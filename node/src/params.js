@@ -3,7 +3,7 @@
 import { fromHex, hexToBytes } from '../../common/bytes.js';
 import { RATIO_COMPLEMENT } from './emission.js';
 
-export const NODE_VERSION = '10.0.0';
+export const NODE_VERSION = '10.0.1';
 /** The network's name on pages, in the launch ceremony and in downloads, derived from NODE_VERSION so labels cannot
  *  drift apart again. */
 export const TESTNET_MAJOR = Number(NODE_VERSION.split('.')[0]);
