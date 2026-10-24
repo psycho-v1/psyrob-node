@@ -110,7 +110,12 @@ class Peer {
     this.lastRecv = Date.now();
     this.buf = this.buf.length ? Buffer.concat([this.buf, d]) : d;
     while (this.buf.length >= FRAME_HEADER && !this.socket.destroyed) {
-      if (this.buf.readUInt32BE(0) !== this.p2p.params.networkMagic) { this.misbehave(100, 'wrong network magic'); return; }
+      if (this.buf.readUInt32BE(0) !== this.p2p.params.networkMagic) {
+        // before HELLO this is a node of another network (an old testnet left running): drop it without a ban, which
+        // would also lock out a current node on the same IPv4 address or IPv6 /64
+        if (!this.helloSeen) { this.p2p.otherNetwork(this.host); this.socket.destroy(); return; }
+        this.misbehave(100, 'wrong network magic'); return;
+      }
       const type = this.buf.readUInt8(4), len = this.buf.readUInt32BE(5);
       if (len > MAX_FRAME) { this.misbehave(100, 'frame too large'); return; }
       if (this.buf.length < FRAME_HEADER + len) return;
@@ -160,6 +165,7 @@ export class P2P {
     this.wsSeeds = (opts.seeds ?? []).filter(isWsUrl);
     this.wsRetry = new Map(); // seed url -> { fails, nextAt }: failed dials back off from 5 s to 5 min
     this.refusedLogged = new Map(); // banned host -> last time its refusal was logged
+    this.otherNetLogged = new Map(); // host of another network -> last time it was logged
     for (const s of opts.seeds ?? []) { if (isWsUrl(s)) continue; const [h, p] = splitHostPort(s); if (h) this.addrman.add(h, p, { source: 'seed' }); }
   }
 
@@ -209,6 +215,14 @@ export class P2P {
     if (Date.now() - last < 600_000) return;
     this.refusedLogged.set(k, Date.now());
     this.log?.(`p2p: refused ${k}: banned until ${new Date(this.bans.get(k)).toISOString().slice(11, 16)} UTC`);
+  }
+
+  /** A peer that opened with another network's magic is dropped, not banned; logged at most once per 10 minutes. */
+  otherNetwork(host) {
+    const k = banKey(host), last = this.otherNetLogged.get(k) ?? 0;
+    if (Date.now() - last < 600_000) return;
+    this.otherNetLogged.set(k, Date.now());
+    this.log?.(`p2p: dropped ${k}: wrong network magic (a node of another network or an older version; not banned)`);
   }
 
   onIncoming(socket) {

@@ -67,7 +67,7 @@ export function neverReplaceable(addr) {
 
 /** The part of the genesis config the three Dev Account holders sign (the start time is set when the genesis is built). */
 export function launchBase(config) {
-  const artifacts = '0x' + bytesToHex(keccak256(utf8(readResourceText('genesis/artifacts.json'))));
+  const artifacts = '0x' + bytesToHex(keccak256(utf8(readResourceText('genesis/artifacts.json').replace(/\r\n/g, '\n'))));
   const base = {
     chainId: Number(config.chainId), target: String(config.target).toLowerCase(),
     devBeneficiaries: config.devBeneficiaries.map((a) => String(a).toLowerCase()), extra: String(config.extra ?? ''), artifacts,

@@ -154,18 +154,29 @@ test('a node reaches another only over WebSocket at /p2p and syncs; a ban hits t
     const h = A.chain.tip.chainHeight;
     await until(() => B.chain.tip.chainHeight >= h + 2, 90_000, 'two more blocks on B');
 
-    // a peer arriving through the tunnel (loopback + CF-Connecting-IP) that sends junk is banned by its own address
-    const { s } = await (async () => {
+    // a peer arriving through the tunnel (loopback + CF-Connecting-IP) is judged by its own address
+    const tunnelClient = async (ip) => {
       const sock = net.connect(hA, '127.0.0.1');
       clients.push(sock);
       await new Promise((r) => sock.once('connect', r));
-      sock.write(`GET /p2p HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: ${randomBytes(16).toString('base64')}\r\nSec-WebSocket-Version: 13\r\nCF-Connecting-IP: 203.0.113.9\r\n\r\n`);
+      sock.write(`GET /p2p HTTP/1.1\r\nHost: localhost\r\nUpgrade: websocket\r\nConnection: Upgrade\r\nSec-WebSocket-Key: ${randomBytes(16).toString('base64')}\r\nSec-WebSocket-Version: 13\r\nCF-Connecting-IP: ${ip}\r\n\r\n`);
       await new Promise((r) => sock.once('data', r));
       sock.closedP = new Promise((r) => sock.once('close', r));
-      return { s: sock };
-    })();
-    s.write(frame(2, Buffer.alloc(16, 0xee))); // wrong network magic
-    await s.closedP;
+      return sock;
+    };
+    // another network's magic before HELLO (an old node left running): dropped, not banned, so a current node on the
+    // same address can still connect
+    const old = await tunnelClient('203.0.113.8');
+    old.write(frame(2, Buffer.alloc(16, 0xee)));
+    await old.closedP;
+    assert.ok(!A.p2p.banned('203.0.113.8'), 'a node of another network is not banned');
+    // junk on this network's magic (a message before HELLO) is banned
+    const junk = await tunnelClient('203.0.113.9');
+    const ping = Buffer.alloc(9);
+    ping.writeUInt32BE(A.p2p.params.networkMagic, 0);
+    ping.writeUInt8(2, 4); // PING before HELLO
+    junk.write(frame(2, ping));
+    await junk.closedP;
     assert.ok(A.p2p.banned('203.0.113.9'));
     assert.ok(!A.p2p.banned('127.0.0.1'), 'the tunnel address itself is never banned for one client');
     assert.ok(A.p2p.info().some((p) => p.ready && p.transport === 'ws'), 'B stays connected');

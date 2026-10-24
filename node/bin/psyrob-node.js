@@ -31,6 +31,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { Node } from '../src/node.js';
 import { splitHostPort } from '../src/p2p.js';
 import { PUBLIC_CHAIN_IDS, GENESIS_FILE } from '../src/params.js';
@@ -39,7 +40,7 @@ import { Ceremony, startPrelaunch } from '../src/prelaunch.js';
 import { DEFAULT_VHOSTS } from '../src/http.js';
 
 // from the source tree: the repository root; in the single executable the genesis and seeds are embedded
-const ROOT = IN_SEA ? null : path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
+const ROOT = IN_SEA ? null : path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const argv = process.argv.slice(2);
 const opt = (name, def = undefined) => { const i = argv.indexOf('--' + name); return i >= 0 ? argv[i + 1] : def; };
 const flag = (name) => argv.includes('--' + name);

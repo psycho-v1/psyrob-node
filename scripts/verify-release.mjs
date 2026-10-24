@@ -13,13 +13,14 @@
 // For a node update plan (/upgrades): the plan's release hash must equal the SHA-256 of this SHA256SUMS.txt.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 
 const args = process.argv.slice(2);
 const opt = (n, d) => { const i = args.indexOf('--' + n); return i >= 0 ? args[i + 1] : d; };
 const dir = args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--'));
 if (!dir) { console.error('usage: verify-release.mjs <folder> [--key docs/RELEASE-KEY.pem] [--rebuilt <folder>]'); process.exit(2); }
-const root = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const keyFile = opt('key', path.join(root, 'docs/RELEASE-KEY.pem'));
 let failed = false;
 const ok = (m) => console.log('ok    ' + m);

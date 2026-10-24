@@ -2,3 +2,5 @@
 *.bat text eol=crlf
 *.sh text eol=lf
 *.svg text eol=lf
+# hashed byte for byte (genesis:check, launch signatures): never CRLF, also on Windows checkouts
+*.json text eol=lf

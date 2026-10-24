@@ -22,18 +22,19 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 import { execFileSync, spawn } from 'node:child_process';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 import { build } from 'esbuild';
 import { NODE_VERSION, TESTNET_CHAIN_ID, TESTNET_NAME, TESTNET_WALLET_NAME } from '../node/src/params.js';
 
-const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const VERSION = NODE_VERSION;
 const CHAIN_ID = Number(TESTNET_CHAIN_ID);
 const GENESIS_FILE = `genesis/genesis-${CHAIN_ID}.json`;
 // reproducible: every time in the packages is the commit time (SOURCE_DATE_EPOCH, as Debian and others use it)
-const EPOCH = Number(process.env.SOURCE_DATE_EPOCH || execFileSync('git', ['-C', path.resolve(path.dirname(new URL(import.meta.url).pathname), '..'), 'log', '-1', '--format=%ct'], { encoding: 'utf8' }).trim());
+const EPOCH = Number(process.env.SOURCE_DATE_EPOCH || execFileSync('git', ['-C', path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), 'log', '-1', '--format=%ct'], { encoding: 'utf8' }).trim());
 process.env.SOURCE_DATE_EPOCH = String(EPOCH);
 const NODE = process.version; // the runtime must be the same version that writes the blob
 const CACHE = path.join(ROOT, 'build/cache');
