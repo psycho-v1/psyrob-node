@@ -1,0 +1,22 @@
+node_modules/
+data/
+.env
+.env.*
+*.log
+*.key
+setup-code.txt
+
+# contract build output
+contracts/out/
+contracts/cache/
+contracts/bnb/out/
+contracts/bnb/cache/
+contracts/lib/forge-std/test/
+native/build/
+
+# release builds (scripts/build-release.mjs): downloaded runtimes, intermediate files and the packages
+build/
+dist/
+
+# key files: never commit
+dev-accounts-SECRET/

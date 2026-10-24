@@ -1,0 +1,88 @@
+/* Home page only (linked from Explorer.home()). Every rule is scoped under .hm so the shared
+   layout, Bootstrap and the other pages are unaffected. The tokens are the site's own colours
+   (layout <style>, .form-control #081216, the TESTNET badge #06201e, the logo's #00f0ff). */
+.hm{
+  --hm-bg:#071014; --hm-panel:#0c181c; --hm-field:#081216; --hm-line:#1c3336;
+  --hm-accent:#3ee0d6; --hm-glow:#00f0ff; --hm-muted:#8aa8a6; --hm-text:#e7f4f2; --hm-on-accent:#06201e;
+  --hm-head:"Barlow Condensed","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+}
+
+/* hero: intro, search and latest blocks on the left, the transfer map on the right */
+.hm .hm-hero{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:36px;padding-block:20px 28px;align-items:start}
+.hm .hm-hero > *{min-width:0}
+.hm h1{margin:0 0 12px;font-size:clamp(44px,5.2vw,58px);line-height:1;text-wrap:balance}
+.hm .lead{margin:0 0 12px;font-size:18px;line-height:1.5}
+
+/* the shared #block-rail (filled by live.js), restyled here to sit in the narrow column */
+.hm .rail{gap:6px;margin:6px 0 0;padding:0 0 10px;overflow-x:auto;scrollbar-width:thin;scrollbar-color:var(--hm-line) transparent}
+.hm .rail .block-node{min-width:74px;text-decoration:none}
+.hm .rail .block-node svg{width:44px;height:44px}
+
+/* transfer map */
+.hm .hm-map-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 20px;margin-bottom:12px}
+.hm h2{margin:0;font-size:28px;line-height:1.1;color:var(--hm-text)}
+.hm .hm-map-head p{margin:4px 0 0;color:var(--hm-muted);font-size:15px}
+.hm .hm-map-head .hm-feed{display:flex;align-items:center;gap:8px;margin:0;border:1px solid var(--hm-line);padding:9px 12px;font:500 13px/1 var(--hm-head);letter-spacing:.14em;text-transform:uppercase;color:var(--hm-accent);white-space:nowrap;font-variant-numeric:tabular-nums}
+.hm .hm-feed i{width:7px;height:7px;border-radius:50%;background:var(--hm-glow);animation:hm-beat 1.6s ease-in-out infinite}
+.hm .hm-feed.hm-off i{animation:none;background:var(--hm-muted)}
+@keyframes hm-beat{50%{opacity:.25}}
+.hm .hm-legend{display:flex;flex-wrap:wrap;gap:4px 16px;margin:0 0 10px;padding:0;list-style:none;font:500 13px/1.2 var(--hm-head);letter-spacing:.1em;text-transform:uppercase;color:var(--hm-muted)}
+.hm .hm-legend li{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.hm .hm-legend i{width:20px;height:0;border-top:2px solid var(--c)}
+.hm .hm-legend i.dash{border-top-style:dashed}
+.hm .hm-canvas-box{position:relative;height:460px;background:var(--hm-field);border:1px solid var(--hm-line);overflow:hidden}
+.hm #hm-graph{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
+.hm .hm-gauges{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;margin-top:10px}
+.hm .hm-gauge{min-width:0;background:var(--hm-panel);border:1px solid var(--hm-line);padding:12px 14px}
+.hm .hm-gauge h3{margin:0 0 8px;font:500 12px/1 var(--hm-head);letter-spacing:.16em;text-transform:uppercase;color:var(--hm-muted)}
+.hm #hm-radar{display:block;width:170px;height:112px}
+.hm .hm-strip{display:flex;gap:2px;height:30px}
+.hm .hm-strip i{flex:1 1 0;min-width:0;background:var(--hm-line);opacity:.55;transition:background .5s,opacity .5s}
+.hm .hm-axis{display:flex;justify-content:space-between;margin-top:5px;font:500 12px/1 var(--hm-head);letter-spacing:.08em;color:var(--hm-muted);font-variant-numeric:tabular-nums}
+.hm .hm-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0;padding:0;list-style:none;font:500 13px/1 var(--hm-head);letter-spacing:.1em;text-transform:uppercase;color:var(--hm-muted)}
+.hm .hm-chips li{border:1px solid var(--hm-line);padding:5px 8px;white-space:nowrap}
+.hm .hm-chips b{font-weight:600;color:var(--hm-text);font-variant-numeric:tabular-nums}
+.hm .hm-count{min-width:170px}
+.hm .hm-num{font:600 44px/1 var(--hm-head);color:var(--hm-text);font-variant-numeric:tabular-nums}
+.hm .hm-count p{margin:6px 0 0;color:var(--hm-muted);font-size:14px;line-height:1.35;font-variant-numeric:tabular-nums}
+.hm .hm-bar{height:3px;margin-top:10px;background:var(--hm-line)}
+.hm .hm-bar i{display:block;height:100%;width:0;background:var(--hm-accent)}
+
+/* tooltip on the map */
+.hm #hm-tip{position:absolute;left:0;top:0;width:max-content;max-width:calc(100% - 20px);background:var(--hm-bg);border:1px solid var(--hm-line);border-left:2px solid var(--hm-accent);padding:10px 12px;pointer-events:none;font-size:13px;line-height:1.4}
+.hm #hm-tip .id{color:var(--hm-text);word-break:break-all}
+.hm #hm-tip .meta{margin:2px 0 8px;font:500 12px/1.2 var(--hm-head);letter-spacing:.12em;text-transform:uppercase;color:var(--hm-muted)}
+.hm #hm-tip table{width:auto;min-width:0;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.hm #hm-tip th{font:500 11px/1 var(--hm-head);letter-spacing:.14em;text-transform:uppercase;text-align:left;color:var(--hm-muted);padding:0 12px 4px 0;border:0}
+.hm #hm-tip td{padding:1px 12px 1px 0;white-space:nowrap;color:var(--hm-text);border:0}
+.hm #hm-tip td:last-child,.hm #hm-tip th:last-child{padding-right:0;text-align:right}
+.hm #hm-tip .sw{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;background:var(--c);vertical-align:1px}
+.hm #hm-tip .more{margin:6px 0 0;color:var(--hm-muted)}
+
+/* figures and the latest transactions */
+.hm .hm-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin:0;padding-block:8px 28px}
+.hm .hm-stat{background:var(--hm-panel);border:1px solid var(--hm-line);padding:14px 16px}
+.hm .hm-stat dt{color:var(--hm-muted);font-size:17px;font-weight:400}
+.hm .hm-stat dd{margin:2px 0 0;font:600 26px/1.15 var(--hm-head);color:var(--hm-text);font-variant-numeric:tabular-nums;overflow-wrap:break-word}
+.hm #hm-txs{margin:14px 0 40px}
+.hm #hm-txs .table-responsive{border:1px solid var(--hm-line)!important;scrollbar-width:thin;scrollbar-color:var(--hm-line) transparent}
+.hm #hm-txs th{font-size:12px;letter-spacing:.16em;padding:12px 14px}
+.hm #hm-txs td{padding:12px 14px;white-space:nowrap;vertical-align:top}
+.hm #hm-txs tr:last-child td{border-bottom:0}
+.hm #hm-txs td:last-child,.hm #hm-txs th:last-child{text-align:right}
+
+@media (max-width:980px){
+  .hm .hm-hero{grid-template-columns:minmax(0,1fr);gap:28px;padding-block:12px 20px}
+}
+@media (max-width:640px){
+  .hm .hm-canvas-box{height:400px}
+  .hm .hm-gauges{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .hm .hm-gauges .hm-heat{grid-column:1 / -1;order:-1}
+  .hm .hm-strip{height:22px}
+  .hm #hm-radar{width:100%;max-width:170px;height:100px;margin-inline:auto}
+  .hm .hm-count{min-width:0}
+  .hm .hm-num{font-size:36px}
+  .hm .hm-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .hm .hm-stat dd{font-size:21px}
+}
+@media (prefers-reduced-motion:reduce){ .hm .hm-strip i{transition:none} .hm .hm-feed i{animation:none} }

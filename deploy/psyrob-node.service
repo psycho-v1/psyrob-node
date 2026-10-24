@@ -1,0 +1,79 @@
+# /etc/systemd/system/psyrob-node.service
+# PSYROB node (block DAG, chain 87870): JSON-RPC, explorer, /health and P2P over WebSocket (/p2p) on 127.0.0.1:8787,
+# behind the Cloudflare tunnel (rpc.psyrob.com, explorer.psyrob.com). TCP P2P on 127.0.0.1:39870 (local only). It does
+# not mine; see psyrob-miner.service.
+# It signs bootstrap checkpoints (DAG_SPEC.md section 9.1) with the three bootstrap keys named in the genesis
+# (/etc/psyrob/bootstrap-1..3.key, made by deploy/KEYS.sh; they do not mine and hold no PSY); any 2 of 3 signatures
+# make a checkpoint final. All three are on this server for now; moving one or two to other machines later needs no
+# change on chain. The keys reach the service as systemd credentials and are copied to private 0600 files. Never run
+# these keys in a second node at the same time (docs/OPERATORS.md).
+# Code: /home/psycho/psyrob-node, a clone of /home/psycho/psyrob at the release tag after `npm ci`.
+# Data: /var/lib/psyrob-node.
+[Unit]
+Description=PSYROB node (chain 87870)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=psyrob
+Group=psyrob
+WorkingDirectory=/home/psycho/psyrob-node
+LoadCredential=bootstrap-1.key:/etc/psyrob/bootstrap-1.key
+LoadCredential=bootstrap-2.key:/etc/psyrob/bootstrap-2.key
+LoadCredential=bootstrap-3.key:/etc/psyrob/bootstrap-3.key
+RuntimeDirectory=psyrob-node
+RuntimeDirectoryMode=0700
+ExecStartPre=/usr/bin/install -m 0600 %d/bootstrap-1.key %t/psyrob-node/bootstrap-1.key
+ExecStartPre=/usr/bin/install -m 0600 %d/bootstrap-2.key %t/psyrob-node/bootstrap-2.key
+ExecStartPre=/usr/bin/install -m 0600 %d/bootstrap-3.key %t/psyrob-node/bootstrap-3.key
+ExecStart=/usr/bin/node --max-old-space-size=1024 /home/psycho/psyrob-node/node/bin/psyrob-node.js \
+  --genesis /home/psycho/psyrob-node/genesis/genesis-87870.json \
+  --datadir /var/lib/psyrob-node \
+  --http-host 127.0.0.1 --http-port 8787 \
+  --http-vhosts localhost,127.0.0.1,::1,rpc.psyrob.com,explorer.psyrob.com --http-cors * \
+  --p2p-host 127.0.0.1 --p2p-port 39870 \
+  --signer-key %t/psyrob-node/bootstrap-1.key --signer-key %t/psyrob-node/bootstrap-2.key --signer-key %t/psyrob-node/bootstrap-3.key
+StateDirectory=psyrob-node
+StateDirectoryMode=0750
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+UMask=0027
+
+# Memory: the server has 3.2 GiB shared with other services. Above MemoryHigh the kernel reclaims; at MemoryMax the
+# node is OOM-killed and Restart=always brings it back (blocks are stored before they are applied, so it replays to
+# its last block). Blocks far below the finality depth keep about 0.4 kB in memory (the rest is in cold.dat); the heap
+# is 1 GiB and the cgroup limits sit above it.
+MemoryHigh=1152M
+MemoryMax=1408M
+MemorySwapMax=512M
+
+# Code: the clone, bind-mounted read-only; the rest of /home is hidden (empty tmpfs)
+ProtectHome=tmpfs
+BindReadOnlyPaths=/home/psycho/psyrob-node
+
+# Hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

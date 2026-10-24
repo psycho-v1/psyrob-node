@@ -1,0 +1,69 @@
+# /etc/systemd/system/psyrob-miner.service
+# PSYROB CPU miner: the separate miner application (miner/), 2 Argon2d threads (32 MiB each), asking the local node
+# for templates over JSON-RPC (http://127.0.0.1:8787). Every attempt is signed with the miner key, so the miner needs
+# the key file, not just an address. deploy/KEYS.sh makes it once: /etc/psyrob/miner.key (root:psyrob, 0640), its
+# address in /etc/psyrob/miner.address (0644) and in the drop-in address.conf (PSYROB_MINER_ADDRESS). The key reaches
+# the service as a systemd credential. With User= set, systemd makes the credential file readable through its group
+# bits, which the miner's own check refuses (it accepts only 0600-style key files), so the first start step copies it
+# into the service's private runtime directory (/run/psyrob-miner, 0700, owned by psyrob, removed when the service
+# stops) as a 0600 file; the miner reads that copy. --expect-address makes the miner refuse to start if the key belongs
+# to any other address; --chain-id makes it refuse a node on another network. The miner key is not a bootstrap key:
+# finality keys do not mine.
+# Before the genesis time no block can be valid (a block may be at most 120 s ahead of the clock and must be later
+# than the genesis), so the third start step waits until 60 s before the genesis time.
+# CPU and priority limits are in psyrob-miner.service.d/limits.conf. Not enabled at launch: deploy/LAUNCH.sh starts it
+# after deploy/check-before-mining.sh passes.
+[Unit]
+Description=PSYROB CPU miner (chain 87870)
+After=psyrob-node.service
+Requires=psyrob-node.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=psyrob
+Group=psyrob
+WorkingDirectory=/home/psycho/psyrob-node
+LoadCredential=miner.key:/etc/psyrob/miner.key
+RuntimeDirectory=psyrob-miner
+RuntimeDirectoryMode=0700
+ExecStartPre=/usr/bin/install -m 0600 %d/miner.key %t/psyrob-miner/miner.key
+ExecStartPre=/bin/bash -c 'for i in $(seq 1 60); do /usr/bin/curl -sf --max-time 2 http://127.0.0.1:8787/health | grep -q chainId.:87870 && exit 0; sleep 1; done; exit 1'
+ExecStartPre=/usr/bin/node -e "const g=require('/home/psycho/psyrob-node/genesis/genesis-87870.json'); const w=g.config.timestamp-60-Math.floor(Date.now()/1000); if (w>0) { console.log('waiting '+w+' s for the genesis time'); setTimeout(()=>{}, w*1000); }"
+ExecStart=/bin/sh -c '[ -n "$$PSYROB_MINER_ADDRESS" ] || { echo "no miner address (address.conf)"; exit 2; }; exec /usr/bin/node --max-old-space-size=256 /home/psycho/psyrob-node/miner/bin/psyrob-miner.js --node http://127.0.0.1:8787 --chain-id 87870 --threads 2 --key "$$RUNTIME_DIRECTORY/miner.key" --expect-address "$$PSYROB_MINER_ADDRESS"'
+TimeoutStartSec=infinity
+Restart=always
+RestartSec=10
+TimeoutStopSec=20
+UMask=0077
+
+# Memory: 2 x 32 MiB Argon2d plus the runtime
+MemoryHigh=384M
+MemoryMax=512M
+MemorySwapMax=128M
+
+ProtectHome=tmpfs
+BindReadOnlyPaths=/home/psycho/psyrob-node
+
+# Hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PSYROB">
+  <defs>
+    <radialGradient id="core" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E6FFFF"/>
+      <stop offset="45%" stop-color="#7FF8FF"/>
+      <stop offset="100%" stop-color="#00F0FF"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00F0FF" stop-opacity="0.55"/>
+      <stop offset="40%" stop-color="#00F0FF" stop-opacity="0.22"/>
+      <stop offset="75%" stop-color="#00F0FF" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#00F0FF" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="3.2"/>
+    </filter>
+  </defs>
+  
+  <g transform="translate(200, 200) scale(1.15)">
+    <polygon points="0,-110 70,-20 0,20" fill="#00f0ff" fill-opacity="0.08" stroke="#00f0ff" stroke-width="2.5"/>
+    <polygon points="0,-110 -70,-20 0,20" fill="#00f0ff" fill-opacity="0.13" stroke="#00f0ff" stroke-width="2.5"/>
+    <polygon points="0,110 70,35 0,20" fill="#00f0ff" fill-opacity="0.03" stroke="#00f0ff" stroke-width="1.5"/>
+    <polygon points="0,110 -70,35 0,20" fill="#00f0ff" fill-opacity="0.07" stroke="#00f0ff" stroke-width="1.5"/>
+    <polygon points="0,-20 50,-10 0,20" fill="none" stroke="#00f0ff" stroke-width="1" opacity="0.6"/>
+    <polygon points="0,-20 -50,-10 0,20" fill="none" stroke="#00f0ff" stroke-width="1" opacity="0.6"/>
+    <circle cx="0" cy="0" r="38" fill="url(#glow)" filter="url(#soft)"/>
+    <circle cx="0" cy="0" r="10" fill="url(#core)"/>
+  </g>
+</svg>

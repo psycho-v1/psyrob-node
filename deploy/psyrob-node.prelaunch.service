@@ -1,0 +1,62 @@
+# /etc/systemd/system/psyrob-node.service, PRE-LAUNCH form (launch ceremony, DAG_SPEC.md section 17.1).
+# Installed by deploy/PRELAUNCH.sh and replaced by the normal unit (psyrob-node.service) by deploy/LAUNCH.sh.
+# Same name, port and sandbox as the node, so the Cloudflare tunnel serves https://explorer.psyrob.com/launch; there is
+# no chain yet and nothing to mine. The signatures are saved in /var/lib/psyrob-node/launch.json.
+# Code: /home/psycho/psyrob-node, a clone of /home/psycho/psyrob at the pre-launch tag after `npm ci`.
+[Unit]
+Description=PSYROB launch ceremony (chain 87870, pre-launch)
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=psyrob
+Group=psyrob
+WorkingDirectory=/home/psycho/psyrob-node
+ExecStart=/usr/bin/node --max-old-space-size=128 /home/psycho/psyrob-node/node/bin/psyrob-node.js \
+  --prelaunch /home/psycho/psyrob-node/genesis/launch-87870.json \
+  --datadir /var/lib/psyrob-node \
+  --http-host 127.0.0.1 --http-port 8787 \
+  --http-vhosts localhost,127.0.0.1,::1,rpc.psyrob.com,explorer.psyrob.com
+StateDirectory=psyrob-node
+StateDirectoryMode=0750
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+UMask=0027
+
+# Memory: the server has 3.2 GiB shared with other services. Above MemoryHigh the kernel reclaims; at MemoryMax the
+# node is OOM-killed and Restart=always brings it back (blocks are stored before they are applied, so it replays to
+# its last block). --max-old-space-size keeps the V8 heap well below the cgroup limit.
+MemoryHigh=512M
+MemoryMax=768M
+MemorySwapMax=256M
+
+# Code: the clone, bind-mounted read-only; the rest of /home is hidden (empty tmpfs)
+ProtectHome=tmpfs
+BindReadOnlyPaths=/home/psycho/psyrob-node
+
+# Hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+SystemCallArchitectures=native
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

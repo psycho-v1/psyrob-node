@@ -1,0 +1,81 @@
+sharma24	qualitative	Sharma	Unpacking How Decentralized Autonomous Organizations (DAOs) Work in Practice
+nabben21	qualitative	Nabben	Decentralised Autonomous Organisations (DAOs) as Data Trusts: A General Model and Pilot Project
+jones	qualitative	Jones	Blockchain and the decentralisation of governance qualitative interview study
+defilippi-voting	qualitative	De Filippi	The rise of DAOs voting governance qualitative
+ziolkowski20	qualitative	Ziolkowski	Decision Problems in Blockchain Governance: Old Wine in New Bottles or Walking in Someone Else's Shoes?
+vanpelt21	qualitative	van Pelt	Defining Blockchain Governance: A Framework for Analysis and Comparison
+liu23	qualitative	Liu	Defining blockchain governance principles: A comprehensive framework
+azouvi18	qualitative	Azouvi	Who Am I? Secure Identity Registration on Distributed Ledgers
+parkin	qualitative	Parkin	The secret lives of Ethereum governance participants qualitative
+froehlich21	qualitative	Froehlich	Blockchain and Cryptocurrency in Human Computer Interaction: A Systematic Literature Review and Research Agenda
+sas18	qualitative	Sas	Design for Trust: An Exploration of the Challenges and Opportunities of Bitcoin Users
+elsden18	qualitative	Elsden	Making Sense of Blockchain Applications: A Typology for HCI
+gao16	qualitative	Gao	Understanding Bitcoin Users' Perceptions of Security and Privacy
+khairuddin16	qualitative	Khairuddin	Exploring Motivations for Bitcoin Technology Usage
+krombholz17	qualitative	Krombholz	The Other Side of the Coin: Usability of Bitcoin Wallets
+chen-dao	qualitative	Chen	Decentralized governance of digital platforms
+tan-gov	qualitative	Tan	Blockchain-based governance case study qualitative nonprofit donation transparency
+puddu20	voting	Puddu	TEEvil: Identity Lease via Trusted Execution Environments
+austgen23	voting	Austgen	DAO Decentralization: Voting-Bloc Entropy, Bribery, and Dark DAOs
+dhillon-bribe	voting	Bonneau	Why Buy When You Can Rent? Bribery Attacks on Bitcoin-Style Consensus
+judmayer21	voting	Judmayer	Pay to Win: Cheap, Cross-Chain Bribing Attacks on PoW Cryptocurrencies
+goodman-term	roles	Dal Bó	Political Dynasties term limits incumbency
+besley-term	roles	Besley	Political Economy and Changing Policy term limits accountability
+termlimits	roles	Smart	Term Limits and Electoral Accountability
+hallock	roles	Hallock	Nonprofit Boards of Directors: Values and Practice compensation
+coi-nonprofit	roles	Callen	Board Composition, Committees, and Organizational Efficiency: The Case of Nonprofits
+recusal	roles	Hamdani	Recusal conflicts of interest voting directors
+caretaker	interim	Boston	Caretaker government constitutional convention interim
+timelock	contracts	Rivest	Time-lock puzzles and timed-release crypto
+mev-timelock	contracts	Torres	Frontrunner Jones and the Raiders of the Dark Forest: An Empirical Study of Frontrunning on the Ethereum Blockchain
+upgradeable	contracts	Salehi	Not so Immutable: Upgradeability of Smart Contracts on Ethereum
+proxy	contracts	Bodell	Proxy Hunting: Understanding and Characterizing Proxy-based Upgradeable Smart Contracts in Blockchains
+govattack	contracts	Gudgeon	The Decentralized Financial Crisis
+defisok	contracts	Werner	SoK: Decentralized Finance (DeFi)
+zhou23	contracts	Zhou	SoK: Decentralized Finance (DeFi) Attacks
+ccsurvey	contracts	Chen	A Survey on Ethereum Systems Security: Vulnerabilities, Attacks, and Defenses
+gasdos	contracts	Chen	Tokenscope or GasChecker: Ethereum gas DoS attack defense adaptive gas cost
+txfee-dag	dag	Bagaria	Boomerang: Redundancy Improves Latency and Throughput in Payment-Channel Networks
+dag-incentive	dag	Fitzi	Parallel Chains: Improving Throughput and Latency of Blockchain Protocols via Parallel Composition
+ledgercombiner	dag	Fitzi	Ledger Combiners for Fast Settlement
+tailstorm	dag	Keller	Tailstorm: A Secure and Fair Blockchain for Cash Transactions
+dagtx	dag	Li	Transaction conflict resolution DAG blockchain execution order
+spectre-security	dag	Natoli	The Balance Attack or Why Forkable Blockchains Are Ill-Suited for Consortium
+kaspaselfish	dag	Gyawali	selfish mining DAG GHOSTDAG analysis
+dagselfish	dag	Wang	Exploring Unfairness on Proof of Authority / selfish mining in DAG-based blockchains
+uncles	dag	Ritz	On the Impact of Ethereum Uncle Rewards
+feng-uncle	dag	Feng	Selfish Mining in Ethereum
+grunspan	security	Grunspan	On profitability of selfish mining
+nayak16	security	Nayak	Stubborn Mining: Generalizing Selfish Mining and Combining with an Eclipse Attack
+bahack	security	Kwon	Be Selfish and Avoid Dilemmas: Fork After Withholding (FAW) Attacks on Bitcoin
+timewarp	time	Fan	Timestamp manipulation difficulty adjustment proof of work attack
+zhang-blockfreq	security	Zhang	Lay Down the Common Metrics: Evaluating Proof-of-Work Consensus Protocols' Security
+weight-cap	committee	Gencer	ByzID / committee weight cap
+cryptosortition	committee	Micali	Verifiable Random Functions
+vrf	committee	Micali	Verifiable random functions
+randao	committee	Syta	Scalable Bias-Resistant Distributed Randomness
+slashing	finality	Buterin	Casper finality slashing accountable safety
+accountable-pos	finality	Tas	Bitcoin-Enhanced Proof-of-Stake Security: Possibilities and Impossibilities
+longrange	finality	Deirmentzoglou	A Survey on Long-Range Attacks for Proof of Stake Protocols
+checkpoint	finality	Karakostas	Securing Proof-of-Work Ledgers via Checkpointing
+eclipse-defense	network	Tran	A Stealthier Partitioning Attack against Bitcoin Peer-to-Peer Network
+addrman	network	Biryukov	Deanonymisation of Clients in Bitcoin P2P Network
+txprobe	network	Delgado-Segura	TxProbe: Discovering Bitcoin's Network Topology Using Orphan Transactions
+discv5	network	Kiffer	Under the Hood of the Ethereum Gossip Protocol
+dnsseed	network	Loe	You Shall Not Join: A Measurement Study of Cryptocurrency Peer-to-Peer Bootstrapping Techniques
+nodeinc	network	Wang	Towards a first step to understand the cryptocurrency stealing attack on Ethereum
+emission	economics	Kroll	The Economics of Bitcoin Mining, or Bitcoin in the Presence of Adversaries
+halving	economics	Meynkhard	Fair market value of bitcoin: halving effect
+inflation-security	economics	Chiu	Incentive Compatibility on the Blockchain
+supply-schedule	economics	Ammous	Can cryptocurrencies fulfil the functions of money?
+tokendist	economics	Fan	Towards Understanding Initial Distribution of Cryptocurrencies token allocation insider
+vesting	economics	Momtaz	Token sales and initial coin offerings: Introduction
+icoinsider	economics	Benedetti	Digital Tulips? Returns to Investors in Initial Coin Offerings
+fee-burn	economics	Ferreira	Dynamic Posted-Price Mechanisms for the Blockchain Transaction-Fee Market
+donation-crypto	ngo	Jain	Crypto donations charities blockchain philanthropy
+ngo-blockchain-trust	ngo	Farooq	A Blockchain-based framework for charity distribution
+charity-transparency	ngo	Saleh	Blockchain without waste: proof-of-stake
+aid-blockchain	ngo	Ko	Blockchain technology and humanitarian supply chains
+ngo-legitimacy	ngo	Lister	NGO Legitimacy: Technical Issue or Social Construct?
+ngo-accountability	ngo	Kilby	Accountability for Empowerment: Dilemmas Facing Non-Governmental Organizations
+ngo-certification	ngo	Bies	Accountability, Organizational Capacity, and Continuous Improvement: Nonprofit accreditation

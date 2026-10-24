@@ -1,0 +1,22 @@
+{
+ "chainId": 87870,
+ "chainIdHex": "0x1573e",
+ "network": "testnet",
+ "name": "PSYROB testnet",
+ "nativeCurrency": {
+  "name": "PSY",
+  "symbol": "PSY",
+  "decimals": 18
+ },
+ "rpc": [
+  "https://rpc.psyrob.com"
+ ],
+ "explorers": [
+  "https://explorer.psyrob.com"
+ ],
+ "p2p": [
+  "wss://rpc.psyrob.com/p2p"
+ ],
+ "genesis": null,
+ "note": "Testnet: PSY and registrations have no value. Use a new key for this network; never reuse a key that was used on any other network. The genesis hash is filled in at the launch ceremony."
+}

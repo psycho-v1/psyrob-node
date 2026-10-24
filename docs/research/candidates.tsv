@@ -1,0 +1,141 @@
+# id	topic	first-author surname	title query
+nakamoto-backbone	consensus	Garay	The Bitcoin Backbone Protocol: Analysis and Applications
+pss17	consensus	Pass	Analysis of the Blockchain Protocol in Asynchronous Networks
+ghost15	consensus	Sompolinsky	Secure High-Rate Transaction Processing in Bitcoin
+inclusive15	dag	Lewenberg	Inclusive Block Chain Protocols
+ghostdag21	dag	Sompolinsky	PHANTOM GHOSTDAG: A Scalable Generalization of Nakamoto Consensus
+conflux20	dag	Li	A Decentralized Blockchain with High Throughput and Fast Confirmation
+prism19	dag	Bagaria	Prism: Deconstructing the Blockchain to Approach Physical Limits
+ohie20	dag	Yu	OHIE: Blockchain Scaling Made Simple
+bitcoinng16	consensus	Eyal	Bitcoin-NG: A Scalable Blockchain Protocol
+narwhal22	dag	Danezis	Narwhal and Tusk: a DAG-based mempool and efficient BFT consensus
+bullshark22	dag	Spiegelman	Bullshark: DAG BFT Protocols Made Practical
+dagrider21	dag	Keidar	All You Need is DAG
+sokdag	dag	Wang	SoK: DAG-based Blockchain Systems
+selfish14	security	Eyal	Majority is not enough: Bitcoin mining is vulnerable
+optselfish16	security	Sapirshtein	Optimal Selfish Mining Strategies in Bitcoin
+gervais16	security	Gervais	On the Security and Performance of Proof of Work Blockchains
+decker13	network	Decker	Information propagation in the Bitcoin network
+eclipse15	network	Heilman	Eclipse Attacks on Bitcoin's Peer-to-Peer Network
+hijack17	network	Apostolaki	Hijacking Bitcoin: Routing Attacks on Cryptocurrencies
+race20	security	Dembo	Everything is a Race and Nakamoto Always Wins
+tight20	security	Gaži	Tight Consistency Bounds for Bitcoin
+kiffer18	security	Kiffer	A Better Method to Analyze Blockchain Consistency
+variable17	difficulty	Garay	The Bitcoin Backbone Protocol with Chains of Variable Difficulty
+kraft16	difficulty	Kraft	Difficulty control for blockchain-based consensus systems
+fullmer18	difficulty	Fullmer	Analysis of Difficulty Control in Bitcoin and Proof-of-Work Blockchains
+noda20	difficulty	Noda	Economic design of the difficulty adjustment algorithm
+argon2-16	pow	Biryukov	Argon2: New Generation of Memory-Hard Functions for Password Hashing and Other Applications
+balloon16	pow	Boneh	Balloon Hashing: A Memory-Hard Function Providing Provable Protection Against Sequential Attacks
+alwenblocki16	pow	Alwen	Efficiently Computing Data-Independent Memory-Hard Functions
+scrypt17	pow	Alwen	Scrypt Is Maximally Memory-Hard
+equihash16	pow	Biryukov	Equihash: Asymmetric Proof-of-Work Based on the Generalized Birthday Problem
+tradeoff15	pow	Biryukov	Tradeoff Cryptanalysis of Memory-Hard Functions
+depthrobust17	pow	Alwen	Depth-Robust Graphs and Their Cumulative Memory Complexity
+argon2i-attack17	pow	Alwen	Towards Practical Attacks on Argon2i and Balloon Hashing
+bandwidth17	pow	Ren	Bandwidth Hard Functions for ASIC Resistance
+dworknaor92	pow	Dwork	Pricing via Processing or Combatting Junk Mail
+memorybound03	pow	Dwork	On Memory-Bound Functions for Fighting Spam
+abadi05	pow	Abadi	Moderately hard, memory-bound functions
+botcoin14	pow	Huang	Botcoin: Monetizing Stolen Cycles
+minesweeper18	pow	Konoth	MineSweeper: An In-depth Look into Drive-by Cryptocurrency Mining and Its Defense
+cryptominer19	pow	Pastrana	A First Look at the Crypto-Mining Malware Ecosystem: A Decade of Unrestricted Wealth
+taylor17	pow	Taylor	The Evolution of Bitcoin Hardware
+devries18	pow	de Vries	Bitcoin's Growing Energy Problem
+romiti19	pow	Romiti	A Deep Dive into Bitcoin Mining Pools: An Empirical Analysis of Mining Shares
+cong21	pow	Cong	Decentralized Mining in Centralized Pools
+kademlia02	network	Maymounkov	Kademlia: A Peer-to-Peer Information System Based on the XOR Metric
+sybil02	network	Douceur	The Sybil Attack
+erlay19	network	Naumenko	Erlay: Efficient Transaction Relay for Bitcoin
+dandelion17	network	Bojja Venkatakrishnan	Dandelion: Redesigning the Bitcoin Network for Anonymity
+perigee20	network	Mao	Perigee: Efficient Peer-to-Peer Network Design for Blockchains
+ethpeers18	network	Kim	Measuring Ethereum Network Peers
+gencer18	network	Gencer	Decentralization in Bitcoin and Ethereum Networks
+neudecker19	network	Neudecker	Network Layer Aspects of Permissionless Blockchains
+ethereclipse	network	Marcus	Low-Resource Eclipse Attacks on Ethereum's Peer-to-Peer Network
+sybilguard06	network	Yu	SybilGuard: defending against sybil attacks via social networks
+pbft99	bft	Castro	Practical Byzantine Fault Tolerance
+lamport82	bft	Lamport	The Byzantine Generals Problem
+flp85	bft	Fischer	Impossibility of distributed consensus with one faulty process
+dls88	bft	Dwork	Consensus in the presence of partial synchrony
+hotstuff19	bft	Yin	HotStuff: BFT Consensus with Linearity and Responsiveness
+algorand17	bft	Gilad	Algorand: Scaling Byzantine Agreements for Cryptocurrencies
+ouroboros17	bft	Kiayias	Ouroboros: A Provably Secure Proof-of-Stake Blockchain Protocol
+forensics21	bft	Sheng	BFT Protocol Forensics
+ebbflow21	finality	Neu	Ebb-and-Flow Protocols: A Resolution of the Availability-Finality Dilemma
+cap21	finality	Sankagiri	Blockchain CAP Theorem Allows User-Dependent Adaptivity and Finality
+afgjort20	finality	Dinsdale-Young	Afgjort: A Partially Synchronous Finality Layer for Blockchains
+omniledger18	committee	Kokoris-Kogias	OmniLedger: A Secure, Scale-Out, Decentralized Ledger via Sharding
+rapidchain18	committee	Zamani	RapidChain: Scaling Blockchain via Full Sharding
+byzcoin16	committee	Kogias	Enhancing Bitcoin Security and Performance with Strong Consistency via Collective Signing
+hybrid17	committee	Pass	Hybrid Consensus: Efficient Consensus in the Permissionless Model
+decentmetrics21	committee	Lin	Measuring Decentralization in Bitcoin and Ethereum using Multiple Metrics and Granularities
+flyclient20	sync	Bünz	FlyClient: Super-Light Clients for Cryptocurrencies
+nipopow20	sync	Kiayias	Non-interactive Proofs of Proof-of-Work
+logspace21	sync	Kiayias	Mining in Logarithmic Space
+szalachowski18	time	Szalachowski	Towards More Reliable Bitcoin Timestamps
+dao19	governance	Wang	Decentralized Autonomous Organizations: Concept, Model, and Applications
+hassan21	governance	Hassan	Decentralized autonomous organization
+feichtinger23	governance	Feichtinger	The Hidden Shortcomings of (D)AOs – An Empirical Study of On-Chain Governance
+barbereau23	governance	Barbereau	Decentralised Finance's timocratic governance: The distribution and exercise of tokenised voting rights
+fritsch24	governance	Fritsch	Analyzing voting power in decentralized governance: Who controls DAOs?
+sokgov22	governance	Kiayias	SoK: Blockchain Governance
+beck18	governance	Beck	Governance in the Blockchain Economy: A Framework and Research Agenda
+defilippi16	governance	De Filippi	The invisible politics of Bitcoin: governance crisis of a decentralized infrastructure
+reijers16	governance	Reijers	Governance in Blockchain Technologies & Social Contract Theories
+rikken19	governance	Rikken	Governance challenges of blockchain and decentralized autonomous organizations
+ostrom00	governance	Ostrom	Collective Action and the Evolution of Social Norms
+lalley18	voting	Lalley	Quadratic Voting: How Mechanism Design Can Radicalize Democracy
+kahng18	voting	Kahng	Liquid Democracy: An Algorithmic Perspective
+herrera10	voting	Herrera	Quorum and Turnout in Referenda
+aguiar10	voting	Aguiar-Conraria	How quorum rules distort referendum outcomes: Evidence from a pivotal voter model
+maniquet15	voting	Maniquet	Approval quorums dominate participation quorums
+aziz17	voting	Aziz	Justified representation in approval-based committee voting
+pjr17	voting	Sánchez-Fernández	Proportional Justified Representation
+fama83	roles	Fama	Separation of Ownership and Control
+jensen76	roles	Jensen	Theory of the firm: Managerial behavior, agency costs and ownership structure
+gugerty09	ngo	Gugerty	Signaling virtue: voluntary accountability programs among nonprofit organizations
+ebrahim03	ngo	Ebrahim	Accountability In Practice: Mechanisms for NGOs
+bekkers03	ngo	Bekkers	Trust, Accreditation, and Philanthropy in the Netherlands
+zwitter18	ngo	Zwitter	Blockchain for humanitarian action and development aid
+kshetri17	ngo	Kshetri	Will blockchain emerge as a tool to break the poverty chain in the Global South?
+hyvarinen17	ngo	Hyvärinen	A Blockchain-Based Approach Towards Overcoming Financial Fraud in Public Sector Services
+borge17	identity	Borge	Proof-of-Personhood: Redemocratizing Permissionless Cryptocurrencies
+siddarth20	identity	Siddarth	Who Watches the Watchmen? A Review of Subjective Approaches for Sybil-Resistance in Proof of Personhood Protocols
+pagnotta22	economics	Pagnotta	Decentralizing Money: Bitcoin Prices and Blockchain Security
+budish	economics	Budish	The Economic Limits of Bitcoin and Anonymous, Decentralized Trust
+huberman21	economics	Huberman	Monopoly without a Monopolist: An Economic Analysis of the Bitcoin Payment System
+easley19	economics	Easley	From mining to markets: The evolution of bitcoin transaction fees
+carlsten16	economics	Carlsten	On the Instability of Bitcoin Without the Block Reward
+roughgarden	economics	Roughgarden	Transaction Fee Mechanism Design
+eip1559-22	economics	Liu	Empirical Analysis of EIP-1559: Transaction Fees, Waiting Times, and Consensus Security
+leshno20	economics	Leshno	Bitcoin: An Axiomatic Approach and an Impossibility Theorem
+cong21tok	economics	Cong	Tokenomics: Dynamic Adoption and Valuation
+chiu22	economics	Chiu	The Economics of Cryptocurrency: Bitcoin and Beyond
+howell20	economics	Howell	Initial Coin Offerings: Financing Growth with Cryptocurrency Token Sales
+lyandres22	economics	Lyandres	Initial Coin Offering (ICO) Success and Post-ICO Performance
+frowis19	economics	Fröwis	The Operational Cost of Ethereum Airdrops
+eskandari15	keys	Eskandari	A First Look at the Usability of Bitcoin Key Management
+krombholz16	keys	Krombholz	The Other Side of the Coin: User Experiences with Bitcoin Security and Privacy
+mai20	keys	Mai	User Mental Models of Cryptocurrency Systems - A Grounded Theory Approach
+voskobojnikov21	keys	Voskobojnikov	The U in Crypto Stands for Usable: An Empirical Study of User Experience with Mobile Cryptocurrency Wallets
+gennaro16	multisig	Gennaro	Threshold-Optimal DSA/ECDSA Signatures and an Application to Bitcoin Wallet Security
+bdn18	multisig	Boneh	Compact Multi-signatures for Smaller Blockchains
+musig19	multisig	Maxwell	Simple Schnorr multi-signatures with applications to Bitcoin
+diangelo20	multisig	Di Angelo	Characteristics of Wallet Contracts on Ethereum
+destefanis18	multisig	Destefanis	Smart contracts vulnerabilities: a call for blockchain software engineering?
+bridgesok	bridge	Zhang	SoK: Security of Cross-chain Bridges
+luu16	contracts	Luu	Making Smart Contracts Smarter
+atzei17	contracts	Atzei	A Survey of Attacks on Ethereum Smart Contracts (SoK)
+securify18	contracts	Tsankov	Securify: Practical Security Analysis of Smart Contracts
+slither19	contracts	Feist	Slither: A Static Analysis Framework for Smart Contracts
+echidna20	contracts	Grieco	Echidna: effective, usable, and fast fuzzing for smart contracts
+contractfuzzer18	contracts	Jiang	ContractFuzzer: Fuzzing Smart Contracts for Vulnerability Detection
+perez21	contracts	Perez	Smart Contract Vulnerabilities: Vulnerable Does Not Imply Exploited
+brokenmetre20	contracts	Perez	Broken Metre: Attacking Resource Metering in EVM
+qin21	contracts	Qin	Attacking the DeFi Ecosystem with Flash Loans for Fun and Profit
+flashboys20	contracts	Daian	Flash Boys 2.0: Frontrunning in Decentralized Exchanges, Miner Extractable Value, and Consensus Instability
+bonneau15	survey	Bonneau	SoK: Research Perspectives and Challenges for Bitcoin and Cryptocurrencies
+garaykiayias20	survey	Garay	SoK: A Consensus Taxonomy in the Blockchain Era
+nielsen90	frontend	Nielsen	Heuristic evaluation of user interfaces
+ginsburg21	interim	Ginsburg	From catastrophe to constitution? The puzzle of emergency powers

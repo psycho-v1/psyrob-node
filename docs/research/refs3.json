@@ -1,0 +1,194 @@
+[
+ {
+  "id": "deter21",
+  "topic": "dos",
+  "query": "DETER: Denial of Ethereum Txpool sERvices",
+  "status": "verified",
+  "doi": "10.1145/3460120.3485369",
+  "title": "DETER: Denial of Ethereum Txpool sERvices",
+  "venue": "Proceedings of the 2021 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2021,
+  "authors": [
+   "Kai Li",
+   "Yibo Wang",
+   "Yuzhe Tang"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "saad20",
+  "topic": "dos",
+  "query": "Exploring the Attack Surface of Blockchain: A Comprehensive Survey",
+  "status": "verified",
+  "doi": "10.1109/comst.2020.2975999",
+  "title": "Exploring the Attack Surface of Blockchain: A Comprehensive Survey",
+  "venue": "IEEE Communications Surveys &amp; Tutorials",
+  "type": "journal-article",
+  "year": 2020,
+  "authors": [
+   "Muhammad Saad",
+   "Jeffrey Spaulding",
+   "Laurent Njilla",
+   "Charles Kamhoua",
+   "Sachin Shetty",
+   "DaeHun Nyang",
+   "David Mohaisen"
+  ],
+  "publisher": "Institute of Electrical and Electronics Engineers (IEEE)",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "wahrstatter24",
+  "topic": "censorship",
+  "query": "Blockchain Censorship",
+  "status": "verified",
+  "doi": "10.1145/3589334.3645431",
+  "title": "Blockchain Censorship",
+  "venue": "Proceedings of the ACM Web Conference 2024",
+  "type": "proceedings-article",
+  "year": 2024,
+  "authors": [
+   "Anton Wahrstätter",
+   "Jens Ernstberger",
+   "Aviv Yaish",
+   "Liyi Zhou",
+   "Kaihua Qin",
+   "Taro Tsuchiya",
+   "Sebastian Steinhorst",
+   "Davor Svetinovic",
+   "Nicolas Christin",
+   "Mikolaj Barczentewicz",
+   "Arthur Gervais"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "txselect",
+  "topic": "dag",
+  "query": "Inclusive Block Chain Protocols",
+  "status": "verified",
+  "doi": "10.1007/978-3-662-47854-7_33",
+  "title": "Inclusive Block Chain Protocols",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2015,
+  "authors": [
+   "Yoad Lewenberg",
+   "Yonatan Sompolinsky",
+   "Aviv Zohar"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "mempoolflood",
+  "topic": "dos",
+  "query": "Mempool optimization for defending against DDoS attacks in PoW-based blockchain systems",
+  "status": "verified",
+  "doi": "10.1109/bloc.2019.8751476",
+  "title": "Mempool optimization for Defending Against DDoS Attacks in PoW-based Blockchain Systems",
+  "venue": "2019 IEEE International Conference on Blockchain and Cryptocurrency (ICBC)",
+  "type": "proceedings-article",
+  "year": 2019,
+  "authors": [
+   "Muhammad Saad",
+   "Laurent Njilla",
+   "Charles Kamhoua",
+   "Joongheon Kim",
+   "DaeHun Nyang",
+   "Aziz Mohaisen"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "bitcoindos",
+  "topic": "dos",
+  "query": "Stressing out: Bitcoin \"Stress Testing\"",
+  "status": "verified",
+  "doi": "10.1007/978-3-662-53357-4_1",
+  "title": "Stressing Out: Bitcoin “Stress Testing”",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2016,
+  "authors": [
+   "Khaled Baqer",
+   "Danny Yuxing Huang",
+   "Damon McCoy",
+   "Nicholas Weaver"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "daaKaspa",
+  "topic": "difficulty",
+  "query": "A Short Paper on Blockchain Difficulty Adjustment DAG",
+  "status": "not-verified",
+  "best": {
+   "title": "A high-throughput DAG-based blockchain protocol",
+   "venue": "Third International Conference on Signal Image Processing and Communication (ICSIPC 2023)",
+   "type": "proceedings-article",
+   "doi": "10.1117/12.3005016",
+   "match": 0.44
+  }
+ },
+ {
+  "id": "asertbch",
+  "topic": "difficulty",
+  "query": "Difficulty adjustment exponential moving average blockchain",
+  "status": "not-verified",
+  "best": {
+   "title": "Acute emotional adjustment among children treated for primary brain tumors",
+   "venue": "Archives of Clinical Neuropsychology",
+   "type": "journal-article",
+   "doi": "10.1016/0887-6177(89)90146-7",
+   "match": 0.45
+  }
+ },
+ {
+  "id": "emptyblocks",
+  "topic": "incentives",
+  "query": "The Gap Game",
+  "status": "verified",
+  "doi": "10.1145/3211890.3211905",
+  "title": "The Gap Game",
+  "venue": "Proceedings of the 11th ACM International Systems and Storage Conference",
+  "type": "proceedings-article",
+  "year": 2018,
+  "authors": [
+   "Itay Tsabary",
+   "Ittay Eyal"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "feeswhale",
+  "topic": "incentives",
+  "query": "Incentivizing Blockchain Forks via Whale Transactions",
+  "status": "verified",
+  "doi": "10.1007/978-3-319-70278-0_17",
+  "title": "Incentivizing Blockchain Forks via Whale Transactions",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2017,
+  "authors": [
+   "Kevin Liao",
+   "Jonathan Katz"
+  ],
+  "publisher": "Springer International Publishing",
+  "has_abstract": false,
+  "match": 1.0
+ }
+]

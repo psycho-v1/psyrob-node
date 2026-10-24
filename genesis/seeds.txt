@@ -1,0 +1,4 @@
+# Seed peers for the PSYROB testnet (chain 87870): one per line, host:port (TCP) or wss://host/p2p (WebSocket).
+# A node also learns peers from every peer it connects to (address gossip), so one reachable seed is enough.
+# The public node is reached over HTTPS/WebSocket through rpc.psyrob.com; no port forwarding is needed to connect out.
+wss://rpc.psyrob.com/p2p

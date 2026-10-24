@@ -1,0 +1,2623 @@
+[
+ {
+  "id": "nakamoto-backbone",
+  "topic": "consensus",
+  "query": "The Bitcoin Backbone Protocol: Analysis and Applications",
+  "status": "verified",
+  "doi": "10.1145/3653445",
+  "title": "The Bitcoin Backbone Protocol: Analysis and Applications",
+  "venue": "Journal of the ACM",
+  "type": "journal-article",
+  "year": 2024,
+  "authors": [
+   "Juan Garay",
+   "Aggelos Kiayias",
+   "Nikos Leonardos"
+  ],
+  "publisher": "Association for Computing Machinery (ACM)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "pss17",
+  "topic": "consensus",
+  "query": "Analysis of the Blockchain Protocol in Asynchronous Networks",
+  "status": "verified",
+  "doi": "10.1007/978-3-319-56614-6_22",
+  "title": "Analysis of the Blockchain Protocol in Asynchronous Networks",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2017,
+  "authors": [
+   "Rafael Pass",
+   "Lior Seeman",
+   "Abhi Shelat"
+  ],
+  "publisher": "Springer International Publishing",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "ghost15",
+  "topic": "consensus",
+  "query": "Secure High-Rate Transaction Processing in Bitcoin",
+  "status": "verified",
+  "doi": "10.1007/978-3-662-47854-7_32",
+  "title": "Secure High-Rate Transaction Processing in Bitcoin",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2015,
+  "authors": [
+   "Yonatan Sompolinsky",
+   "Aviv Zohar"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "inclusive15",
+  "topic": "dag",
+  "query": "Inclusive Block Chain Protocols",
+  "status": "verified",
+  "doi": "10.1007/978-3-662-47854-7_33",
+  "title": "Inclusive Block Chain Protocols",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2015,
+  "authors": [
+   "Yoad Lewenberg",
+   "Yonatan Sompolinsky",
+   "Aviv Zohar"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "ghostdag21",
+  "topic": "dag",
+  "query": "PHANTOM GHOSTDAG: A Scalable Generalization of Nakamoto Consensus",
+  "status": "verified",
+  "doi": "10.1145/3479722.3480990",
+  "title": "PHANTOM GHOSTDAG",
+  "venue": "Proceedings of the 3rd ACM Conference on Advances in Financial Technologies",
+  "type": "proceedings-article",
+  "year": 2021,
+  "authors": [
+   "Yonatan Sompolinsky",
+   "Shai Wyborski",
+   "Aviv Zohar"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 0.88
+ },
+ {
+  "id": "conflux20",
+  "topic": "dag",
+  "query": "A Decentralized Blockchain with High Throughput and Fast Confirmation",
+  "status": "not-verified",
+  "best": {
+   "title": "A decentralized crypto network with dynamic threshold change",
+   "venue": "IET Blockchain",
+   "type": "journal-article",
+   "doi": "10.1049/blc2.12026",
+   "match": 0.51
+  }
+ },
+ {
+  "id": "prism19",
+  "topic": "dag",
+  "query": "Prism: Deconstructing the Blockchain to Approach Physical Limits",
+  "status": "verified",
+  "doi": "10.1145/3319535.3363213",
+  "title": "Prism",
+  "venue": "Proceedings of the 2019 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2019,
+  "authors": [
+   "Vivek Bagaria",
+   "Sreeram Kannan",
+   "David Tse",
+   "Giulia Fanti",
+   "Pramod Viswanath"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "ohie20",
+  "topic": "dag",
+  "query": "OHIE: Blockchain Scaling Made Simple",
+  "status": "verified",
+  "doi": "10.1109/sp40000.2020.00008",
+  "title": "OHIE: Blockchain Scaling Made Simple",
+  "venue": "2020 IEEE Symposium on Security and Privacy (SP)",
+  "type": "proceedings-article",
+  "year": 2020,
+  "authors": [
+   "Haifeng Yu",
+   "Ivica Nikolic",
+   "Ruomu Hou",
+   "Prateek Saxena"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "bitcoinng16",
+  "topic": "consensus",
+  "query": "Bitcoin-NG: A Scalable Blockchain Protocol",
+  "status": "not-verified",
+  "best": {
+   "title": "A Model for Scalable and Autonomic Network Management",
+   "venue": "Lecture Notes in Computer Science",
+   "type": "book-chapter",
+   "doi": "10.1007/978-3-642-00972-3_17",
+   "match": 0.4
+  }
+ },
+ {
+  "id": "narwhal22",
+  "topic": "dag",
+  "query": "Narwhal and Tusk: a DAG-based mempool and efficient BFT consensus",
+  "status": "verified",
+  "doi": "10.1145/3492321.3519594",
+  "title": "Narwhal and Tusk",
+  "venue": "Proceedings of the Seventeenth European Conference on Computer Systems",
+  "type": "proceedings-article",
+  "year": 2022,
+  "authors": [
+   "George Danezis",
+   "Lefteris Kokoris-Kogias",
+   "Alberto Sonnino",
+   "Alexander Spiegelman"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "bullshark22",
+  "topic": "dag",
+  "query": "Bullshark: DAG BFT Protocols Made Practical",
+  "status": "verified",
+  "doi": "10.1145/3548606.3559361",
+  "title": "Bullshark",
+  "venue": "Proceedings of the 2022 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2022,
+  "authors": [
+   "Alexander Spiegelman",
+   "Neil Giridharan",
+   "Alberto Sonnino",
+   "Lefteris Kokoris-Kogias"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "dagrider21",
+  "topic": "dag",
+  "query": "All You Need is DAG",
+  "status": "verified",
+  "doi": "10.1145/3465084.3467905",
+  "title": "All You Need is DAG",
+  "venue": "Proceedings of the 2021 ACM Symposium on Principles of Distributed Computing",
+  "type": "proceedings-article",
+  "year": 2021,
+  "authors": [
+   "Idit Keidar",
+   "Eleftherios Kokoris-Kogias",
+   "Oded Naor",
+   "Alexander Spiegelman"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "sokdag",
+  "topic": "dag",
+  "query": "SoK: DAG-based Blockchain Systems",
+  "status": "verified",
+  "doi": "10.1145/3576899",
+  "title": "SoK: DAG-based Blockchain Systems",
+  "venue": "ACM Computing Surveys",
+  "type": "journal-article",
+  "year": 2023,
+  "authors": [
+   "Qin Wang",
+   "Jiangshan Yu",
+   "Shiping Chen",
+   "Yang Xiang"
+  ],
+  "publisher": "Association for Computing Machinery (ACM)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "selfish14",
+  "topic": "security",
+  "query": "Majority is not enough: Bitcoin mining is vulnerable",
+  "status": "verified",
+  "doi": "10.1145/3212998",
+  "title": "Majority is not enough",
+  "venue": "Communications of the ACM",
+  "type": "journal-article",
+  "year": 2018,
+  "authors": [
+   "Ittay Eyal",
+   "Emin Gün Sirer"
+  ],
+  "publisher": "Association for Computing Machinery (ACM)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "optselfish16",
+  "topic": "security",
+  "query": "Optimal Selfish Mining Strategies in Bitcoin",
+  "status": "verified",
+  "doi": "10.1007/978-3-662-54970-4_30",
+  "title": "Optimal Selfish Mining Strategies in Bitcoin",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2017,
+  "authors": [
+   "Ayelet Sapirshtein",
+   "Yonatan Sompolinsky",
+   "Aviv Zohar"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "gervais16",
+  "topic": "security",
+  "query": "On the Security and Performance of Proof of Work Blockchains",
+  "status": "verified",
+  "doi": "10.1145/2976749.2978341",
+  "title": "On the Security and Performance of Proof of Work Blockchains",
+  "venue": "Proceedings of the 2016 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2016,
+  "authors": [
+   "Arthur Gervais",
+   "Ghassan O. Karame",
+   "Karl Wüst",
+   "Vasileios Glykantzis",
+   "Hubert Ritzdorf",
+   "Srdjan Capkun"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "decker13",
+  "topic": "network",
+  "query": "Information propagation in the Bitcoin network",
+  "status": "verified",
+  "doi": "10.1109/p2p.2013.6688704",
+  "title": "Information propagation in the Bitcoin network",
+  "venue": "IEEE P2P 2013 Proceedings",
+  "type": "proceedings-article",
+  "year": 2013,
+  "authors": [
+   "Christian Decker",
+   "Roger Wattenhofer"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "eclipse15",
+  "topic": "network",
+  "query": "Eclipse Attacks on Bitcoin's Peer-to-Peer Network",
+  "status": "not-verified",
+  "best": {
+   "title": "Predicting Voluntary Participation in a Public Health Program Using a Neural Network",
+   "venue": "Health Information Systems",
+   "type": "book-chapter",
+   "doi": "10.4018/978-1-60566-988-5.ch123",
+   "match": 0.44
+  }
+ },
+ {
+  "id": "hijack17",
+  "topic": "network",
+  "query": "Hijacking Bitcoin: Routing Attacks on Cryptocurrencies",
+  "status": "verified",
+  "doi": "10.1109/sp.2017.29",
+  "title": "Hijacking Bitcoin: Routing Attacks on Cryptocurrencies",
+  "venue": "2017 IEEE Symposium on Security and Privacy (SP)",
+  "type": "proceedings-article",
+  "year": 2017,
+  "authors": [
+   "Maria Apostolaki",
+   "Aviv Zohar",
+   "Laurent Vanbever"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "race20",
+  "topic": "security",
+  "query": "Everything is a Race and Nakamoto Always Wins",
+  "status": "verified",
+  "doi": "10.1145/3372297.3417290",
+  "title": "Everything is a Race and Nakamoto Always Wins",
+  "venue": "Proceedings of the 2020 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2020,
+  "authors": [
+   "Amir Dembo",
+   "Sreeram Kannan",
+   "Ertem Nusret Tas",
+   "David Tse",
+   "Pramod Viswanath",
+   "Xuechao Wang",
+   "Ofer Zeitouni"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "tight20",
+  "topic": "security",
+  "query": "Tight Consistency Bounds for Bitcoin",
+  "status": "verified",
+  "doi": "10.1145/3372297.3423365",
+  "title": "Tight Consistency Bounds for Bitcoin",
+  "venue": "Proceedings of the 2020 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2020,
+  "authors": [
+   "Peter Gaži",
+   "Aggelos Kiayias",
+   "Alexander Russell"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "kiffer18",
+  "topic": "security",
+  "query": "A Better Method to Analyze Blockchain Consistency",
+  "status": "verified",
+  "doi": "10.1145/3243734.3243814",
+  "title": "A Better Method to Analyze Blockchain Consistency",
+  "venue": "Proceedings of the 2018 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2018,
+  "authors": [
+   "Lucianna Kiffer",
+   "Rajmohan Rajaraman",
+   "abhi shelat"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "variable17",
+  "topic": "difficulty",
+  "query": "The Bitcoin Backbone Protocol with Chains of Variable Difficulty",
+  "status": "verified",
+  "doi": "10.1007/978-3-319-63688-7_10",
+  "title": "The Bitcoin Backbone Protocol with Chains of Variable Difficulty",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2017,
+  "authors": [
+   "Juan Garay",
+   "Aggelos Kiayias",
+   "Nikos Leonardos"
+  ],
+  "publisher": "Springer International Publishing",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "kraft16",
+  "topic": "difficulty",
+  "query": "Difficulty control for blockchain-based consensus systems",
+  "status": "verified",
+  "doi": "10.1007/s12083-015-0347-x",
+  "title": "Difficulty control for blockchain-based consensus systems",
+  "venue": "Peer-to-Peer Networking and Applications",
+  "type": "journal-article",
+  "year": 2015,
+  "authors": [
+   "Daniel Kraft"
+  ],
+  "publisher": "Springer Science and Business Media LLC",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "fullmer18",
+  "topic": "difficulty",
+  "query": "Analysis of Difficulty Control in Bitcoin and Proof-of-Work Blockchains",
+  "status": "verified",
+  "doi": "10.1109/cdc.2018.8619082",
+  "title": "Analysis of Difficulty Control in Bitcoin and Proof-of-Work Blockchains",
+  "venue": "2018 IEEE Conference on Decision and Control (CDC)",
+  "type": "proceedings-article",
+  "year": 2018,
+  "authors": [
+   "Daniel Fullmer",
+   "A. Stephen Morse"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "noda20",
+  "topic": "difficulty",
+  "query": "Economic design of the difficulty adjustment algorithm",
+  "status": "not-verified",
+  "best": {
+   "title": "An Economic Analysis of Difficulty Adjustment Algorithms in Proof‐of‐Work Blockchain Systems",
+   "venue": "International Economic Review",
+   "type": "journal-article",
+   "doi": "10.1111/iere.70028",
+   "match": 0.64
+  }
+ },
+ {
+  "id": "argon2-16",
+  "topic": "pow",
+  "query": "Argon2: New Generation of Memory-Hard Functions for Password Hashing and Other Applications",
+  "status": "verified",
+  "doi": "10.1109/eurosp.2016.31",
+  "title": "Argon2: New Generation of Memory-Hard Functions for Password Hashing and Other Applications",
+  "venue": "2016 IEEE European Symposium on Security and Privacy (EuroS&amp;P)",
+  "type": "proceedings-article",
+  "year": 2016,
+  "authors": [
+   "Alex Biryukov",
+   "Daniel Dinu",
+   "Dmitry Khovratovich"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "balloon16",
+  "topic": "pow",
+  "query": "Balloon Hashing: A Memory-Hard Function Providing Provable Protection Against Sequential Attacks",
+  "status": "verified",
+  "doi": "10.1007/978-3-662-53887-6_8",
+  "title": "Balloon Hashing: A Memory-Hard Function Providing Provable Protection Against Sequential Attacks",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2016,
+  "authors": [
+   "Dan Boneh",
+   "Henry Corrigan-Gibbs",
+   "Stuart Schechter"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "alwenblocki16",
+  "topic": "pow",
+  "query": "Efficiently Computing Data-Independent Memory-Hard Functions",
+  "status": "verified",
+  "doi": "10.1007/978-3-662-53008-5_9",
+  "title": "Efficiently Computing Data-Independent Memory-Hard Functions",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2016,
+  "authors": [
+   "Joël Alwen",
+   "Jeremiah Blocki"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "scrypt17",
+  "topic": "pow",
+  "query": "Scrypt Is Maximally Memory-Hard",
+  "status": "verified",
+  "doi": "10.1007/978-3-319-56617-7_2",
+  "title": "Scrypt Is Maximally Memory-Hard",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2017,
+  "authors": [
+   "Joël Alwen",
+   "Binyi Chen",
+   "Krzysztof Pietrzak",
+   "Leonid Reyzin",
+   "Stefano Tessaro"
+  ],
+  "publisher": "Springer International Publishing",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "equihash16",
+  "topic": "pow",
+  "query": "Equihash: Asymmetric Proof-of-Work Based on the Generalized Birthday Problem",
+  "status": "verified",
+  "doi": "10.5195/ledger.2017.48",
+  "title": "Equihash: Asymmetric Proof-of-Work Based on  the Generalized Birthday Problem",
+  "venue": "Ledger",
+  "type": "journal-article",
+  "year": 2017,
+  "authors": [
+   "Alex Biryukov",
+   "Dmitry Khovratovich"
+  ],
+  "publisher": "University Library System, University of Pittsburgh",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "tradeoff15",
+  "topic": "pow",
+  "query": "Tradeoff Cryptanalysis of Memory-Hard Functions",
+  "status": "verified",
+  "doi": "10.1007/978-3-662-48800-3_26",
+  "title": "Tradeoff Cryptanalysis of Memory-Hard Functions",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2015,
+  "authors": [
+   "Alex Biryukov",
+   "Dmitry Khovratovich"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "depthrobust17",
+  "topic": "pow",
+  "query": "Depth-Robust Graphs and Their Cumulative Memory Complexity",
+  "status": "verified",
+  "doi": "10.1007/978-3-319-56617-7_1",
+  "title": "Depth-Robust Graphs and Their Cumulative Memory Complexity",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2017,
+  "authors": [
+   "Joël Alwen",
+   "Jeremiah Blocki",
+   "Krzysztof Pietrzak"
+  ],
+  "publisher": "Springer International Publishing",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "argon2i-attack17",
+  "topic": "pow",
+  "query": "Towards Practical Attacks on Argon2i and Balloon Hashing",
+  "status": "verified",
+  "doi": "10.1109/eurosp.2017.47",
+  "title": "Towards Practical Attacks on Argon2i and Balloon Hashing",
+  "venue": "2017 IEEE European Symposium on Security and Privacy (EuroS&amp;P)",
+  "type": "proceedings-article",
+  "year": 2017,
+  "authors": [
+   "Joel Alwen",
+   "Jeremiah Blocki"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "bandwidth17",
+  "topic": "pow",
+  "query": "Bandwidth Hard Functions for ASIC Resistance",
+  "status": "verified",
+  "doi": "10.1007/978-3-319-70500-2_16",
+  "title": "Bandwidth Hard Functions for ASIC Resistance",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2017,
+  "authors": [
+   "Ling Ren",
+   "Srinivas Devadas"
+  ],
+  "publisher": "Springer International Publishing",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "dworknaor92",
+  "topic": "pow",
+  "query": "Pricing via Processing or Combatting Junk Mail",
+  "status": "verified",
+  "doi": "10.1007/3-540-48071-4_10",
+  "title": "Pricing via Processing or Combatting Junk Mail",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": null,
+  "authors": [
+   "Cynthia Dwork",
+   "Moni Naor"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "memorybound03",
+  "topic": "pow",
+  "query": "On Memory-Bound Functions for Fighting Spam",
+  "status": "verified",
+  "doi": "10.1007/978-3-540-45146-4_25",
+  "title": "On Memory-Bound Functions for Fighting Spam",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2003,
+  "authors": [
+   "Cynthia Dwork",
+   "Andrew Goldberg",
+   "Moni Naor"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "abadi05",
+  "topic": "pow",
+  "query": "Moderately hard, memory-bound functions",
+  "status": "verified",
+  "doi": "10.1145/1064340.1064341",
+  "title": "Moderately hard, memory-bound functions",
+  "venue": "ACM Transactions on Internet Technology",
+  "type": "journal-article",
+  "year": 2005,
+  "authors": [
+   "Martin Abadi",
+   "Mike Burrows",
+   "Mark Manasse",
+   "Ted Wobber"
+  ],
+  "publisher": "Association for Computing Machinery (ACM)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "botcoin14",
+  "topic": "pow",
+  "query": "Botcoin: Monetizing Stolen Cycles",
+  "status": "verified",
+  "doi": "10.14722/ndss.2014.23044",
+  "title": "Botcoin: Monetizing Stolen Cycles",
+  "venue": "Proceedings 2014 Network and Distributed System Security Symposium",
+  "type": "proceedings-article",
+  "year": 2014,
+  "authors": [
+   "Danny Yuxing Huang",
+   "Damon McCoy",
+   "Hitesh Dharmdasani",
+   "Sarah Meiklejohn",
+   "Vacha Dave",
+   "Chris Grier",
+   "Stefan Savage",
+   "Nicholas Weaver",
+   "Alex C. Snoeren",
+   "Kirill Levchenko"
+  ],
+  "publisher": "Internet Society",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "minesweeper18",
+  "topic": "pow",
+  "query": "MineSweeper: An In-depth Look into Drive-by Cryptocurrency Mining and Its Defense",
+  "status": "verified",
+  "doi": "10.1145/3243734.3243858",
+  "title": "MineSweeper",
+  "venue": "Proceedings of the 2018 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2018,
+  "authors": [
+   "Radhesh Krishnan Konoth",
+   "Emanuele Vineti",
+   "Veelasha Moonsamy",
+   "Martina Lindorfer",
+   "Christopher Kruegel",
+   "Herbert Bos",
+   "Giovanni Vigna"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "cryptominer19",
+  "topic": "pow",
+  "query": "A First Look at the Crypto-Mining Malware Ecosystem: A Decade of Unrestricted Wealth",
+  "status": "verified",
+  "doi": "10.1145/3355369.3355576",
+  "title": "A First Look at the Crypto-Mining Malware Ecosystem",
+  "venue": "Proceedings of the Internet Measurement Conference",
+  "type": "proceedings-article",
+  "year": 2019,
+  "authors": [
+   "Sergio Pastrana",
+   "Guillermo Suarez-Tangil"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "taylor17",
+  "topic": "pow",
+  "query": "The Evolution of Bitcoin Hardware",
+  "status": "verified",
+  "doi": "10.1109/mc.2017.3571056",
+  "title": "The Evolution of Bitcoin Hardware",
+  "venue": "Computer",
+  "type": "journal-article",
+  "year": 2017,
+  "authors": [
+   "Michael Bedford Taylor"
+  ],
+  "publisher": "Institute of Electrical and Electronics Engineers (IEEE)",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "devries18",
+  "topic": "pow",
+  "query": "Bitcoin's Growing Energy Problem",
+  "status": "verified",
+  "doi": "10.1016/j.joule.2018.04.016",
+  "title": "Bitcoin's Growing Energy Problem",
+  "venue": "Joule",
+  "type": "journal-article",
+  "year": 2018,
+  "authors": [
+   "Alex de Vries"
+  ],
+  "publisher": "Elsevier BV",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "romiti19",
+  "topic": "pow",
+  "query": "A Deep Dive into Bitcoin Mining Pools: An Empirical Analysis of Mining Shares",
+  "status": "not-verified",
+  "best": {
+   "title": "MODELLING AND DYNAMIC ANALYSIS OF FLUID POWERED ROBOTS",
+   "venue": "Information Control Problems in Manufacturing Technology 1982",
+   "type": "book-chapter",
+   "doi": "10.1016/b978-0-08-029946-4.50018-2",
+   "match": 0.46
+  }
+ },
+ {
+  "id": "cong21",
+  "topic": "pow",
+  "query": "Decentralized Mining in Centralized Pools",
+  "status": "verified",
+  "doi": "10.1093/rfs/hhaa040",
+  "title": "Decentralized Mining in Centralized Pools",
+  "venue": "The Review of Financial Studies",
+  "type": "journal-article",
+  "year": 2020,
+  "authors": [
+   "Lin William Cong",
+   "Zhiguo He",
+   "Jiasun Li"
+  ],
+  "publisher": "Oxford University Press (OUP)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "kademlia02",
+  "topic": "network",
+  "query": "Kademlia: A Peer-to-Peer Information System Based on the XOR Metric",
+  "status": "verified",
+  "doi": "10.1007/3-540-45748-8_5",
+  "title": "Kademlia: A Peer-to-Peer Information System Based on the XOR Metric",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2002,
+  "authors": [
+   "Petar Maymounkov",
+   "David Mazières"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "sybil02",
+  "topic": "network",
+  "query": "The Sybil Attack",
+  "status": "verified",
+  "doi": "10.1007/3-540-45748-8_24",
+  "title": "The Sybil Attack",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2002,
+  "authors": [
+   "John R. Douceur"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "erlay19",
+  "topic": "network",
+  "query": "Erlay: Efficient Transaction Relay for Bitcoin",
+  "status": "verified",
+  "doi": "10.1145/3319535.3354237",
+  "title": "Erlay",
+  "venue": "Proceedings of the 2019 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2019,
+  "authors": [
+   "Gleb Naumenko",
+   "Gregory Maxwell",
+   "Pieter Wuille",
+   "Alexandra Fedorova",
+   "Ivan Beschastnikh"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "dandelion17",
+  "topic": "network",
+  "query": "Dandelion: Redesigning the Bitcoin Network for Anonymity",
+  "status": "verified",
+  "doi": "10.1145/3143314.3078528",
+  "title": "Dandelion",
+  "venue": "ACM SIGMETRICS Performance Evaluation Review",
+  "type": "journal-article",
+  "year": 2017,
+  "authors": [
+   "Shaileshh Bojja Venkatakrishnan",
+   "Giulia Fanti",
+   "Pramod Viswanath"
+  ],
+  "publisher": "Association for Computing Machinery (ACM)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "perigee20",
+  "topic": "network",
+  "query": "Perigee: Efficient Peer-to-Peer Network Design for Blockchains",
+  "status": "verified",
+  "doi": "10.1145/3382734.3405704",
+  "title": "Perigee: Efficient Peer-to-Peer Network Design for Blockchains",
+  "venue": "Proceedings of the 39th Symposium on Principles of Distributed Computing",
+  "type": "proceedings-article",
+  "year": 2020,
+  "authors": [
+   "Yifan Mao",
+   "Soubhik Deb",
+   "Shaileshh Bojja Venkatakrishnan",
+   "Sreeram Kannan",
+   "Kannan Srinivasan"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "ethpeers18",
+  "topic": "network",
+  "query": "Measuring Ethereum Network Peers",
+  "status": "verified",
+  "doi": "10.1145/3278532.3278542",
+  "title": "Measuring Ethereum Network Peers",
+  "venue": "Proceedings of the Internet Measurement Conference 2018",
+  "type": "proceedings-article",
+  "year": 2018,
+  "authors": [
+   "Seoung Kyun Kim",
+   "Zane Ma",
+   "Siddharth Murali",
+   "Joshua Mason",
+   "Andrew Miller",
+   "Michael Bailey"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "gencer18",
+  "topic": "network",
+  "query": "Decentralization in Bitcoin and Ethereum Networks",
+  "status": "verified",
+  "doi": "10.1007/978-3-662-58387-6_24",
+  "title": "Decentralization in Bitcoin and Ethereum Networks",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2018,
+  "authors": [
+   "Adem Efe Gencer",
+   "Soumya Basu",
+   "Ittay Eyal",
+   "Robbert van Renesse",
+   "Emin Gün Sirer"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "neudecker19",
+  "topic": "network",
+  "query": "Network Layer Aspects of Permissionless Blockchains",
+  "status": "verified",
+  "doi": "10.1109/comst.2018.2852480",
+  "title": "Network Layer Aspects of Permissionless Blockchains",
+  "venue": "IEEE Communications Surveys &amp; Tutorials",
+  "type": "journal-article",
+  "year": 2019,
+  "authors": [
+   "Till Neudecker",
+   "Hannes Hartenstein"
+  ],
+  "publisher": "Institute of Electrical and Electronics Engineers (IEEE)",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "ethereclipse",
+  "topic": "network",
+  "query": "Low-Resource Eclipse Attacks on Ethereum's Peer-to-Peer Network",
+  "status": "not-verified",
+  "best": {
+   "title": "Pseudoscience, Coming to a Peer-Reviewed Journal Near You",
+   "venue": "Pseudoscience",
+   "type": "book-chapter",
+   "doi": "10.7551/mitpress/9780262037426.003.0013",
+   "match": 0.35
+  }
+ },
+ {
+  "id": "sybilguard06",
+  "topic": "network",
+  "query": "SybilGuard: defending against sybil attacks via social networks",
+  "status": "verified",
+  "doi": "10.1145/1151659.1159945",
+  "title": "SybilGuard",
+  "venue": "ACM SIGCOMM Computer Communication Review",
+  "type": "journal-article",
+  "year": 2006,
+  "authors": [
+   "Haifeng Yu",
+   "Michael Kaminsky",
+   "Phillip B. Gibbons",
+   "Abraham Flaxman"
+  ],
+  "publisher": "Association for Computing Machinery (ACM)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "pbft99",
+  "topic": "bft",
+  "query": "Practical Byzantine Fault Tolerance",
+  "status": "verified",
+  "doi": "10.1145/571637.571640",
+  "title": "Practical byzantine fault tolerance and proactive recovery",
+  "venue": "ACM Transactions on Computer Systems",
+  "type": "journal-article",
+  "year": 2002,
+  "authors": [
+   "Miguel Castro",
+   "Barbara Liskov"
+  ],
+  "publisher": "Association for Computing Machinery (ACM)",
+  "has_abstract": true,
+  "match": 0.75
+ },
+ {
+  "id": "lamport82",
+  "topic": "bft",
+  "query": "The Byzantine Generals Problem",
+  "status": "verified",
+  "doi": "10.1145/357172.357176",
+  "title": "The Byzantine Generals Problem",
+  "venue": "ACM Transactions on Programming Languages and Systems",
+  "type": "journal-article",
+  "year": 1982,
+  "authors": [
+   "Leslie Lamport",
+   "Robert Shostak",
+   "Marshall Pease"
+  ],
+  "publisher": "Association for Computing Machinery (ACM)",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "flp85",
+  "topic": "bft",
+  "query": "Impossibility of distributed consensus with one faulty process",
+  "status": "verified",
+  "doi": "10.1145/3149.214121",
+  "title": "Impossibility of distributed consensus with one faulty process",
+  "venue": "Journal of the ACM",
+  "type": "journal-article",
+  "year": 1985,
+  "authors": [
+   "Michael J. Fischer",
+   "Nancy A. Lynch",
+   "Michael S. Paterson"
+  ],
+  "publisher": "Association for Computing Machinery (ACM)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "dls88",
+  "topic": "bft",
+  "query": "Consensus in the presence of partial synchrony",
+  "status": "verified",
+  "doi": "10.1145/42282.42283",
+  "title": "Consensus in the presence of partial synchrony",
+  "venue": "Journal of the ACM",
+  "type": "journal-article",
+  "year": 1988,
+  "authors": [
+   "Cynthia Dwork",
+   "Nancy Lynch",
+   "Larry Stockmeyer"
+  ],
+  "publisher": "Association for Computing Machinery (ACM)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "hotstuff19",
+  "topic": "bft",
+  "query": "HotStuff: BFT Consensus with Linearity and Responsiveness",
+  "status": "verified",
+  "doi": "10.1145/3293611.3331591",
+  "title": "HotStuff",
+  "venue": "Proceedings of the 2019 ACM Symposium on Principles of Distributed Computing",
+  "type": "proceedings-article",
+  "year": 2019,
+  "authors": [
+   "Maofan Yin",
+   "Dahlia Malkhi",
+   "Michael K. Reiter",
+   "Guy Golan Gueta",
+   "Ittai Abraham"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "algorand17",
+  "topic": "bft",
+  "query": "Algorand: Scaling Byzantine Agreements for Cryptocurrencies",
+  "status": "verified",
+  "doi": "10.1145/3132747.3132757",
+  "title": "Algorand",
+  "venue": "Proceedings of the 26th Symposium on Operating Systems Principles",
+  "type": "proceedings-article",
+  "year": 2017,
+  "authors": [
+   "Yossi Gilad",
+   "Rotem Hemo",
+   "Silvio Micali",
+   "Georgios Vlachos",
+   "Nickolai Zeldovich"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "ouroboros17",
+  "topic": "bft",
+  "query": "Ouroboros: A Provably Secure Proof-of-Stake Blockchain Protocol",
+  "status": "verified",
+  "doi": "10.1007/978-3-319-63688-7_12",
+  "title": "Ouroboros: A Provably Secure Proof-of-Stake Blockchain Protocol",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2017,
+  "authors": [
+   "Aggelos Kiayias",
+   "Alexander Russell",
+   "Bernardo David",
+   "Roman Oliynykov"
+  ],
+  "publisher": "Springer International Publishing",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "forensics21",
+  "topic": "bft",
+  "query": "BFT Protocol Forensics",
+  "status": "verified",
+  "doi": "10.1145/3460120.3484566",
+  "title": "BFT Protocol Forensics",
+  "venue": "Proceedings of the 2021 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2021,
+  "authors": [
+   "Peiyao Sheng",
+   "Gerui Wang",
+   "Kartik Nayak",
+   "Sreeram Kannan",
+   "Pramod Viswanath"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "ebbflow21",
+  "topic": "finality",
+  "query": "Ebb-and-Flow Protocols: A Resolution of the Availability-Finality Dilemma",
+  "status": "verified",
+  "doi": "10.1109/sp40001.2021.00045",
+  "title": "Ebb-and-Flow Protocols: A Resolution of the Availability-Finality Dilemma",
+  "venue": "2021 IEEE Symposium on Security and Privacy (SP)",
+  "type": "proceedings-article",
+  "year": 2021,
+  "authors": [
+   "Joachim Neu",
+   "Ertem Nusret Tas",
+   "David Tse"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "cap21",
+  "topic": "finality",
+  "query": "Blockchain CAP Theorem Allows User-Dependent Adaptivity and Finality",
+  "status": "verified",
+  "doi": "10.1007/978-3-662-64331-0_5",
+  "title": "Blockchain CAP Theorem Allows User-Dependent Adaptivity and Finality",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2021,
+  "authors": [
+   "Suryanarayana Sankagiri",
+   "Xuechao Wang",
+   "Sreeram Kannan",
+   "Pramod Viswanath"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "afgjort20",
+  "topic": "finality",
+  "query": "Afgjort: A Partially Synchronous Finality Layer for Blockchains",
+  "status": "verified",
+  "doi": "10.1007/978-3-030-57990-6_2",
+  "title": "Afgjort: A Partially Synchronous Finality Layer for Blockchains",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2020,
+  "authors": [
+   "Thomas Dinsdale-Young",
+   "Bernardo Magri",
+   "Christian Matt",
+   "Jesper Buus Nielsen",
+   "Daniel Tschudi"
+  ],
+  "publisher": "Springer International Publishing",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "omniledger18",
+  "topic": "committee",
+  "query": "OmniLedger: A Secure, Scale-Out, Decentralized Ledger via Sharding",
+  "status": "verified",
+  "doi": "10.1109/sp.2018.000-5",
+  "title": "OmniLedger: A Secure, Scale-Out, Decentralized Ledger via Sharding",
+  "venue": "2018 IEEE Symposium on Security and Privacy (SP)",
+  "type": "proceedings-article",
+  "year": 2018,
+  "authors": [
+   "Eleftherios Kokoris-Kogias",
+   "Philipp Jovanovic",
+   "Linus Gasser",
+   "Nicolas Gailly",
+   "Ewa Syta",
+   "Bryan Ford"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "rapidchain18",
+  "topic": "committee",
+  "query": "RapidChain: Scaling Blockchain via Full Sharding",
+  "status": "verified",
+  "doi": "10.1145/3243734.3243853",
+  "title": "RapidChain",
+  "venue": "Proceedings of the 2018 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2018,
+  "authors": [
+   "Mahdi Zamani",
+   "Mahnush Movahedi",
+   "Mariana Raykova"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "byzcoin16",
+  "topic": "committee",
+  "query": "Enhancing Bitcoin Security and Performance with Strong Consistency via Collective Signing",
+  "status": "not-verified",
+  "best": {
+   "title": "Beyond Bitcoin: Exploring the Expanding Horizons of Blockchain Innovation",
+   "venue": "IT Professional",
+   "type": "journal-article",
+   "doi": "10.1109/mitp.2024.3404228",
+   "match": 0.42
+  }
+ },
+ {
+  "id": "hybrid17",
+  "topic": "committee",
+  "query": "Hybrid Consensus: Efficient Consensus in the Permissionless Model",
+  "status": "not-verified",
+  "best": {
+   "title": "Eye for an Eye: Efficient Concurrent Zero-Knowledge in the Timing Model",
+   "venue": "Lecture Notes in Computer Science",
+   "type": "book-chapter",
+   "doi": "10.1007/978-3-642-11799-2_31",
+   "match": 0.57
+  }
+ },
+ {
+  "id": "decentmetrics21",
+  "topic": "committee",
+  "query": "Measuring Decentralization in Bitcoin and Ethereum using Multiple Metrics and Granularities",
+  "status": "verified",
+  "doi": "10.1109/icdew53142.2021.00022",
+  "title": "Measuring Decentralization in Bitcoin and Ethereum using Multiple Metrics and Granularities",
+  "venue": "2021 IEEE 37th International Conference on Data Engineering Workshops (ICDEW)",
+  "type": "proceedings-article",
+  "year": 2021,
+  "authors": [
+   "Qinwei Lin",
+   "Chao Li",
+   "Xifeng Zhao",
+   "Xianhai Chen"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "flyclient20",
+  "topic": "sync",
+  "query": "FlyClient: Super-Light Clients for Cryptocurrencies",
+  "status": "not-verified",
+  "best": {
+   "title": "Origin and Transformation of Light Hydrocarbons Ascending at an Active Pockmark on Vestnesa Ridge, Arctic Ocean",
+   "venue": "Journal of Geophysical Research: Solid Earth",
+   "type": "journal-article",
+   "doi": "10.1029/2018jb016679",
+   "match": 0.31
+  }
+ },
+ {
+  "id": "nipopow20",
+  "topic": "sync",
+  "query": "Non-interactive Proofs of Proof-of-Work",
+  "status": "verified",
+  "doi": "10.1007/978-3-030-51280-4_27",
+  "title": "Non-interactive Proofs of Proof-of-Work",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2020,
+  "authors": [
+   "Aggelos Kiayias",
+   "Andrew Miller",
+   "Dionysis Zindros"
+  ],
+  "publisher": "Springer International Publishing",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "logspace21",
+  "topic": "sync",
+  "query": "Mining in Logarithmic Space",
+  "status": "verified",
+  "doi": "10.1145/3460120.3484784",
+  "title": "Mining in Logarithmic Space",
+  "venue": "Proceedings of the 2021 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2021,
+  "authors": [
+   "Aggelos Kiayias",
+   "Nikos Leonardos",
+   "Dionysis Zindros"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "szalachowski18",
+  "topic": "time",
+  "query": "Towards More Reliable Bitcoin Timestamps",
+  "status": "verified",
+  "doi": "10.1109/cvcbt.2018.00018",
+  "title": "(Short Paper) Towards More Reliable Bitcoin Timestamps",
+  "venue": "2018 Crypto Valley Conference on Blockchain Technology (CVCBT)",
+  "type": "proceedings-article",
+  "year": 2018,
+  "authors": [
+   "Pawel Szalachowski"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 0.87
+ },
+ {
+  "id": "dao19",
+  "topic": "governance",
+  "query": "Decentralized Autonomous Organizations: Concept, Model, and Applications",
+  "status": "verified",
+  "doi": "10.1109/tcss.2019.2938190",
+  "title": "Decentralized Autonomous Organizations: Concept, Model, and Applications",
+  "venue": "IEEE Transactions on Computational Social Systems",
+  "type": "journal-article",
+  "year": 2019,
+  "authors": [
+   "Shuai Wang",
+   "Wenwen Ding",
+   "Juanjuan Li",
+   "Yong Yuan",
+   "Liwei Ouyang",
+   "Fei-Yue Wang"
+  ],
+  "publisher": "Institute of Electrical and Electronics Engineers (IEEE)",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "hassan21",
+  "topic": "governance",
+  "query": "Decentralized autonomous organization",
+  "status": "verified",
+  "doi": "10.14763/2021.2.1556",
+  "title": "Decentralized Autonomous Organization",
+  "venue": "Internet Policy Review",
+  "type": "journal-article",
+  "year": 2021,
+  "authors": [
+   "Samer Hassan",
+   "Primavera De Filippi"
+  ],
+  "publisher": "Internet Policy Review, Alexander von Humboldt Institute for Internet and Society",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "feichtinger23",
+  "topic": "governance",
+  "query": "The Hidden Shortcomings of (D)AOs – An Empirical Study of On-Chain Governance",
+  "status": "verified",
+  "doi": "10.1007/978-3-031-48806-1_11",
+  "title": "The Hidden Shortcomings of (D)AOs – An Empirical Study of On-Chain Governance",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2023,
+  "authors": [
+   "Rainer Feichtinger",
+   "Robin Fritsch",
+   "Yann Vonlanthen",
+   "Roger Wattenhofer"
+  ],
+  "publisher": "Springer Nature Switzerland",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "barbereau23",
+  "topic": "governance",
+  "query": "Decentralised Finance's timocratic governance: The distribution and exercise of tokenised voting rights",
+  "status": "verified",
+  "doi": "10.1016/j.techsoc.2023.102251",
+  "title": "Decentralised Finance’s timocratic governance: The distribution and exercise of tokenised voting rights",
+  "venue": "Technology in Society",
+  "type": "journal-article",
+  "year": 2023,
+  "authors": [
+   "Tom Barbereau",
+   "Reilly Smethurst",
+   "Orestis Papageorgiou",
+   "Johannes Sedlmeir",
+   "Gilbert Fridgen"
+  ],
+  "publisher": "Elsevier BV",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "fritsch24",
+  "topic": "governance",
+  "query": "Analyzing voting power in decentralized governance: Who controls DAOs?",
+  "status": "verified",
+  "doi": "10.1016/j.bcra.2024.100208",
+  "title": "Analyzing voting power in decentralized governance: Who controls DAOs?",
+  "venue": "Blockchain: Research and Applications",
+  "type": "journal-article",
+  "year": 2024,
+  "authors": [
+   "Robin Fritsch",
+   "Marino Müller",
+   "Roger Wattenhofer"
+  ],
+  "publisher": "Elsevier BV",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "sokgov22",
+  "topic": "governance",
+  "query": "SoK: Blockchain Governance",
+  "status": "verified",
+  "doi": "10.1145/3558535.3559794",
+  "title": "SoK: Blockchain Governance",
+  "venue": "Proceedings of the 4th ACM Conference on Advances in Financial Technologies",
+  "type": "proceedings-article",
+  "year": 2022,
+  "authors": [
+   "Aggelos Kiayias",
+   "Philip Lazos"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "beck18",
+  "topic": "governance",
+  "query": "Governance in the Blockchain Economy: A Framework and Research Agenda",
+  "status": "verified",
+  "doi": "10.17705/1jais.00518",
+  "title": "Governance in the Blockchain Economy: A Framework and Research Agenda",
+  "venue": "Journal of the Association for Information Systems",
+  "type": "journal-article",
+  "year": 2018,
+  "authors": [
+   "",
+   "Roman Beck",
+   "Christoph Müller-Bloch",
+   "",
+   "John Leslie King",
+   ""
+  ],
+  "publisher": "Association for Information Systems",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "defilippi16",
+  "topic": "governance",
+  "query": "The invisible politics of Bitcoin: governance crisis of a decentralized infrastructure",
+  "status": "verified",
+  "doi": "10.14763/2016.3.427",
+  "title": "The invisible politics of Bitcoin: governance crisis of a decentralised infrastructure",
+  "venue": "Internet Policy Review",
+  "type": "journal-article",
+  "year": 2016,
+  "authors": [
+   "Primavera De Filippi",
+   "Benjamin Loveluck"
+  ],
+  "publisher": "Internet Policy Review, Alexander von Humboldt Institute for Internet and Society",
+  "has_abstract": false,
+  "match": 0.99
+ },
+ {
+  "id": "reijers16",
+  "topic": "governance",
+  "query": "Governance in Blockchain Technologies & Social Contract Theories",
+  "status": "verified",
+  "doi": "10.5195/ledger.2016.62",
+  "title": "Governance in Blockchain Technologies &amp; Social Contract Theories",
+  "venue": "Ledger",
+  "type": "journal-article",
+  "year": 2016,
+  "authors": [
+   "Wessel Reijers",
+   "Fiachra O'Brolcháin",
+   "Paul Haynes"
+  ],
+  "publisher": "University Library System, University of Pittsburgh",
+  "has_abstract": true,
+  "match": 0.97
+ },
+ {
+  "id": "rikken19",
+  "topic": "governance",
+  "query": "Governance challenges of blockchain and decentralized autonomous organizations",
+  "status": "verified",
+  "doi": "10.3233/ip-190154",
+  "title": "Governance challenges of blockchain and decentralized autonomous organizations",
+  "venue": "Information Polity",
+  "type": "journal-article",
+  "year": 2019,
+  "authors": [
+   "Olivier Rikken",
+   "Marijn Janssen",
+   "Zenlin Kwee"
+  ],
+  "publisher": "SAGE Publications",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "ostrom00",
+  "topic": "governance",
+  "query": "Collective Action and the Evolution of Social Norms",
+  "status": "verified",
+  "doi": "10.1080/19390459.2014.935173",
+  "title": "Collective action and the evolution of social norms",
+  "venue": "Journal of Natural Resources Policy Research",
+  "type": "journal-article",
+  "year": 2014,
+  "authors": [
+   "Elinor Ostrom"
+  ],
+  "publisher": "The Pennsylvania State University Press",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "lalley18",
+  "topic": "voting",
+  "query": "Quadratic Voting: How Mechanism Design Can Radicalize Democracy",
+  "status": "verified",
+  "doi": "10.1257/pandp.20181002",
+  "title": "Quadratic Voting: How Mechanism Design Can Radicalize Democracy",
+  "venue": "AEA Papers and Proceedings",
+  "type": "journal-article",
+  "year": 2018,
+  "authors": [
+   "Steven P. Lalley",
+   "E. Glen Weyl"
+  ],
+  "publisher": "American Economic Association",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "kahng18",
+  "topic": "voting",
+  "query": "Liquid Democracy: An Algorithmic Perspective",
+  "status": "verified",
+  "doi": "10.1613/jair.1.12261",
+  "title": "Liquid Democracy: An Algorithmic Perspective",
+  "venue": "Journal of Artificial Intelligence Research",
+  "type": "journal-article",
+  "year": 2021,
+  "authors": [
+   "Anson Kahng",
+   "Simon Mackenzie",
+   "Ariel Procaccia"
+  ],
+  "publisher": "AI Access Foundation",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "herrera10",
+  "topic": "voting",
+  "query": "Quorum and Turnout in Referenda",
+  "status": "verified",
+  "doi": "10.1111/j.1542-4774.2010.tb00542.x",
+  "title": "Quorum and Turnout in Referenda",
+  "venue": "Journal of the European Economic Association",
+  "type": "journal-article",
+  "year": 2010,
+  "authors": [
+   "Helios Herrera",
+   "Andrea Mattozzi"
+  ],
+  "publisher": "Oxford University Press (OUP)",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "aguiar10",
+  "topic": "voting",
+  "query": "How quorum rules distort referendum outcomes: Evidence from a pivotal voter model",
+  "status": "verified",
+  "doi": "10.1016/j.ejpoleco.2010.03.004",
+  "title": "How quorum rules distort referendum outcomes: Evidence from a pivotal voter model",
+  "venue": "European Journal of Political Economy",
+  "type": "journal-article",
+  "year": 2010,
+  "authors": [
+   "Luís Aguiar-Conraria",
+   "Pedro C. Magalhães"
+  ],
+  "publisher": "Elsevier BV",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "maniquet15",
+  "topic": "voting",
+  "query": "Approval quorums dominate participation quorums",
+  "status": "verified",
+  "doi": "10.1007/s00355-014-0804-0",
+  "title": "Approval quorums dominate participation quorums",
+  "venue": "Social Choice and Welfare",
+  "type": "journal-article",
+  "year": 2015,
+  "authors": [
+   "François Maniquet",
+   "Massimo Morelli"
+  ],
+  "publisher": "Springer Science and Business Media LLC",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "aziz17",
+  "topic": "voting",
+  "query": "Justified representation in approval-based committee voting",
+  "status": "verified",
+  "doi": "10.1609/aaai.v29i1.9324",
+  "title": "Justified Representation in Approval-Based Committee Voting",
+  "venue": "Proceedings of the AAAI Conference on Artificial Intelligence",
+  "type": "journal-article",
+  "year": 2015,
+  "authors": [
+   "Haris Aziz",
+   "Markus Brill",
+   "Vincent Conitzer",
+   "Edith Elkind",
+   "Rupert Freeman",
+   "Toby Walsh"
+  ],
+  "publisher": "Association for the Advancement of Artificial Intelligence (AAAI)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "pjr17",
+  "topic": "voting",
+  "query": "Proportional Justified Representation",
+  "status": "verified",
+  "doi": "10.1016/j.artint.2026.104503",
+  "title": "Proportional justified representation",
+  "venue": "Artificial Intelligence",
+  "type": "journal-article",
+  "year": 2026,
+  "authors": [
+   "Luis Sánchez-Fernández",
+   "Edith Elkind",
+   "Martin Lackner",
+   "Norberto Fernández García",
+   "Jesús A. Fisteus",
+   "Pablo Basanta Val",
+   "Piotr Skowron"
+  ],
+  "publisher": "Elsevier BV",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "fama83",
+  "topic": "roles",
+  "query": "Separation of Ownership and Control",
+  "status": "verified",
+  "doi": "10.4324/9780203888711.ch6",
+  "title": "Separation of ownership and control",
+  "venue": "Routledge Studies in Corporate Governance",
+  "type": "book-chapter",
+  "year": 2009,
+  "authors": [
+   "Eugene Fama",
+   "Michael Jensen"
+  ],
+  "publisher": "Routledge",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "jensen76",
+  "topic": "roles",
+  "query": "Theory of the firm: Managerial behavior, agency costs and ownership structure",
+  "status": "verified",
+  "doi": "10.1017/cbo9780511817410.023",
+  "title": "Theory of the firm: managerial behavior, agency costs, and ownership structure",
+  "venue": "The Economic Nature of the Firm",
+  "type": "book-chapter",
+  "year": 2009,
+  "authors": [
+   "Michael Jensen",
+   "William Meckling"
+  ],
+  "publisher": "Cambridge University Press",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "gugerty09",
+  "topic": "ngo",
+  "query": "Signaling virtue: voluntary accountability programs among nonprofit organizations",
+  "status": "verified",
+  "doi": "10.1007/s11077-009-9085-3",
+  "title": "Signaling virtue: voluntary accountability programs among nonprofit organizations",
+  "venue": "Policy Sciences",
+  "type": "journal-article",
+  "year": 2009,
+  "authors": [
+   "Mary Kay Gugerty"
+  ],
+  "publisher": "Springer Science and Business Media LLC",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "ebrahim03",
+  "topic": "ngo",
+  "query": "Accountability In Practice: Mechanisms for NGOs",
+  "status": "verified",
+  "doi": "10.1016/s0305-750x(03)00014-7",
+  "title": "Accountability In Practice: Mechanisms for NGOs",
+  "venue": "World Development",
+  "type": "journal-article",
+  "year": 2003,
+  "authors": [
+   "Alnoor Ebrahim"
+  ],
+  "publisher": "Elsevier BV",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "bekkers03",
+  "topic": "ngo",
+  "query": "Trust, Accreditation, and Philanthropy in the Netherlands",
+  "status": "verified",
+  "doi": "10.1177/0899764003258102",
+  "title": "Trust, Accreditation, and Philanthropy in the Netherlands",
+  "venue": "Nonprofit and Voluntary Sector Quarterly",
+  "type": "journal-article",
+  "year": 2003,
+  "authors": [
+   "René Bekkers"
+  ],
+  "publisher": "SAGE Publications",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "zwitter18",
+  "topic": "ngo",
+  "query": "Blockchain for humanitarian action and development aid",
+  "status": "verified",
+  "doi": "10.1186/s41018-018-0044-5",
+  "title": "Blockchain for humanitarian action and development aid",
+  "venue": "Journal of International Humanitarian Action",
+  "type": "journal-article",
+  "year": 2018,
+  "authors": [
+   "Andrej Zwitter",
+   "Mathilde Boisse-Despiaux"
+  ],
+  "publisher": "Springer Science and Business Media LLC",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "kshetri17",
+  "topic": "ngo",
+  "query": "Will blockchain emerge as a tool to break the poverty chain in the Global South?",
+  "status": "verified",
+  "doi": "10.1080/01436597.2017.1298438",
+  "title": "Will blockchain emerge as a tool to break the poverty chain in the Global South?",
+  "venue": "Third World Quarterly",
+  "type": "journal-article",
+  "year": 2017,
+  "authors": [
+   "Nir Kshetri"
+  ],
+  "publisher": "Informa UK Limited",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "hyvarinen17",
+  "topic": "ngo",
+  "query": "A Blockchain-Based Approach Towards Overcoming Financial Fraud in Public Sector Services",
+  "status": "verified",
+  "doi": "10.1007/s12599-017-0502-4",
+  "title": "A Blockchain-Based Approach Towards Overcoming Financial Fraud in Public Sector Services",
+  "venue": "Business &amp; Information Systems Engineering",
+  "type": "journal-article",
+  "year": 2017,
+  "authors": [
+   "Hissu Hyvärinen",
+   "Marten Risius",
+   "Gustav Friis"
+  ],
+  "publisher": "Springer Science and Business Media LLC",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "borge17",
+  "topic": "identity",
+  "query": "Proof-of-Personhood: Redemocratizing Permissionless Cryptocurrencies",
+  "status": "verified",
+  "doi": "10.1109/eurospw.2017.46",
+  "title": "Proof-of-Personhood: Redemocratizing Permissionless Cryptocurrencies",
+  "venue": "2017 IEEE European Symposium on Security and Privacy Workshops (EuroS&amp;PW)",
+  "type": "proceedings-article",
+  "year": 2017,
+  "authors": [
+   "Maria Borge",
+   "Eleftherios Kokoris-Kogias",
+   "Philipp Jovanovic",
+   "Linus Gasser",
+   "Nicolas Gailly",
+   "Bryan Ford"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "siddarth20",
+  "topic": "identity",
+  "query": "Who Watches the Watchmen? A Review of Subjective Approaches for Sybil-Resistance in Proof of Personhood Protocols",
+  "status": "verified",
+  "doi": "10.3389/fbloc.2020.590171",
+  "title": "Who Watches the Watchmen? A Review of Subjective Approaches for Sybil-Resistance in Proof of Personhood Protocols",
+  "venue": "Frontiers in Blockchain",
+  "type": "journal-article",
+  "year": 2020,
+  "authors": [
+   "Divya Siddarth",
+   "Sergey Ivliev",
+   "Santiago Siri",
+   "Paula Berman"
+  ],
+  "publisher": "Frontiers Media SA",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "pagnotta22",
+  "topic": "economics",
+  "query": "Decentralizing Money: Bitcoin Prices and Blockchain Security",
+  "status": "verified",
+  "doi": "10.1093/rfs/hhaa149",
+  "title": "Decentralizing Money: Bitcoin Prices and Blockchain Security",
+  "venue": "The Review of Financial Studies",
+  "type": "journal-article",
+  "year": 2021,
+  "authors": [
+   "Emiliano S Pagnotta"
+  ],
+  "publisher": "Oxford University Press (OUP)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "budish",
+  "topic": "economics",
+  "query": "The Economic Limits of Bitcoin and Anonymous, Decentralized Trust",
+  "status": "not-verified",
+  "best": {
+   "title": "The Economic Limits of Permissionless Consensus",
+   "venue": "Proceedings of the 25th ACM Conference on Economics and Computation",
+   "type": "proceedings-article",
+   "doi": "10.1145/3670865.3673548",
+   "match": 0.54
+  }
+ },
+ {
+  "id": "huberman21",
+  "topic": "economics",
+  "query": "Monopoly without a Monopolist: An Economic Analysis of the Bitcoin Payment System",
+  "status": "verified",
+  "doi": "10.1093/restud/rdab014",
+  "title": "Monopoly without a Monopolist: An Economic Analysis of the Bitcoin Payment System",
+  "venue": "The Review of Economic Studies",
+  "type": "journal-article",
+  "year": 2021,
+  "authors": [
+   "Gur Huberman",
+   "Jacob D Leshno",
+   "Ciamac Moallemi"
+  ],
+  "publisher": "Oxford University Press (OUP)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "easley19",
+  "topic": "economics",
+  "query": "From mining to markets: The evolution of bitcoin transaction fees",
+  "status": "verified",
+  "doi": "10.1016/j.jfineco.2019.03.004",
+  "title": "From mining to markets: The evolution of bitcoin transaction fees",
+  "venue": "Journal of Financial Economics",
+  "type": "journal-article",
+  "year": 2019,
+  "authors": [
+   "David Easley",
+   "Maureen O'Hara",
+   "Soumya Basu"
+  ],
+  "publisher": "Elsevier BV",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "carlsten16",
+  "topic": "economics",
+  "query": "On the Instability of Bitcoin Without the Block Reward",
+  "status": "verified",
+  "doi": "10.1145/2976749.2978408",
+  "title": "On the Instability of Bitcoin Without the Block Reward",
+  "venue": "Proceedings of the 2016 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2016,
+  "authors": [
+   "Miles Carlsten",
+   "Harry Kalodner",
+   "S. Matthew Weinberg",
+   "Arvind Narayanan"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "roughgarden",
+  "topic": "economics",
+  "query": "Transaction Fee Mechanism Design",
+  "status": "verified",
+  "doi": "10.1145/3476436.3476445",
+  "title": "Transaction fee mechanism design",
+  "venue": "ACM SIGecom Exchanges",
+  "type": "journal-article",
+  "year": 2021,
+  "authors": [
+   "Tim Roughgarden"
+  ],
+  "publisher": "Association for Computing Machinery (ACM)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "eip1559-22",
+  "topic": "economics",
+  "query": "Empirical Analysis of EIP-1559: Transaction Fees, Waiting Times, and Consensus Security",
+  "status": "verified",
+  "doi": "10.1145/3548606.3559341",
+  "title": "Empirical Analysis of EIP-1559",
+  "venue": "Proceedings of the 2022 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2022,
+  "authors": [
+   "Yulin Liu",
+   "Yuxuan Lu",
+   "Kartik Nayak",
+   "Fan Zhang",
+   "Luyao Zhang",
+   "Yinhong Zhao"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "leshno20",
+  "topic": "economics",
+  "query": "Bitcoin: An Axiomatic Approach and an Impossibility Theorem",
+  "status": "verified",
+  "doi": "10.1257/aeri.20190494",
+  "title": "Bitcoin: An Axiomatic Approach and an Impossibility Theorem",
+  "venue": "American Economic Review: Insights",
+  "type": "journal-article",
+  "year": 2020,
+  "authors": [
+   "Jacob D. Leshno",
+   "Philipp Strack"
+  ],
+  "publisher": "American Economic Association",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "cong21tok",
+  "topic": "economics",
+  "query": "Tokenomics: Dynamic Adoption and Valuation",
+  "status": "verified",
+  "doi": "10.1093/rfs/hhaa089",
+  "title": "Tokenomics: Dynamic Adoption and Valuation",
+  "venue": "The Review of Financial Studies",
+  "type": "journal-article",
+  "year": 2020,
+  "authors": [
+   "Lin William Cong",
+   "Ye Li",
+   "Neng Wang"
+  ],
+  "publisher": "Oxford University Press (OUP)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "chiu22",
+  "topic": "economics",
+  "query": "The Economics of Cryptocurrency: Bitcoin and Beyond",
+  "status": "verified",
+  "doi": "10.1111/caje.12625",
+  "title": "The economics of cryptocurrency: Bitcoin and beyond",
+  "venue": "Canadian Journal of Economics/Revue canadienne d'économique",
+  "type": "journal-article",
+  "year": 2022,
+  "authors": [
+   "Jonathan Chiu",
+   "Thorsten V. Koeppl"
+  ],
+  "publisher": "Wiley",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "howell20",
+  "topic": "economics",
+  "query": "Initial Coin Offerings: Financing Growth with Cryptocurrency Token Sales",
+  "status": "verified",
+  "doi": "10.1093/rfs/hhz131",
+  "title": "Initial Coin Offerings: Financing Growth with Cryptocurrency Token Sales",
+  "venue": "The Review of Financial Studies",
+  "type": "journal-article",
+  "year": 2019,
+  "authors": [
+   "Sabrina T Howell",
+   "Marina Niessner",
+   "David Yermack"
+  ],
+  "publisher": "Oxford University Press (OUP)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "lyandres22",
+  "topic": "economics",
+  "query": "Initial Coin Offering (ICO) Success and Post-ICO Performance",
+  "status": "verified",
+  "doi": "10.1287/mnsc.2022.4312",
+  "title": "Initial Coin Offering (ICO) Success and Post-ICO Performance",
+  "venue": "Management Science",
+  "type": "journal-article",
+  "year": 2022,
+  "authors": [
+   "Evgeny Lyandres",
+   "Berardino Palazzo",
+   "Daniel Rabetti"
+  ],
+  "publisher": "Institute for Operations Research and the Management Sciences (INFORMS)",
+  "has_abstract": true,
+  "match": 1.0
+ },
+ {
+  "id": "frowis19",
+  "topic": "economics",
+  "query": "The Operational Cost of Ethereum Airdrops",
+  "status": "verified",
+  "doi": "10.1007/978-3-030-31500-9_17",
+  "title": "The Operational Cost of Ethereum Airdrops",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2019,
+  "authors": [
+   "Michael Fröwis",
+   "Rainer Böhme"
+  ],
+  "publisher": "Springer International Publishing",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "eskandari15",
+  "topic": "keys",
+  "query": "A First Look at the Usability of Bitcoin Key Management",
+  "status": "verified",
+  "doi": "10.14722/usec.2015.23015",
+  "title": "A First Look at the Usability of Bitcoin Key Management",
+  "venue": "Proceedings 2015 Workshop on Usable Security",
+  "type": "proceedings-article",
+  "year": 2015,
+  "authors": [
+   "Shayan Eskandari",
+   "David Barrera",
+   "Elizabeth Stobert",
+   "Jeremy Clark"
+  ],
+  "publisher": "Internet Society",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "krombholz16",
+  "topic": "keys",
+  "query": "The Other Side of the Coin: User Experiences with Bitcoin Security and Privacy",
+  "status": "verified",
+  "doi": "10.1007/978-3-662-54970-4_33",
+  "title": "The Other Side of the Coin: User Experiences with Bitcoin Security and Privacy",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2017,
+  "authors": [
+   "Katharina Krombholz",
+   "Aljosha Judmayer",
+   "Matthias Gusenbauer",
+   "Edgar Weippl"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "mai20",
+  "topic": "keys",
+  "query": "User Mental Models of Cryptocurrency Systems - A Grounded Theory Approach",
+  "status": "not-verified",
+  "best": {
+   "title": "A Particle Swarm Optimization Copula-Based Approach with Application to Cryptocurrency Portfolio Optimisation",
+   "venue": "Journal of Risk and Financial Management",
+   "type": "journal-article",
+   "doi": "10.3390/jrfm15070285",
+   "match": 0.32
+  }
+ },
+ {
+  "id": "voskobojnikov21",
+  "topic": "keys",
+  "query": "The U in Crypto Stands for Usable: An Empirical Study of User Experience with Mobile Cryptocurrency Wallets",
+  "status": "verified",
+  "doi": "10.1145/3411764.3445407",
+  "title": "The U in Crypto Stands for Usable: An Empirical Study of User Experience with Mobile Cryptocurrency Wallets",
+  "venue": "Proceedings of the 2021 CHI Conference on Human Factors in Computing Systems",
+  "type": "proceedings-article",
+  "year": 2021,
+  "authors": [
+   "Artemij Voskobojnikov",
+   "Oliver Wiese",
+   "Masoud Mehrabi Koushki",
+   "Volker Roth",
+   "Konstantin (Kosta) Beznosov"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "gennaro16",
+  "topic": "multisig",
+  "query": "Threshold-Optimal DSA/ECDSA Signatures and an Application to Bitcoin Wallet Security",
+  "status": "verified",
+  "doi": "10.1007/978-3-319-39555-5_9",
+  "title": "Threshold-Optimal DSA/ECDSA Signatures and an Application to Bitcoin Wallet Security",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2016,
+  "authors": [
+   "Rosario Gennaro",
+   "Steven Goldfeder",
+   "Arvind Narayanan"
+  ],
+  "publisher": "Springer International Publishing",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "bdn18",
+  "topic": "multisig",
+  "query": "Compact Multi-signatures for Smaller Blockchains",
+  "status": "verified",
+  "doi": "10.1007/978-3-030-03329-3_15",
+  "title": "Compact Multi-signatures for Smaller Blockchains",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2018,
+  "authors": [
+   "Dan Boneh",
+   "Manu Drijvers",
+   "Gregory Neven"
+  ],
+  "publisher": "Springer International Publishing",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "musig19",
+  "topic": "multisig",
+  "query": "Simple Schnorr multi-signatures with applications to Bitcoin",
+  "status": "verified",
+  "doi": "10.1007/s10623-019-00608-x",
+  "title": "Simple Schnorr multi-signatures with applications to Bitcoin",
+  "venue": "Designs, Codes and Cryptography",
+  "type": "journal-article",
+  "year": 2019,
+  "authors": [
+   "Gregory Maxwell",
+   "Andrew Poelstra",
+   "Yannick Seurin",
+   "Pieter Wuille"
+  ],
+  "publisher": "Springer Science and Business Media LLC",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "diangelo20",
+  "topic": "multisig",
+  "query": "Characteristics of Wallet Contracts on Ethereum",
+  "status": "verified",
+  "doi": "10.1109/brains49436.2020.9223287",
+  "title": "Characteristics of Wallet Contracts on Ethereum",
+  "venue": "2020 2nd Conference on Blockchain Research &amp; Applications for Innovative Networks and Services (BRAINS)",
+  "type": "proceedings-article",
+  "year": 2020,
+  "authors": [
+   "Monika di Angelo",
+   "Gernot Salzer"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "destefanis18",
+  "topic": "multisig",
+  "query": "Smart contracts vulnerabilities: a call for blockchain software engineering?",
+  "status": "verified",
+  "doi": "10.1109/iwbose.2018.8327567",
+  "title": "Smart contracts vulnerabilities: a call for blockchain software engineering?",
+  "venue": "2018 International Workshop on Blockchain Oriented Software Engineering (IWBOSE)",
+  "type": "proceedings-article",
+  "year": 2018,
+  "authors": [
+   "Giuseppe Destefanis",
+   "Michele Marchesi",
+   "Marco Ortu",
+   "Roberto Tonelli",
+   "Andrea Bracciali",
+   "Robert Hierons"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "bridgesok",
+  "topic": "bridge",
+  "query": "SoK: Security of Cross-chain Bridges",
+  "status": "not-verified",
+  "best": {
+   "title": "Security of Cross-chain Bridges: Attack Surfaces, Defenses, and Open Problems",
+   "venue": "The 27th International Symposium on Research in Attacks, Intrusions and Defenses",
+   "type": "proceedings-article",
+   "doi": "10.1145/3678890.3678894",
+   "match": 0.57
+  }
+ },
+ {
+  "id": "luu16",
+  "topic": "contracts",
+  "query": "Making Smart Contracts Smarter",
+  "status": "verified",
+  "doi": "10.1145/2976749.2978309",
+  "title": "Making Smart Contracts Smarter",
+  "venue": "Proceedings of the 2016 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2016,
+  "authors": [
+   "Loi Luu",
+   "Duc-Hiep Chu",
+   "Hrishi Olickel",
+   "Prateek Saxena",
+   "Aquinas Hobor"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "atzei17",
+  "topic": "contracts",
+  "query": "A Survey of Attacks on Ethereum Smart Contracts (SoK)",
+  "status": "verified",
+  "doi": "10.1007/978-3-662-54455-6_8",
+  "title": "A Survey of Attacks on Ethereum Smart Contracts (SoK)",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2017,
+  "authors": [
+   "Nicola Atzei",
+   "Massimo Bartoletti",
+   "Tiziana Cimoli"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "securify18",
+  "topic": "contracts",
+  "query": "Securify: Practical Security Analysis of Smart Contracts",
+  "status": "verified",
+  "doi": "10.1145/3243734.3243780",
+  "title": "Securify",
+  "venue": "Proceedings of the 2018 ACM SIGSAC Conference on Computer and Communications Security",
+  "type": "proceedings-article",
+  "year": 2018,
+  "authors": [
+   "Petar Tsankov",
+   "Andrei Dan",
+   "Dana Drachsler-Cohen",
+   "Arthur Gervais",
+   "Florian Bünzli",
+   "Martin Vechev"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "slither19",
+  "topic": "contracts",
+  "query": "Slither: A Static Analysis Framework for Smart Contracts",
+  "status": "verified",
+  "doi": "10.1109/wetseb.2019.00008",
+  "title": "Slither: A Static Analysis Framework for Smart Contracts",
+  "venue": "2019 IEEE/ACM 2nd International Workshop on Emerging Trends in Software Engineering for Blockchain (WETSEB)",
+  "type": "proceedings-article",
+  "year": 2019,
+  "authors": [
+   "Josselin Feist",
+   "Gustavo Grieco",
+   "Alex Groce"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "echidna20",
+  "topic": "contracts",
+  "query": "Echidna: effective, usable, and fast fuzzing for smart contracts",
+  "status": "verified",
+  "doi": "10.1145/3395363.3404366",
+  "title": "Echidna: effective, usable, and fast fuzzing for smart contracts",
+  "venue": "Proceedings of the 29th ACM SIGSOFT International Symposium on Software Testing and Analysis",
+  "type": "proceedings-article",
+  "year": 2020,
+  "authors": [
+   "Gustavo Grieco",
+   "Will Song",
+   "Artur Cygan",
+   "Josselin Feist",
+   "Alex Groce"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "contractfuzzer18",
+  "topic": "contracts",
+  "query": "ContractFuzzer: Fuzzing Smart Contracts for Vulnerability Detection",
+  "status": "verified",
+  "doi": "10.1145/3238147.3238177",
+  "title": "ContractFuzzer: fuzzing smart contracts for vulnerability detection",
+  "venue": "Proceedings of the 33rd ACM/IEEE International Conference on Automated Software Engineering",
+  "type": "proceedings-article",
+  "year": 2018,
+  "authors": [
+   "Bo Jiang",
+   "Ye Liu",
+   "W. K. Chan"
+  ],
+  "publisher": "ACM",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "perez21",
+  "topic": "contracts",
+  "query": "Smart Contract Vulnerabilities: Vulnerable Does Not Imply Exploited",
+  "status": "not-verified",
+  "best": {
+   "title": "Logical fallacy and cognitive bias vulnerabilities inherent to process safety management",
+   "venue": "Process Safety Progress",
+   "type": "journal-article",
+   "doi": "10.1002/prs.70071",
+   "match": 0.49
+  }
+ },
+ {
+  "id": "brokenmetre20",
+  "topic": "contracts",
+  "query": "Broken Metre: Attacking Resource Metering in EVM",
+  "status": "verified",
+  "doi": "10.14722/ndss.2020.24267",
+  "title": "Broken Metre: Attacking Resource Metering in EVM",
+  "venue": "Proceedings 2020 Network and Distributed System Security Symposium",
+  "type": "proceedings-article",
+  "year": 2020,
+  "authors": [
+   "Daniel Perez",
+   "Benjamin Livshits"
+  ],
+  "publisher": "Internet Society",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "qin21",
+  "topic": "contracts",
+  "query": "Attacking the DeFi Ecosystem with Flash Loans for Fun and Profit",
+  "status": "verified",
+  "doi": "10.1007/978-3-662-64322-8_1",
+  "title": "Attacking the DeFi Ecosystem with Flash Loans for Fun and Profit",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2021,
+  "authors": [
+   "Kaihua Qin",
+   "Liyi Zhou",
+   "Benjamin Livshits",
+   "Arthur Gervais"
+  ],
+  "publisher": "Springer Berlin Heidelberg",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "flashboys20",
+  "topic": "contracts",
+  "query": "Flash Boys 2.0: Frontrunning in Decentralized Exchanges, Miner Extractable Value, and Consensus Instability",
+  "status": "verified",
+  "doi": "10.1109/sp40000.2020.00040",
+  "title": "Flash Boys 2.0: Frontrunning in Decentralized Exchanges, Miner Extractable Value, and Consensus Instability",
+  "venue": "2020 IEEE Symposium on Security and Privacy (SP)",
+  "type": "proceedings-article",
+  "year": 2020,
+  "authors": [
+   "Philip Daian",
+   "Steven Goldfeder",
+   "Tyler Kell",
+   "Yunqi Li",
+   "Xueyuan Zhao",
+   "Iddo Bentov",
+   "Lorenz Breidenbach",
+   "Ari Juels"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "bonneau15",
+  "topic": "survey",
+  "query": "SoK: Research Perspectives and Challenges for Bitcoin and Cryptocurrencies",
+  "status": "verified",
+  "doi": "10.1109/sp.2015.14",
+  "title": "SoK: Research Perspectives and Challenges for Bitcoin and Cryptocurrencies",
+  "venue": "2015 IEEE Symposium on Security and Privacy",
+  "type": "proceedings-article",
+  "year": 2015,
+  "authors": [
+   "Joseph Bonneau",
+   "Andrew Miller",
+   "Jeremy Clark",
+   "Arvind Narayanan",
+   "Joshua A. Kroll",
+   "Edward W. Felten"
+  ],
+  "publisher": "IEEE",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "garaykiayias20",
+  "topic": "survey",
+  "query": "SoK: A Consensus Taxonomy in the Blockchain Era",
+  "status": "verified",
+  "doi": "10.1007/978-3-030-40186-3_13",
+  "title": "SoK: A Consensus Taxonomy in the Blockchain Era",
+  "venue": "Lecture Notes in Computer Science",
+  "type": "book-chapter",
+  "year": 2020,
+  "authors": [
+   "Juan Garay",
+   "Aggelos Kiayias"
+  ],
+  "publisher": "Springer International Publishing",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "nielsen90",
+  "topic": "frontend",
+  "query": "Heuristic evaluation of user interfaces",
+  "status": "verified",
+  "doi": "10.1145/97243.97281",
+  "title": "Heuristic evaluation of user interfaces",
+  "venue": "Proceedings of the SIGCHI conference on Human factors in computing systems Empowering people - CHI '90",
+  "type": "proceedings-article",
+  "year": 1990,
+  "authors": [
+   "Jakob Nielsen",
+   "Rolf Molich"
+  ],
+  "publisher": "ACM Press",
+  "has_abstract": false,
+  "match": 1.0
+ },
+ {
+  "id": "ginsburg21",
+  "topic": "interim",
+  "query": "From catastrophe to constitution? The puzzle of emergency powers",
+  "status": "not-verified",
+  "best": {
+   "title": "Constitution Making and Constitutional Change",
+   "venue": "The Oxford Handbook of Constitutional Law in Asia",
+   "type": "book-chapter",
+   "doi": "10.1093/oxfordhb/9780198825463.013.28",
+   "match": 0.41
+  }
+ }
+]

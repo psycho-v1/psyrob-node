@@ -1,0 +1,17 @@
+{
+ "chainId": 87870,
+ "target": "0x83126e978d4fdf3b645a1cac083126e978d4fdf3b645a1cac083126e978d4f",
+ "devBeneficiaries": [
+  "0x4774424a774a833b73c3ea055ad953babf10a7a3",
+  "0x2ddfaa87f811515e5dc0a0fc3da958308cf64685",
+  "0xb14974d7d9b63d525112dbc1988e8d779454a383"
+ ],
+ "bootstrapSigners": [
+  "0x3978a19998b1f23b25d4ba92484013c0a11b78a2",
+  "0x95e78bcef17e88e4ba22e3f6b16ad101673d6c45",
+  "0xed186dd953942be292bbb96d09be61b3dd861c77"
+ ],
+ "bootstrapQuorum": 2,
+ "extra": "PSYROB v10 genesis 87870",
+ "note": "Launch ceremony of testnet v10.0: psyrob-node --prelaunch genesis/launch-87870.json. The three Dev Account wallets sign their seats and council keys at /launch; the signed base also names the three bootstrap finality keys (dedicated keys that do not mine and hold no PSY; any 2 of them finalise checkpoints until the first finality committee is sealed, for 12 months at most). genesis/build.js --launch builds the genesis from the signed file."
+}
