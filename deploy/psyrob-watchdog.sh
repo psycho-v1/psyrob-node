@@ -3,7 +3,7 @@
 # 1. The node must answer /health locally with chain 87870 and the network's genesis hash, else restart psyrob-node
 #    (and only it; a running miner restarts with it through Requires=).
 # 2. If the node is fine locally but neither public name answers through Cloudflare, restart the tunnel.
-GENESIS=0x0000000000000000000000000000000000000000000000000000000000000000
+GENESIS=0xe80031e7dec18c0693f15cfc685b01dd6a226b2392ff08c85ec6e782549d7a15
 # A node that is replaying its stored blocks answers /health with 503 and "starting": true; it is left alone. Replay
 # time grows with the chain, so as a second guard: no check in the first 10 minutes, and after that no restart until the
 # node has logged "replayed ..." since it started, unless it has been starting for over 2 hours.

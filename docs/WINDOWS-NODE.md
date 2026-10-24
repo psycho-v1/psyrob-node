@@ -41,7 +41,7 @@ It must end with:
 
 ```
 chain ID:              87870 (0x1573e), network testnet
-genesis hash:          0x0000000000000000000000000000000000000000000000000000000000000000
+genesis hash:          0xe80031e7dec18c0693f15cfc685b01dd6a226b2392ff08c85ec6e782549d7a15
 ```
 
 If it prints anything else, or a line starting with `MISMATCH`, stop: you are not on the PSYROB testnet. Don't edit anything in `genesis\`.
@@ -57,7 +57,7 @@ Double-click **`Start-PSYROB.bat`** in the `psyrob-node` folder, or in PowerShel
 Keep the window open. You should see:
 
 ```
-psyrob 10.0.0: chain 87870, genesis 0x0000000000000000000000000000000000000000000000000000000000000000
+psyrob 10.0.0: chain 87870, genesis 0xe80031e7dec18c0693f15cfc685b01dd6a226b2392ff08c85ec6e782549d7a15
 P2P on …, HTTP/RPC and explorer on http://127.0.0.1:8787
 ```
 

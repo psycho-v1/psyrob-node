@@ -17,6 +17,6 @@
  "p2p": [
   "wss://rpc.psyrob.com/p2p"
  ],
- "genesis": null,
+ "genesis": "0xe80031e7dec18c0693f15cfc685b01dd6a226b2392ff08c85ec6e782549d7a15",
  "note": "Testnet: PSY and registrations have no value. Use a new key for this network; never reuse a key that was used on any other network. The genesis hash is filled in at the launch ceremony."
 }
