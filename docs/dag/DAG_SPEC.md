@@ -186,9 +186,9 @@ Each contract pays only its own beneficiary, which can never be changed. The thr
 
 ### 8.7 Modes and the Interim Council fallback
 `GovernanceMode` computes the mode from the number of elected NGOs and the time since genesis:
-- **Bootstrap** (first 3 months): mining, transfers, contracts, NGO minting, attestation and the first election run. No fund decisions, no role elections, no finality checkpoints.
-- **Normal** (at least 60 elected NGOs): everything is active, including finality checkpoints, role elections, Treasury spending and volunteer-fund decisions.
-- **Interim** (after 3 months with fewer than 60 elected NGOs): only mining and basic functions continue (transfers, contracts, NGO minting, attestation, the monthly supplementary elections, Ordinary proposals). The **Interim Council** is the set of NGOs elected so far. Its only power is to decide attestation challenges. It cannot spend, change parameters, hold role elections or activate finality. Once 60 NGOs are elected, the mode returns to Normal.
+- **Bootstrap** (first 3 months): mining, transfers, contracts, NGO minting, attestation and the first election run. No fund decisions, no role elections, no finality committee (checkpoints are finalised by the bootstrap keys, section 9.1).
+- **Normal** (at least 60 elected NGOs): everything is active, including the finality committee (section 9), role elections, Treasury spending and volunteer-fund decisions.
+- **Interim** (after 3 months with fewer than 60 elected NGOs): only mining and basic functions continue (transfers, contracts, NGO minting, attestation, the monthly supplementary elections, Ordinary proposals). The **Interim Council** is the set of NGOs elected so far. Its only power is to decide attestation challenges. It cannot spend, change parameters, hold role elections or activate the finality committee (bootstrap finality, section 9.1, continues until its deadline). Once 60 NGOs are elected, the mode returns to Normal.
 
 ## 9. Finality committee
 
