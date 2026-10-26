@@ -423,6 +423,10 @@ export class P2P {
         if (!Array.isArray(hashes) || hashes.length > 510) return peer.misbehave(20, 'oversized chain');
         const want = hashes.map(bytesToHex).filter((h) => !this.chain.dag.has(h) && !this.chain.orphans.has(h) && !this.recentlyRequested(h));
         for (let i = 0; i < want.length; i += 100) peer.sendRlp(MSG.GETDATA, want.slice(i, i + 100).map((h) => { this.markRequested(h, peer); return [rlp.int(1), fromHex('0x' + h)]; }));
+        // the batch: what this reply asked for. Only it decides when to ask again; announced tip blocks and orphan
+        // parents requested from the same peer meanwhile do not (they kept every sync stalled after two batches)
+        peer.batch = new Set(want);
+        peer.batchAt = Date.now();
         peer.syncMore = hashes.length === 500;
         if (!want.length && peer.syncMore) this.requestChain(peer, hashes.map(bytesToHex));
         return;
@@ -535,15 +539,20 @@ export class P2P {
 
   /**
    * Stall recovery (every 5 s): if the best peer is ahead of us, or said it has more, and no block was added for 15 s
-   * while nothing asked of it is still due, ask it for its chain again from our tip. A sync then survives lost
-   * replies, dropped or evicted orphans and dead requests.
+   * while no block of its last batch arrived for 15 s either, ask it for its chain again from our tip; what is left of
+   * the batch may then be requested again. A sync then survives lost replies, dropped or evicted orphans and dead
+   * requests. Other requests to the peer (announced tip blocks, orphan parents) do not hold this up: during a long
+   * sync they never stop, since each new tip block arrives as an orphan whose parents are thousands of blocks away.
    */
   resync() {
     const now = Date.now();
     if (now - (this.lastProgress ?? 0) < 15_000) return;
     const tip = this.chain.tip.blueScore;
     const best = [...this.peers].filter((p) => p.ready && p.kind !== 'feeler' && (p.syncMore || p.blueScore > tip)).sort((a, b) => b.blueScore - a.blueScore)[0];
-    if (!best || now - (best.chainAskedAt ?? 0) < 15_000 || this.awaiting(best)) return;
+    if (!best || now - (best.chainAskedAt ?? 0) < 15_000) return;
+    if (best.batch?.size && now - (best.batchAt ?? 0) < 15_000) return;
+    for (const h of best.batch ?? []) if (this.requested.get(h)?.peer === best) this.requested.delete(h);
+    best.batch = null;
     best.syncMore = false;
     this.requestChain(best);
   }
@@ -561,6 +570,11 @@ export class P2P {
       if (!peer.powBucket.take() || !pool.take()) { this.droppedUnsolicited = (this.droppedUnsolicited ?? 0) + 1; peer.dropped = (peer.dropped ?? 0) + 1; return; }
     }
     const r = await this.onBlock(raw, peer);
+    // a batch block counts as delivered whatever became of it (added, orphan, known or invalid)
+    if (peer.batch?.delete(h)) {
+      peer.batchAt = Date.now();
+      if (!peer.batch.size && peer.syncMore) { peer.syncMore = false; this.requestChain(peer); }
+    }
     if (!r) return;
     peer.known.add(r.hash);
     this.requested.delete(r.hash);
@@ -572,7 +586,6 @@ export class P2P {
       if (want.length) peer.sendRlp(MSG.GETDATA, want.map((h) => [rlp.int(1), fromHex('0x' + h)]));
     }
     if (r.status === 'added') this.lastProgress = Date.now();
-    if (r.status === 'added' && peer.syncMore && !this.awaiting(peer)) { peer.syncMore = false; this.requestChain(peer); }
   }
 
   /**

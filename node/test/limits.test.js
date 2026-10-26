@@ -7,11 +7,12 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { testChain, key, mineOne, hex } from './helpers.js';
+import { testChain, key, mineOne, blockOn, hex } from './helpers.js';
 import { Rpc, RpcError } from '../src/rpc.js';
 import { Mempool } from '../src/mempool.js';
 import { Store } from '../src/store.js';
-import { P2P } from '../src/p2p.js';
+import { P2P, MSG } from '../src/p2p.js';
+import { decodeBlock } from '../src/block.js';
 import { startingServer } from '../src/node.js';
 import { signTx } from '../src/tx.js';
 import { makeParams } from '../src/params.js';
@@ -90,6 +91,42 @@ test('sync detection: a stale tip and a peer still delivering means syncing; a p
   const rpc = new Rpc({ chain: t.chain, mempool: t.mempool, p2p: { syncing: () => ({ blueScore: 3, target: 900 }) } });
   await assert.rejects(rpc.methods.psy_getBlockTemplate.call(rpc, '0x' + hex(A.addr)), (e) => e.code === -32005 && /still syncing/.test(e.message));
   assert.deepEqual(rpc.methods.eth_syncing.call(rpc), { startingBlock: '0x0', currentBlock: '0x3', highestBlock: '0x384' });
+});
+
+test('sync batches: the next batch is asked for when the last one is in, whatever else is requested from the peer', async () => {
+  const t = await testChain();
+  t.advance(10);
+  const raw = await blockOn(t, [t.chain.tip.hash], A);
+  const x = bytesToHex(decodeBlock(raw).hash);
+  const p2p = new P2P({ params: t.params, chain: t.chain, mempool: t.mempool, genesisHash: t.genesis.hash, listenPort: null, seeds: [], onBlock: (r) => t.chain.addBlock(r) });
+  const fake = () => ({ ready: true, kind: 'full', outbound: true, blueScore: 9000, syncMore: true, inQueue: 1, socket: { destroyed: false }, known: new Set(), sent: [], sendRlp(type) { this.sent.push(type); } });
+  // the batch's last block arrives while an announced tip block (an orphan whose parents are far away) is still due
+  const peer = fake();
+  p2p.peers.add(peer);
+  peer.batch = new Set([x]);
+  p2p.markRequested(x, peer);
+  p2p.markRequested('ab'.repeat(32), peer);
+  await p2p.onBlockMsg(peer, raw);
+  assert.deepEqual(peer.sent, [MSG.GETCHAIN], 'the next batch is asked for at once (v10.0.1 waited, and stalled every 1,000 blocks)');
+  assert.equal(peer.syncMore, false);
+  // stall recovery: a batch block that never came, other requests still due, nothing new for 15 s
+  p2p.peers.delete(peer);
+  const stalled = fake(), lost = 'cd'.repeat(32), ago = Date.now() - 20_000;
+  p2p.peers.add(stalled);
+  stalled.batch = new Set([lost]);
+  stalled.batchAt = stalled.chainAskedAt = p2p.lastProgress = ago;
+  p2p.markRequested(lost, stalled);
+  p2p.markRequested('ef'.repeat(32), stalled);
+  p2p.resync();
+  assert.deepEqual(stalled.sent, [MSG.GETCHAIN], 'asked again from our tip');
+  assert.equal(p2p.recentlyRequested(lost), false, 'and the lost block may be requested again');
+  // a batch still arriving is left alone
+  stalled.sent = [];
+  stalled.batch = new Set([lost]);
+  stalled.batchAt = Date.now();
+  stalled.chainAskedAt = ago;
+  p2p.resync();
+  assert.deepEqual(stalled.sent, []);
 });
 
 test('cold store: old blocks leave memory and are read back on demand; new blocks still connect', async () => {
