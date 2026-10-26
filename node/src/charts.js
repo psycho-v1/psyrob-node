@@ -5,6 +5,7 @@
 const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const n = (x) => (Number.isFinite(x) ? Math.round(x * 100) / 100 : 0);
 
+import { T } from './i18n.js';
 export const COLORS = ['#3ee0d6', '#8de9b8', '#8aa8a6', '#e7f4f2', '#d99'];
 
 export const CHART_CSS =
@@ -27,13 +28,13 @@ const legend = (items) => `<ul class="legend">${items.map(([c, t]) => `<li><i st
  * fmtX / fmtY format tick labels; ticks are chosen evenly.
  */
 export function lineChart({ series, title = '', fmtX = String, fmtY = String, marker = null, yMin = null, height = 220, area = true, xTicks = 5, yTicks = 4 }) {
-  const W = 600, H = height, L = 58, R = 14, T = 12, B = 28;
+  const W = 600, H = height, L = 58, R = 14, TOP = 12, B = 28;
   const pts = series.flatMap((s) => s.points);
-  if (!pts.length) return `<p class="muted">No data yet.</p>`;
+  if (!pts.length) return `<p class="muted">${T('No data yet.')}</p>`;
   const xs = pts.map((p) => p[0]), ys = pts.map((p) => p[1]);
   const x0 = Math.min(...xs), x1 = Math.max(...xs, x0 + 1e-9);
   const y0 = yMin ?? Math.min(0, ...ys), y1 = Math.max(...ys, y0 + 1e-9);
-  const X = (x) => L + ((x - x0) / (x1 - x0 || 1)) * (W - L - R), Y = (y) => T + (1 - (y - y0) / (y1 - y0 || 1)) * (H - T - B);
+  const X = (x) => L + ((x - x0) / (x1 - x0 || 1)) * (W - L - R), Y = (y) => TOP + (1 - (y - y0) / (y1 - y0 || 1)) * (H - TOP - B);
   let g = '';
   for (let i = 0; i <= yTicks; i++) {
     const v = y0 + ((y1 - y0) * i) / yTicks, y = n(Y(v));
@@ -57,7 +58,7 @@ export function lineChart({ series, title = '', fmtX = String, fmtY = String, ma
   });
   if (marker && marker.x >= x0 && marker.x <= x1) {
     const mx = n(X(marker.x));
-    lines += `<line x1="${mx}" x2="${mx}" y1="${T}" y2="${H - B}" stroke="var(--cyan)" stroke-dasharray="3 4"/><text x="${mx + 5}" y="${T + 10}" fill="var(--cyan)">${esc(marker.label)}</text>`;
+    lines += `<line x1="${mx}" x2="${mx}" y1="${TOP}" y2="${H - B}" stroke="var(--cyan)" stroke-dasharray="3 4"/><text x="${mx + 5}" y="${TOP + 10}" fill="var(--cyan)">${esc(marker.label)}</text>`;
   }
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}"><defs>${defs}</defs>${g}<line class="axis" x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}"/>${lines}</svg>` +
     (series.length > 1 || series[0]?.name ? legend(series.map((s) => [s.color, s.name])) : '');
@@ -65,7 +66,7 @@ export function lineChart({ series, title = '', fmtX = String, fmtY = String, ma
 
 /** Horizontal bars. items: [{ label, value, color?, text? }] with values from 0 to max. */
 export function barChart({ items, title = '', max = null, fmt = String }) {
-  if (!items.length) return '<p class="muted">No data yet.</p>';
+  if (!items.length) return `<p class="muted">${T('No data yet.')}</p>`;
   const W = 600, row = 26, L = 150, H = items.length * row + 6;
   const m = max ?? Math.max(...items.map((x) => x.value), 1e-9);
   const bars = items.map((x, i) => {
@@ -80,14 +81,14 @@ export function barChart({ items, title = '', max = null, fmt = String }) {
 
 /** Vertical bars for a series (e.g. block intervals). values: numbers; target draws a dashed line. */
 export function columnChart({ values, title = '', target = null, fmtY = String, color = COLORS[0], height = 170, labels = null }) {
-  if (!values.length) return '<p class="muted">No data yet.</p>';
-  const W = 600, H = height, L = 40, B = 18, T = 8;
+  if (!values.length) return `<p class="muted">${T('No data yet.')}</p>`;
+  const W = 600, H = height, L = 40, B = 18, TOP = 8;
   const m = Math.max(...values, target ?? 0, 1e-9);
   const bw = (W - L - 6) / values.length;
-  const Y = (v) => T + (1 - v / m) * (H - T - B);
+  const Y = (v) => TOP + (1 - v / m) * (H - TOP - B);
   const bars = values.map((v, i) => `<rect class="vbar" x="${n(L + i * bw + 1)}" y="${n(Y(v))}" width="${n(Math.max(1, bw - 2))}" height="${n(H - B - Y(v))}" fill="${color}" opacity=".85" style="animation-delay:${n(i * 0.012)}s"/>`).join('');
-  const tl = target === null ? '' : `<line x1="${L}" x2="${W - 4}" y1="${n(Y(target))}" y2="${n(Y(target))}" stroke="var(--ink)" stroke-dasharray="4 4"/><text x="${W - 4}" y="${n(Y(target)) - 4}" text-anchor="end" fill="var(--ink)">target ${esc(fmtY(target))}</text>`;
-  const axis = `<text x="${L - 6}" y="${T + 8}" text-anchor="end">${esc(fmtY(m))}</text><text x="${L - 6}" y="${H - B}" text-anchor="end">0</text>` +
+  const tl = target === null ? '' : `<line x1="${L}" x2="${W - 4}" y1="${n(Y(target))}" y2="${n(Y(target))}" stroke="var(--ink)" stroke-dasharray="4 4"/><text x="${W - 4}" y="${n(Y(target)) - 4}" text-anchor="end" fill="var(--ink)">${esc(T('target {v}', { v: fmtY(target) }))}</text>`;
+  const axis = `<text x="${L - 6}" y="${TOP + 8}" text-anchor="end">${esc(fmtY(m))}</text><text x="${L - 6}" y="${H - B}" text-anchor="end">0</text>` +
     (labels ? `<text x="${L}" y="${H - 4}">${esc(labels[0])}</text><text x="${W - 4}" y="${H - 4}" text-anchor="end">${esc(labels[1])}</text>` : '');
   return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(title)}"><line class="axis" x1="${L}" x2="${W - 4}" y1="${H - B}" y2="${H - B}"/>${axis}${bars}${tl}</svg>`;
 }
@@ -130,5 +131,5 @@ export function seats({ groups, title = '', perRow = 11 }) {
   }
   const rows = Math.ceil(i / perRow);
   return `<svg class="chart" viewBox="0 0 ${perRow * 30 + 6} ${rows * 30 + 6}" style="max-width:${perRow * 34}px" role="img" aria-label="${esc(title)}">${out}</svg>` +
-    legend(groups.map((g) => [g.color, `${g.label}: ${g.filled} of ${g.count}`]));
+    legend(groups.map((g) => [g.color, `${g.label}: ${T('{a} of {b}', { a: g.filled, b: g.count })}`]));
 }

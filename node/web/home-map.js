@@ -11,7 +11,13 @@
 const root = document.getElementById('hm');
 if (!root || !document.getElementById('hm-graph')) return;
 
-const CENTER_LABEL = 'CENTRE';        // tag under the middle address if the server sends no label (D28: the pool)
+// texts in the page's language (the page carries them as JSON; the English text is the key, as T() in /i18n.js;
+// named L here because T is the animation time in this file)
+const I18N = (() => { try { return JSON.parse(document.getElementById('psy-i18n')?.textContent || '{}'); } catch (_) { return {}; } })();
+const L = (en, v) => { const s = I18N[en] ?? en; return v ? s.replace(/\{(\w+)\}/g, (m, k) => (k in v ? String(v[k]) : m)) : s; };
+const LOCALE = document.documentElement.lang && document.documentElement.lang !== 'en' ? document.documentElement.lang : 'en-US';
+
+const CENTER_LABEL = L('CENTRE');        // tag under the middle address if the server sends no label (D28: the pool)
 const SPINE_LENGTH = 5;               // how many of the latest blocks stay on the map
 const MAX_PER_PAIR = 6;               // newest transfers kept as lines between any two addresses
 const MAX_ADDRESSES = 16;             // addresses on the map besides the centre (two rings of 8)
@@ -161,7 +167,7 @@ function setOnline(ok) {
   renderFeedText();
 }
 function renderFeedText() {
-  $('hm-feed-txt').textContent = feed.ok ? 'Live · block ' + fmt(shownTip) : 'Offline · retrying';
+  $('hm-feed-txt').textContent = feed.ok ? L('Live · block {n}', { n: fmt(shownTip) }) : L('Offline · retrying');
 }
 
 // a new block: it joins the tip of the spine, the oldest block on the map retires
@@ -237,7 +243,7 @@ const easeInOut = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 const easeOutBack = t => 1 + 2.4 * Math.pow(t - 1, 3) + 1.4 * Math.pow(t - 1, 2);
 const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a})`; };
 const short = id => id.startsWith('block:') ? '#' + fmt(+id.slice(6)) : id.startsWith('dag:') ? id.slice(6, 12) + '…' : id.slice(0, 6) + '…' + id.slice(-6);
-const fmt = n => n.toLocaleString('en-US');
+const fmt = n => n.toLocaleString(LOCALE);
 const isTx = e => e.kind === 'transfer' || e.kind === 'call' || e.kind === 'deploy';
 const pairKey = e => e.a.id < e.b.id ? e.a.id + '|' + e.b.id : e.b.id + '|' + e.a.id;
 const drawRank = e => e.tether ? 0 : e.kind === 'parent' ? 1 : e.dir === 'other' ? 2 : 3;
@@ -424,7 +430,7 @@ let lastDesc = '';
 function describe() {
   const others = nodes.filter(n => n.kind === 'address' && !n.isCenter && n.out === null).length;
   const blocks = spine.filter(n => n.out === null).length;
-  const d = `Live map of PSY transfers between the ${centerInfo.label || 'centre address'} ${short(centerInfo.address)} and ${others} other address${others === 1 ? '' : 'es'}, with the latest ${blocks} block${blocks === 1 ? '' : 's'}`;
+  const d = L('Live map of PSY transfers between the {c} {a} and {n} other addresses, with the latest {b} blocks', { c: centerInfo.label || L('centre address'), a: short(centerInfo.address), n: others, b: blocks });
   if (d !== lastDesc) { lastDesc = d; canvas.setAttribute('aria-label', d); }
 }
 
@@ -757,7 +763,7 @@ function updateGauges(T) {
   if (bar !== lastBar) { lastBar = bar; nextBar.style.width = bar + '%'; }
   drawRadar();
 }
-const fmtPsy = v => v.toLocaleString('en-US', { maximumFractionDigits: 6 });
+const fmtPsy = v => v.toLocaleString(LOCALE, { maximumFractionDigits: 6 });
 
 function drawRadar() {
   const w = radar.clientWidth, h = radar.clientHeight, N = RADAR_AXES.length;
@@ -796,21 +802,21 @@ function drawRadar() {
 
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 function valueText(e) {
-  if (e.kind === 'transfer') return valueLabel(e) + (e.failed ? ' · failed' : '');
-  if (e.kind === 'alloc') return valueLabel(e) + ' · genesis';
-  if (e.kind === 'call') return valueLabel(e) + ' · call' + (e.failed ? ', failed' : '');
-  if (e.kind === 'deploy') return valueLabel(e) + ' · new contract';
-  return e.kind === 'parent' ? 'parent' : 'includes tx';
+  if (e.kind === 'transfer') return valueLabel(e) + (e.failed ? ' · ' + L('failed') : '');
+  if (e.kind === 'alloc') return valueLabel(e) + ' · ' + L('genesis');
+  if (e.kind === 'call') return valueLabel(e) + ' · ' + (e.failed ? L('call, failed') : L('call'));
+  if (e.kind === 'deploy') return valueLabel(e) + ' · ' + L('new contract');
+  return e.kind === 'parent' ? L('parent') : L('includes tx');
 }
 function setTip(n) {
   if (n === tipNode) return;
   tipNode = n;
   if (!n) { tip.hidden = true; return; }
-  const T = clock(performance.now());
-  const links = n.links.filter(e => T >= e.at && e.out === null).sort((p, q) => q.block - p.block);
-  const meta = [n.isCenter ? (centerInfo.label || 'centre address') : n.role === 'system' ? n.label : n.role || n.kind, links.length + (links.length === 1 ? ' line' : ' lines')];
+  const tNow = clock(performance.now());
+  const links = n.links.filter(e => tNow >= e.at && e.out === null).sort((p, q) => q.block - p.block);
+  const meta = [n.isCenter ? (centerInfo.label || L('centre address')) : n.role === 'system' ? n.label : T(n.role || n.kind), links.length === 1 ? L('1 line') : L('{n} lines', { n: links.length })];
   const table = el('table'), head = el('tr');
-  for (const h of ['from', 'to', 'value', 'block']) head.append(el('th', '', h));
+  for (const h of ['from', 'to', 'value', 'block']) head.append(el('th', '', T(h)));
   table.append(head);
   for (const e of links.slice(0, 8)) {
     const tr = el('tr'), from = el('td'), sw = el('span', 'sw');
@@ -819,8 +825,8 @@ function setTip(n) {
     tr.append(from, el('td', '', short(e.to)), el('td', '', valueText(e)), el('td', '', fmt(e.block)));
     table.append(tr);
   }
-  const parts = [el('div', 'id', n.kind === 'block' ? 'Block ' + fmt(n.number) : n.id), el('div', 'meta', meta.join(' · ')), table];
-  if (links.length > 8) parts.push(el('p', 'more', `+ ${links.length - 8} earlier`));
+  const parts = [el('div', 'id', n.kind === 'block' ? L('Block {ref}', { ref: fmt(n.number) }) : n.id), el('div', 'meta', meta.join(' · ')), table];
+  if (links.length > 8) parts.push(el('p', 'more', L('+ {n} earlier', { n: links.length - 8 })));
   tip.replaceChildren(...parts);
   tip.hidden = false;
 }
@@ -885,13 +891,13 @@ function renderStats(stats) {
 const cut = h => (h.length < 16 ? h : h.slice(0, 10) + '…' + h.slice(-6));
 function ago(sec) {
   const d = Math.max(0, Math.floor(Date.now() / 1000) - sec);
-  if (d < 60) return d + 's ago';
-  if (d < 3600) return Math.floor(d / 60) + 'm ago';
-  if (d < 86400) return Math.floor(d / 3600) + 'h ago';
+  if (d < 60) return L('{n}s ago', { n: d });
+  if (d < 3600) return L('{n}m ago', { n: Math.floor(d / 60) });
+  if (d < 86400) return L('{n}h ago', { n: Math.floor(d / 3600) });
   return new Date(sec * 1000).toISOString().slice(0, 16).replace('T', ' ');
 }
 function addrLink(hex) {
-  if (!hex) return el('span', 'muted', 'contract creation');
+  if (!hex) return el('span', 'muted', L('contract creation'));
   const a = el('a', '', labelOf(hex) || cut(hex)); a.href = '/address/' + hex; return a;
 }
 function link(href, text) { const a = el('a', '', text); a.href = href; return a; }
@@ -900,9 +906,9 @@ function tableRow(t) {
   const age = el('div', 'muted', ago(t.ts)); age.dataset.ts = t.ts;
   c[0].append(link('/block/' + t.block, String(t.block)), age);
   c[1].append(link('/tx/' + t.hash, cut(t.hash)));
-  if (t.status === 0) c[1].append(' ', el('span', 'muted', 'failed'));
+  if (t.status === 0) c[1].append(' ', el('span', 'muted', L('failed')));
   c[2].append(addrLink(t.from));
-  if (!t.to && t.contract) c[3].append(addrLink(t.contract), ' ', el('span', 'muted', '(new contract)'));
+  if (!t.to && t.contract) c[3].append(addrLink(t.contract), ' ', el('span', 'muted', L('(new contract)')));
   else c[3].append(addrLink(t.to));
   if (t.call) c[3].append(el('div', 'muted', t.call));
   tr.append(...c); tr.dataset.hash = t.hash;
@@ -919,7 +925,7 @@ function renderTable(txs) {
   const body = tbody(); if (!body) return;
   const rows = txs.slice(0, 10).map(tableRow);
   if (rows.length) body.replaceChildren(...rows);
-  else { const tr = el('tr'), td = el('td', '', 'No transactions yet.'); td.colSpan = 5; tr.append(td); body.replaceChildren(tr); }
+  else { const tr = el('tr'), td = el('td', '', L('No transactions yet.')); td.colSpan = 5; tr.append(td); body.replaceChildren(tr); }
 }
 // the server rendered the first rows; tag them with their time so the ages keep counting
 function adoptTableRows(txs) {

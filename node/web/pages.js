@@ -6,17 +6,18 @@
 // Results are written with textContent, never as HTML.
 
 import { encodeParams, decodeParams, hexToU8, u8ToHex, signatureOf } from '/abicodec.js';
+import { T } from '/i18n.js';
 
 // ---- my account
 const connect = document.getElementById('account-connect');
 if (connect) {
   connect.addEventListener('click', async () => {
     const eth = window.ethereum;
-    if (!eth) { connect.textContent = 'No browser wallet found'; return; }
+    if (!eth) { connect.textContent = T('No browser wallet found'); return; }
     try {
       const [a] = await eth.request({ method: 'eth_requestAccounts' });
       if (/^0x[0-9a-fA-F]{40}$/.test(a ?? '')) location.href = '/account?address=' + encodeURIComponent(a);
-    } catch { connect.textContent = 'The wallet did not share an address'; }
+    } catch { connect.textContent = T('The wallet did not share an address'); }
   });
 }
 
@@ -50,7 +51,7 @@ if (forms.length) {
   const loadAbi = async () => (abi ??= await (await fetch('/api/abi')).json());
   const word = (text) => { // a plain word (a parameter name) as bytes32, as the explorer's pkey() does
     const b = new TextEncoder().encode(text);
-    if (b.length > 32) throw new Error('more than 32 bytes');
+    if (b.length > 32) throw new Error(T('more than 32 bytes'));
     const o = new Uint8Array(32); o.set(b); return u8ToHex(o);
   };
   const parse = (type, s) => {
@@ -58,16 +59,16 @@ if (forms.length) {
     if (type.endsWith(']')) {
       const inner = type.slice(0, type.lastIndexOf('['));
       const list = JSON.parse(s || '[]');
-      if (!Array.isArray(list)) throw new Error('a list is needed, for example ["0x…"]');
+      if (!Array.isArray(list)) throw new Error(T('a list is needed, for example ["0x…"]'));
       return list.map((x) => parse(inner, String(x)));
     }
-    if (type === 'address') { if (!/^0x[0-9a-fA-F]{40}$/.test(s)) throw new Error('an address is 0x and 40 hex characters'); return s; }
-    if (type === 'bool') { if (!/^(true|false)$/.test(s)) throw new Error('true or false'); return s === 'true'; }
-    if (/^u?int\d*$/.test(type)) { if (!/^-?\d+$/.test(s)) throw new Error('a whole number'); return BigInt(s); }
+    if (type === 'address') { if (!/^0x[0-9a-fA-F]{40}$/.test(s)) throw new Error(T('an address is 0x and 40 hex characters')); return s; }
+    if (type === 'bool') { if (!/^(true|false)$/.test(s)) throw new Error(T('true or false')); return s === 'true'; }
+    if (/^u?int\d*$/.test(type)) { if (!/^-?\d+$/.test(s)) throw new Error(T('a whole number')); return BigInt(s); }
     if (type === 'bytes32') return /^0x[0-9a-fA-F]{64}$/.test(s) ? s : word(s);
-    if (/^bytes\d*$/.test(type)) { if (!/^0x([0-9a-fA-F]{2})*$/.test(s)) throw new Error('hex bytes, 0x…'); return s; }
+    if (/^bytes\d*$/.test(type)) { if (!/^0x([0-9a-fA-F]{2})*$/.test(s)) throw new Error(T('hex bytes, 0x…')); return s; }
     if (type === 'string') return s;
-    throw new Error('type ' + type + ' is not supported here');
+    throw new Error(T('type {t} is not supported here', { t: type }));
   };
   const show = (v) => JSON.stringify(v, (k, x) => (typeof x === 'bigint' ? x.toString() : x), 2);
   for (const form of forms) {
@@ -89,7 +90,7 @@ if (forms.length) {
         const vals = decodeParams(f.outputs, hexToU8(j.result));
         out.textContent = show(f.outputs.length === 1 ? vals[0] : Object.fromEntries(f.outputs.map((o, i) => [o.name || `out${i}`, vals[i]])));
       } catch (err) {
-        out.textContent = 'Could not read: ' + err.message;
+        out.textContent = T('Could not read: {why}', { why: err.message });
       }
     });
   }
