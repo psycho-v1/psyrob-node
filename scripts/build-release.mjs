@@ -98,7 +98,8 @@ walk('node/web');
 const assets = {
   node: Object.fromEntries([...common, ...web, 'common/abicodec.js', 'genesis/artifacts.json', GENESIS_FILE, 'genesis/seeds.txt'].map((r) => [r, path.join(ROOT, r)])
     .concat([['help/psyrob-node.txt', path.join(WORK, 'help/psyrob-node.txt')], ['node/powworker.cjs', path.join(WORK, 'powworker.cjs')]])),
-  miner: Object.fromEntries(common.map((r) => [r, path.join(ROOT, r)]).concat([['miner/worker.cjs', path.join(WORK, 'worker.cjs')], ['help/psyrob-miner.txt', path.join(WORK, 'help/psyrob-miner.txt')]])),
+  // the miner's dashboard shows the PSYROB fonts, icons and logo (miner/gui/assets.js serves them)
+  miner: Object.fromEntries([...common, ...web.filter((r) => /^node\/web\/(sprite\.svg|logo\.svg|vendor\/fonts\/.+\.woff2)$/.test(r))].map((r) => [r, path.join(ROOT, r)]).concat([['miner/worker.cjs', path.join(WORK, 'worker.cjs')], ['help/psyrob-miner.txt', path.join(WORK, 'help/psyrob-miner.txt')]])),
 };
 
 // ---- 4. blobs and executables

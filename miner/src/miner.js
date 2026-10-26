@@ -45,6 +45,10 @@ export class Miner {
     this.attempts = 0;
     this.found = 0;
     this.accepted = 0;
+    this.rejected = 0;
+    this.threadAttempts = [];
+    this.blocks = []; // the last 200 submissions: { at, id, hash, status, reason, blueScore, node }
+    this.latencyMs = null; // the node's last psy_dagInfo round trip
     this.stopped = false;
     this.submitted = new Map(); // template id -> 'pending' | 'added' | 'failed'
     this.waitingSince = 0; // template refused while the node syncs
@@ -120,7 +124,8 @@ export class Miner {
       const workerData = { key: [...this.key], impl: this.impl };
       // single executable: the worker is an embedded, separately bundled script
       const w = IN_SEA ? new Worker(readResourceText('miner/worker.cjs'), { eval: true, workerData }) : new Worker(new URL('./worker.js', import.meta.url), { workerData });
-      w.on('message', (m) => this.onWorker(m));
+      this.threadAttempts.push(0);
+      w.on('message', (m) => this.onWorker(m, i));
       w.on('error', (e) => this.log('worker error: ' + e.message));
       this.workers.push(w);
     }
@@ -166,7 +171,8 @@ export class Miner {
   async poll() {
     if (this.stopped) return;
     let info;
-    try { info = await this.rpc('psy_dagInfo'); } catch (e) {
+    const t0 = Date.now();
+    try { info = await this.rpc('psy_dagInfo'); this.latencyMs = Date.now() - t0; } catch (e) {
       if (e instanceof TransientError && (await this.failover(e.message))) return;
       throw e;
     }
@@ -177,8 +183,8 @@ export class Miner {
     }
   }
 
-  async onWorker(m) {
-    if (m.type === 'count') { this.attempts += m.n; return; }
+  async onWorker(m, thread = 0) {
+    if (m.type === 'count') { this.attempts += m.n; this.threadAttempts[thread] = (this.threadAttempts[thread] ?? 0) + m.n; return; }
     if (m.type !== 'found' || this.stopped) return;
     // a second solution for a template already submitted would be refused ("unknown or expired template")
     const state = this.submitted.get(m.id);
@@ -186,6 +192,9 @@ export class Miner {
     this.found++;
     this.submitted.set(m.id, 'pending');
     const url = this.job?.id === m.id ? this.job.url : this.url;
+    const rec = { at: Date.now(), id: m.id, hash: null, status: 'pending', reason: null, blueScore: this.job?.id === m.id ? Number(this.job.header.blueScore) : null, node: url };
+    this.blocks.push(rec);
+    if (this.blocks.length > 200) this.blocks.shift();
     // ask for the next template at once; the threads keep hashing meanwhile
     this.newJob().catch((e) => this.log('template: ' + e.message));
     const until = Date.now() + SUBMIT_RETRY_MS;
@@ -193,12 +202,16 @@ export class Miner {
       try {
         const r = await this.rpc('psy_submitBlock', [m.id, m.nonce, m.sig], url);
         if (r.status === 'added') this.accepted++;
+        else if (r.status !== 'known') this.rejected++;
+        Object.assign(rec, { hash: r.hash, status: r.status });
         this.submitted.set(m.id, r.status === 'added' || r.status === 'known' ? 'added' : 'failed');
         this.log(`block ${r.hash.slice(0, 18)}… ${r.status}`);
         return;
       } catch (e) {
         if (!(e instanceof TransientError) || Date.now() + wait > until || this.stopped) {
           this.submitted.set(m.id, 'failed');
+          this.rejected++;
+          Object.assign(rec, { status: 'refused', reason: e.message });
           this.log('submit refused: ' + e.message);
           return;
         }
