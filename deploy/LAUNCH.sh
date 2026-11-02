@@ -14,7 +14,7 @@
 # deploy/check-before-mining.sh passes, and the watchdog timer starts. Log: /var/log/psyrob-launch.log.
 set -euo pipefail
 
-TAG=v10.0.0
+TAG=v11.0.0
 R=/home/psycho/psyrob-node
 DEV=/home/psycho/psyrob
 DATA=/var/lib/psyrob-node
@@ -30,6 +30,10 @@ asme() { sudo -u psycho -H "$@"; }
 [ -f "$DATA/launch.json" ] || { say "no $DATA/launch.json: run deploy/PRELAUNCH.sh and the ceremony first"; exit 1; }
 signed=$(node -e "const l=JSON.parse(require('fs').readFileSync('$DATA/launch.json','utf8'));console.log((l.launchSignatures||[]).filter(Boolean).length)")
 [ "$signed" = 3 ] || { say "only $signed of 3 seats are signed: the ceremony is not complete"; exit 1; }
+# the signatures must be for this network's ceremony (genesis/launch-87870.json), not an earlier one
+want=$(node -e "console.log(JSON.parse(require('fs').readFileSync('$DEV/genesis/launch-87870.json','utf8')).extra)")
+have=$(node -e "const l=JSON.parse(require('fs').readFileSync('$DATA/launch.json','utf8'));console.log(l.extra ?? l.base?.extra ?? '')")
+[ "$want" = "$have" ] || { say "the signed ceremony is for '$have', not '$want': run deploy/PRELAUNCH.sh and sign again"; exit 1; }
 
 # a second run (after a later step failed) keeps the genesis already committed and tagged: rebuilding it would give a
 # new start time and so a new genesis hash
@@ -52,7 +56,7 @@ else
   say "commit and tag $TAG"
   asme git -C "$DEV" add genesis/genesis-87870.json genesis/launch-87870.signed.json genesis/chain.json deploy/psyrob-watchdog.sh docs/WINDOWS-NODE.md
   asme git -C "$DEV" commit -q -m "Genesis $GENESIS, chain 87870 (launch ceremony signed by Dev Accounts 1-3)"
-  asme git -C "$DEV" tag -a "$TAG" -m "PSYROB testnet v10.0.0, chain 87870, genesis $GENESIS"
+  asme git -C "$DEV" tag -a "$TAG" -m "PSYROB testnet v11.0.0, chain 87870, genesis $GENESIS"
 fi
 
 say "building the downloads, signed with the release key (a few minutes)"

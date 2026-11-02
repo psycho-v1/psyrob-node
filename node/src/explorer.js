@@ -26,9 +26,9 @@ export const HEADERS = {
     "script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'",
 };
 
-const STATIC = { '/home.css': 'text/css', '/logo.svg': 'image/svg+xml', '/sprite.svg': 'image/svg+xml', '/web-band.js': 'text/javascript',
+const STATIC = { '/home.css': 'text/css', '/psy-tokens.css': 'text/css', '/logo.svg': 'image/svg+xml', '/sprite.svg': 'image/svg+xml', '/web-band.js': 'text/javascript',
   '/home-map.js': 'text/javascript', '/dag-graph.js': 'text/javascript', '/app.js': 'text/javascript', '/abicodec.js': 'text/javascript', '/live.js': 'text/javascript',
-  '/pages.js': 'text/javascript', '/register.js': 'text/javascript', '/i18n.js': 'text/javascript',
+  '/pages.js': 'text/javascript', '/ui.js': 'text/javascript', '/proposal.js': 'text/javascript', '/register.js': 'text/javascript', '/i18n.js': 'text/javascript',
   // self-hosted third-party assets (no CDN): Bootstrap 5.3.3 (MIT), Barlow Condensed and Source Serif 4 (OFL)
   '/vendor/bootstrap.min.css': 'text/css', '/vendor/bootstrap.bundle.min.js': 'text/javascript', '/vendor/fonts.css': 'text/css',
   '/vendor/fonts/barlow-condensed-latin-500-normal.woff2': 'font/woff2', '/vendor/fonts/barlow-condensed-latin-600-normal.woff2': 'font/woff2',
@@ -49,11 +49,21 @@ export function clientKeysOf(sources) {
   }
   return [...keys];
 }
-const CLIENT_SCRIPTS = ['app.js', 'register.js', 'pages.js', 'home-map.js'];
+const CLIENT_SCRIPTS = ['app.js', 'register.js', 'pages.js', 'home-map.js', 'proposal.js'];
 
 const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 const icon = (name) => `<svg class="prb" aria-hidden="true"><use href="/sprite.svg#prb-${name}"></use></svg>`;
 const short = (s) => (String(s).length < 16 ? String(s) : String(s).slice(0, 10) + '…' + String(s).slice(-6));
+/** EIP-55 mixed-case checksum of a 20-byte address (40 hex digits, any case): wallets catch a mistyped character. */
+function checksum(hex) {
+  const h = String(hex).replace(/^0x/, '').toLowerCase();
+  const d = bytesToHex(keccak256(new TextEncoder().encode(h)));
+  return '0x' + [...h].map((ch, i) => (parseInt(d[i], 16) >= 8 ? ch.toUpperCase() : ch)).join('');
+}
+/** A button that copies the full value (ui.js); never the shortened text shown in tables. */
+const copyBtn = (v) => `<button type="button" class="copy" data-copy="${esc(v)}" data-done="${esc(T('Copied'))}" aria-label="${esc(T('Copy'))}: ${esc(v)}">${T('Copy')}</button>`;
+/** A page for a block, transaction or address that does not exist: HTTP 404, with a way on. */
+const notFound = (html) => ({ notFound: html });
 const num = (n) => Number(n).toLocaleString(locale());
 const h0x = (b) => '0x' + bytesToHex(b);
 function psy(wei, dp = 4) {
@@ -62,6 +72,11 @@ function psy(wei, dp = 4) {
   const i = wei / PSY, f = (wei % PSY).toString().padStart(18, '0').slice(0, dp).replace(/0+$/, '');
   const point = lang() === 'en' ? '.' : (1.5).toLocaleString(locale()).charAt(1);
   return (neg ? '-' : '') + i.toLocaleString(locale()) + (f ? point + f : '');
+}
+/** wei as an exact decimal PSY amount (18 decimals, trailing zeros cut), for CSV files. */
+function weiText(wei) {
+  const w = BigInt(wei), i = w / PSY, f = (w % PSY).toString().padStart(18, '0').replace(/0+$/, '');
+  return f ? `${i}.${f}` : String(i);
 }
 const gwei = (wei) => (Number(wei) / 1e9).toLocaleString(locale(), { maximumFractionDigits: 3 });
 function ago(sec, now) {
@@ -85,6 +100,7 @@ const NAV = [
     ['/metrics', 'chart-line', 'Decentralisation metrics'], ['/run-a-node', 'server', 'Run a node'], ['/mine', 'cpu', 'Mine'], ['/wallet', 'key', 'Wallet set-up']]],
   ['Developers', 'server', [['/developers', 'clipboard', 'RPC and API'], ['/contracts', 'box', 'Contracts (read)'], ['/about', 'info', 'About']]],
 ];
+const RAIL = new Set(['/dag', '/blocks']);
 const BAND = new Set(['/dag', '/blocks', '/txs', '/emission', '/network', '/ngos', '/ngo-submit', '/attestation', '/election', '/governance', '/roles', '/treasury', '/committee', '/metrics', '/run-a-node', '/mine', '/wallet', '/about',
   '/mempool', '/holders', '/account', '/election-rounds', '/proposals', '/mining', '/developers', '/contracts', '/upgrades', '/pause']);
 /** PSY still held by the three Dev Account vesting contracts. */
@@ -236,6 +252,23 @@ export class Explorer {
       if (p === '/api/abi') return send(200, this.abiJson, 'application/json');
       if (p === '/api/metrics') return send(200, JSON.stringify(await this.metricsData()), 'application/json');
       if (p === '/api/mining') return send(200, JSON.stringify(this.miningData()), 'application/json');
+      // CSV downloads for NGO reports and auditors (the same data as the pages; amounts in PSY with 18 decimals)
+      const csv = (name, rows) => { res.writeHead(200, { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': `attachment; filename="${name}"`, 'Cache-Control': 'no-store', ...HEADERS }); res.end(rows.map((r) => r.map((x) => (/[",\n]/.test(String(x)) ? `"${String(x).replace(/"/g, '""')}"` : String(x))).join(',')).join('\r\n') + '\r\n'); return true; };
+      const csvAddr = /^\/api\/address\/(0x[0-9a-fA-F]{40})\/txs\.csv$/.exec(p);
+      if (csvAddr) {
+        const me = csvAddr[1].toLowerCase();
+        const rows = this.recentTxs(5000, 50_000).filter((t) => t.from === me || t.to === me || t.contract === me);
+        return csv(`psyrob-${me}-transactions.csv`, [['chain_block', 'time_utc', 'transaction', 'from', 'to', 'contract_created', 'value_psy', 'kind', 'call', 'status'],
+          ...rows.map((t) => [t.block, new Date(t.ts * 1000).toISOString(), t.hash, t.from, t.to ?? '', t.contract ?? '', weiText(t.value), t.kind, t.call ?? '', t.status ? 'success' : 'failed'])]);
+      }
+      if (p === '/api/holders.csv') {
+        return csv('psyrob-holders.csv', [['rank', 'address', 'label', 'balance_psy'], ...this.holdersData().top.map(([hex, bal], i) => [i + 1, checksum(hex), this.labels.get(hex) ?? '', weiText(bal)])]);
+      }
+      if (p.startsWith('/api/account/')) {
+        await this.refreshMode();
+        const j = await this.accountJson(decodeURIComponent(p.slice(13)));
+        return j ? send(200, JSON.stringify(j), 'application/json') : send(404, JSON.stringify({ error: 'not an address' }), 'application/json');
+      }
       if (p === '/api/dag') return send(200, JSON.stringify(this.dagData(Number(url.searchParams.get('n') || 60))), 'application/json');
       await this.refreshMode();
       await this.refreshPause();
@@ -250,8 +283,9 @@ export class Explorer {
         this.cache.set(key, { tip: this.chain.tip.hash, at: Date.now(), page });
       }
       if (page?.redirect) { res.writeHead(302, { Location: page.redirect, ...HEADERS }); res.end(); return true; }
+      if (page?.notFound) return send(404, page.notFound);
       if (page) return send(200, page);
-      return send(404, this.layout(T('Not found'), `<h1>${T('Not found')}</h1><p class="muted">${T('That page is not on this explorer.')}</p>` + this.searchBox(), ''));
+      return send(404, this.layout(T('Not found'), `<h1>${T('Not found')}</h1><p class="muted">${T('That page is not on this explorer.')}</p>` + this.searchBox() + `<p><a href="/blocks">${T('See the latest chain blocks')}</a></p>`, ''));
     } catch (e) {
       this.node.log(`explorer ${p}: ${e.stack ?? e.message}`);
       return send(500, this.layout(T('Error'), `<h1>${T('Something went wrong')}</h1><p class="muted">${T('The page could not be built. Try again in a moment.')}</p>`, ''));
@@ -308,15 +342,18 @@ export class Explorer {
 
   // ---------------------------------------------------------------- layout
 
-  layout(title, body, active, { head = '', scripts = '' } = {}) {
+  layout(title, body, active, { head = '', scripts = '', desc = '' } = {}) {
     title = T(title); // pages may pass the English title (a translated one is returned as it is)
     const m = BAND.has(active) && /^(<p class="eyebrow">[^]*?<\/p><h1>[^]*?<\/h1>)(<p class="lead">[^]*?<\/p>)?/.exec(body);
     if (m) {
-      body = `<section class="band"><canvas class="web-band" aria-hidden="true"></canvas><div class="band-head">${m[1]}${m[2] ?? ''}</div></section>` +
-        `<div class="rail" id="block-rail" aria-label="${T('Latest chain blocks')}"></div>` + guideHtml(title) + body.slice(m[0].length);
+      // a long lead (the rules of the page) folds into "Read the rules" below the heading, on a solid background
+      const lead = m[2] ?? '', long = lead.replace(/<[^>]+>/g, '').length > 320;
+      body = `<section class="band"><canvas class="web-band" aria-hidden="true"></canvas><div class="band-head">${m[1]}${long ? '' : lead}</div></section>` +
+        (long ? `<details class="rules panel"><summary>${T('Read the rules')}</summary>${lead}</details>` : '') +
+        (RAIL.has(active) ? `<div class="rail" id="block-rail" aria-label="${T('Latest chain blocks')}"></div>` : '') + guideHtml(title) + body.slice(m[0].length);
       scripts = '<script src="/web-band.js"></script>' + scripts;
     }
-    const link = ([href, ic, label]) => `<li><a class="dropdown-item${href === active ? ' active' : ''}" href="${href}">${icon(ic)}<span>${T(label)}</span></a></li>`;
+    const link = ([href, ic, label]) => `<li><a class="dropdown-item${href === active ? ' active' : ''}" href="${href}"${href === active ? ' aria-current="page"' : ''}>${icon(ic)}<span>${T(label)}</span></a></li>`;
     const nav = NAV.map(([group, ic, items], i) => {
       const on = items.some(([href]) => href === active || (href !== '/' && active.startsWith(href + '/')));
       return `<li class="nav-item dropdown"><a class="nav-link dropdown-toggle${on ? ' active' : ''}" href="#" id="nav${i}" role="button" data-bs-toggle="dropdown" aria-expanded="false">${icon(ic)}<span>${T(group)}</span></a>` +
@@ -329,13 +366,19 @@ export class Explorer {
     keep.delete('lang');
     const langHref = (c) => { const q = new URLSearchParams(keep); q.set('lang', c); return esc(page.path + '?' + q.toString()); };
     const cur = LANGS.find((x) => x.code === lang());
-    const langMenu = `<li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" id="navLang" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="${T('Language')}">${icon('globe')}<span>${esc(cur?.short ?? 'EN')}</span></a>` +
+    const langMenu = `<li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" id="navLang" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="${T('Language')}">${icon('globe')}<span style="text-transform:none">${esc(cur?.name ?? 'English')}</span></a>` +
       `<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navLang">${LANGS.map((x) => `<li><a class="dropdown-item${x.code === lang() ? ' active' : ''}" href="${langHref(x.code)}" lang="${x.code}" dir="${x.dir}" hreflang="${x.code}" style="text-transform:none">${esc(x.name)}</a></li>`).join('')}</ul></li>`;
     const texts = this.clientKeys ? JSON.stringify(clientDict(this.clientKeys)).replace(/</g, '\\u003c') : '{}';
+    const fullTitle = `${title} · ${T('PSYROB v{n} Explorer', { n: TESTNET_MAJOR })}`;
+    desc = desc || T('Explorer of the PSYROB test network: blocks, the block DAG, transactions, mining, NGOs and on-chain governance.');
     return `<!doctype html><html lang="${lang()}" dir="${dir()}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">` +
-      `<title>${esc(title)} · ${T('PSYROB v{n} Explorer', { n: TESTNET_MAJOR })}</title><meta name="psyrob-network" content="${TESTNET_WALLET_NAME}"><link rel="icon" href="/logo.svg">` +
+      `<title>${esc(fullTitle)}</title><meta name="description" content="${esc(desc)}"><meta property="og:type" content="website"><meta property="og:site_name" content="PSYROB">` +
+      `<meta property="og:title" content="${esc(fullTitle)}"><meta property="og:description" content="${esc(desc)}"><meta name="twitter:card" content="summary">` +
+      `<meta name="psyrob-network" content="${TESTNET_WALLET_NAME}"><link rel="icon" href="/logo.svg">` +
       '<link href="/vendor/fonts.css" rel="stylesheet"><link href="/vendor/bootstrap.min.css" rel="stylesheet">' +
-      '<style>:root{--bg:#071014;--ink:#e7f4f2;--mute:#8aa8a6;--line:#1c3336;--cyan:#3ee0d6;--panel:#0c181c;--field:#081216}' +
+      // the colours of node/web/psy-tokens.css (shared with psyrob.com and the Members Hub)
+      '<style>:root{--bg:#071014;--ink:#e7f4f2;--mute:#8aa8a6;--line:#1c3336;--cyan:#3ee0d6;--panel:#0c181c;--field:#081216;' +
+      '--ok:#8de9b8;--warn-ink:#e8d9a8;--warn-bg:#151208;--warn-line:#6b5a2a;--danger:#e07a72;--danger-ink:#f0c4c4;--danger-bg:#1a0b0b;--danger-line:#6b3a3a}' +
       "body{background:var(--bg);color:var(--ink);font:18px/1.5 'Source Serif 4',Palatino,serif}a{color:var(--cyan)}" +
       '.navbar{background:rgba(7,16,20,.94);border-bottom:1px solid var(--line)}' +
       ".brand{letter-spacing:.22em;font-family:'Barlow Condensed',sans-serif;font-weight:600;color:var(--ink);font-size:18px}.brand img{width:34px;height:34px}" +
@@ -347,26 +390,41 @@ export class Explorer {
       ".eyebrow{color:var(--cyan);font:600 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;text-transform:uppercase}" +
       '.muted,.lead{color:var(--mute)!important}.panel{background:var(--panel);border:1px solid var(--line);padding:14px;margin-bottom:14px}' +
       ".stat strong{display:block;font:600 28px/1 'Barlow Condensed',sans-serif;margin-top:6px}.panel a,.stat strong{overflow-wrap:anywhere}" +
-      '.form-control,.form-select{background:#081216;color:var(--ink);border:1px solid var(--line);border-radius:0}.form-control:focus{background:#081216;color:var(--ink)}' +
+      '.form-control,.form-select{background:#081216;color:var(--ink);border:1px solid var(--line);border-radius:0}.form-control:focus,.form-select:focus{background:#081216;color:var(--ink);border-color:var(--cyan);box-shadow:none}' +
+      // Bootstrap's own theme values follow the PSYROB colours (no blue, no rounded corners)
+      '[data-bs-theme=dark]{--bs-body-bg:var(--bg);--bs-body-color:var(--ink);--bs-primary:var(--cyan);--bs-primary-rgb:62,224,214;--bs-link-color:var(--cyan);--bs-link-color-rgb:62,224,214;--bs-link-hover-color:var(--ink);--bs-border-color:var(--line);--bs-border-radius:0;--bs-border-radius-sm:0;--bs-border-radius-lg:0;--bs-focus-ring-color:rgba(62,224,214,.6)}' +
+      '.navbar-toggler,.btn{border-radius:0}.navbar-toggler:focus{box-shadow:none}.form-control::placeholder{color:var(--mute);opacity:1}.form-label{color:var(--mute);font:500 13px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}' +
+      ':focus-visible{outline:2px solid var(--cyan)!important;outline-offset:2px;box-shadow:none!important}' +
+      '.skip{position:absolute;left:-9999px;top:0;z-index:2000;background:var(--cyan);color:#06201e;padding:10px 14px;font:600 14px/1 "Barlow Condensed",sans-serif;letter-spacing:.1em;text-transform:uppercase}.skip:focus{left:8px;top:8px}' +
+      // wide tables: a shadow at the edge shows there is more to scroll; on phones the columns wrap instead
+      '.table-responsive{background:linear-gradient(to right,var(--bg) 30%,rgba(7,16,20,0)),linear-gradient(to left,var(--bg) 30%,rgba(7,16,20,0)) 100% 0,radial-gradient(farthest-side at 0 50%,rgba(62,224,214,.35),transparent),radial-gradient(farthest-side at 100% 50%,rgba(62,224,214,.35),transparent) 100% 0;background-repeat:no-repeat;background-size:40px 100%,40px 100%,14px 100%,14px 100%;background-attachment:local,local,scroll,scroll}' +
+      '.panel .table-responsive{background-image:linear-gradient(to right,var(--panel) 30%,rgba(12,24,28,0)),linear-gradient(to left,var(--panel) 30%,rgba(12,24,28,0)),radial-gradient(farthest-side at 0 50%,rgba(62,224,214,.35),transparent),radial-gradient(farthest-side at 100% 50%,rgba(62,224,214,.35),transparent)}' +
+      '@media (max-width:600px){table{min-width:0}th,td{padding:8px 6px;font-size:15px;overflow-wrap:anywhere}}' +
+      '.copy{background:transparent;border:1px solid var(--line);color:var(--cyan);padding:2px 6px;margin-left:6px;font:600 12px/1.2 "Barlow Condensed",sans-serif;letter-spacing:.1em;text-transform:uppercase;vertical-align:middle;min-height:24px}.copy:hover{border-color:var(--cyan)}' +
+      'td a{display:inline-block;min-height:24px;padding:2px 0}@media (max-width:991px){.navbar-toggler{min-width:44px;min-height:44px}.nav-link,.dropdown-item{min-height:44px}.pager a,.pager button,.pager .btn{min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center}}' +
       ".btn-cyan{background:var(--cyan);color:#06201e;border:0;border-radius:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase}" +
       ".btn-line{background:transparent;color:var(--cyan);border:1px solid var(--line);border-radius:0;font-family:'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase}" +
       'table{width:100%;border-collapse:collapse;min-width:640px}th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}' +
       "th{color:var(--mute);font:500 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase}code{color:var(--cyan);word-break:break-all}" +
-      ".rail{display:flex;gap:14px;overflow:hidden;padding:8px 0 16px}.block-node{min-width:92px;text-align:center;color:var(--cyan)}.block-node svg{width:54px;height:54px}.block-node span{display:block;font:600 13px/1 'Barlow Condensed',sans-serif}" +
+      ".rail{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;padding:8px 0 16px;-webkit-mask-image:linear-gradient(to right,#000 85%,transparent);mask-image:linear-gradient(to right,#000 85%,transparent)}.rail::-webkit-scrollbar{display:none}.block-node{min-width:92px;text-align:center;color:var(--cyan)}.block-node svg{width:54px;height:54px}.block-node span{display:block;font:600 13px/1 'Barlow Condensed',sans-serif}" +
       '.dropdown-menu{background:var(--bg);border:1px solid var(--line);border-radius:0;padding:4px 0;min-width:210px}' +
       ".dropdown-item{display:flex;align-items:center;gap:8px;color:var(--mute);font:500 14px/1 'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:10px 14px}" +
       '.dropdown-item:hover,.dropdown-item:focus,.dropdown-item.active{background:var(--panel);color:var(--ink)}' +
-      ".st{display:inline-block;font:600 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:3px 6px;white-space:nowrap}" +
-      '.st.on{background:var(--cyan);color:#06201e}.st.off{border:1px solid var(--line);color:var(--mute)}.st.red{border:1px solid #6b3a3a;color:#d99}' +
+      ".st{display:inline-block;font:600 12px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase;padding:3px 6px;white-space:nowrap}" +
+      '.st.on{background:var(--cyan);color:#06201e}.st.off{border:1px solid var(--line);color:var(--mute)}.st.red{border:1px solid var(--danger-line);color:var(--danger)}.st.warn{border:1px solid var(--warn-line);color:var(--warn-ink)}' +
+      ".nav-search .form-control{min-width:220px;min-height:36px}@media (min-width:992px) and (max-width:1199px){.nav-search .form-control{min-width:150px}}.foot-links{display:flex;flex-wrap:wrap;gap:6px 18px;margin-bottom:10px}.foot-links a{color:var(--cyan);text-decoration:none;min-height:24px}" +
       ".foot{border-top:1px solid var(--line);margin-top:28px;padding-top:10px;padding-bottom:28px;color:var(--mute);font:500 13px/1.4 'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase}" +
       '.band{position:relative;min-height:210px;border:1px solid var(--line);overflow:hidden;margin-bottom:18px}.band canvas{position:absolute;inset:0;display:block}' +
-      '.band-head{position:relative;padding:22px 20px}.band-head h1{margin:6px 0 8px}.band-head .lead{max-width:62ch;margin-bottom:0}@media (max-width:700px){.band{min-height:190px}}' +
-      '.warn{border:1px solid #6b5a2a;background:#151208;color:#e8d9a8;padding:12px 14px;margin:12px 0}.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}' +
+      '.band-head{position:relative;padding:22px 20px;background:linear-gradient(to right,rgba(7,16,20,.94),rgba(7,16,20,.75) 60%,rgba(7,16,20,.2))}.band-head .lead{color:var(--ink)!important}.band .eyebrow{font-size:15px}.band-head h1{margin:6px 0 8px}.band-head .lead{max-width:62ch;margin-bottom:0}@media (max-width:700px){.band{min-height:190px}}' +
+      'details.rules summary{color:var(--cyan);font:600 15px/1.2 "Barlow Condensed",sans-serif;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;min-height:24px}details.rules .lead{margin:10px 0 0;color:var(--ink)!important;max-width:75ch}' +
+      'form.row-tx{display:inline-block;margin:0 4px 4px 0}form.row-tx .out:empty{display:none}td.acts{min-width:150px}td.acts .btn:disabled{opacity:.45}' +
+      'ul.check{list-style:none;padding:0;margin:8px 0}ul.check li{padding:3px 0}ul.check li.ok>span:first-child{color:var(--ok)}ul.check li.no>span:first-child{color:var(--danger)}' +
+      '.warn{border:1px solid var(--warn-line);background:var(--warn-bg);color:var(--warn-ink);padding:12px 14px;margin:12px 0}.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}' +
       'form.tx label{display:block;margin:8px 0 4px;color:var(--mute);font:500 13px/1 "Barlow Condensed",sans-serif;letter-spacing:.08em;text-transform:uppercase}form.tx .out{margin-top:8px;font-size:15px;overflow-wrap:anywhere}' +
       '#wallet-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 14px}' +
       ".tn-banner{background:var(--cyan);color:#06201e;font:600 13px/1.3 'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase;text-align:center;padding:6px 12px}" +
-      ".pz-banner{border-bottom:1px solid #6b3a3a;background:#1a0b0b;color:#f0c4c4;font-size:15px;padding:10px 0}.pz-banner strong{font-family:'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase}" +
-      ".im-banner{border-bottom:1px solid #6b5a2a;background:#151208;color:#e8d9a8;font-size:15px;padding:10px 0}.im-banner strong{font-family:'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase}" +
+      ".pz-banner{border-bottom:1px solid var(--danger-line);background:var(--danger-bg);color:var(--danger-ink);font-size:15px;padding:10px 0}.pz-banner strong{font-family:'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase}" +
+      ".im-banner{border-bottom:1px solid var(--warn-line);background:var(--warn-bg);color:var(--warn-ink);font-size:15px;padding:10px 0}.im-banner strong{font-family:'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase}" +
       '.dl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:16px 0}.dl h3{font-size:1.05rem;margin:0 0 6px}.dl .btn{margin-top:4px}' +
       'ol.steps{counter-reset:s;list-style:none;padding-left:0}ol.steps>li{counter-increment:s;position:relative;padding:0 0 10px 40px}ol.steps>li::before{content:counter(s);position:absolute;left:0;top:0;width:28px;height:28px;border:1px solid var(--cyan);color:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:.85rem}' +
       '.pager{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.tabs button[aria-selected="true"]{background:var(--cyan);color:#06201e}' +
@@ -384,13 +442,14 @@ export class Explorer {
       '[dir=rtl] ol.steps>li{padding:0 40px 10px 0}[dir=rtl] ol.steps>li::before{left:auto;right:0}[dir=rtl] .hm-facts li{padding:2px 18px 2px 0}[dir=rtl] .hm-facts li:before{left:auto;right:2px}' +
       '[dir=rtl] .navbar-nav{margin-left:0!important;margin-right:auto}[dir=rtl] .ms-auto{margin-left:0!important;margin-right:auto!important}[dir=rtl] .dropdown-menu-end{right:auto;left:0}' +
       'code,pre,.mono{direction:ltr;unicode-bidi:isolate}' +
-      `</style><script type="application/json" id="psy-i18n">${texts}</script>` + head + '</head><body><nav class="navbar navbar-expand-lg sticky-top"><div class="container">' +
+      `</style><script type="application/json" id="psy-i18n">${texts}</script>` + head + `</head><body data-bs-theme="dark"><a class="skip" href="#main">${T('Skip to content')}</a><header><nav class="navbar navbar-expand-lg sticky-top"><div class="container">` +
       `<a class="navbar-brand brand d-flex align-items-center gap-2" href="/"><img src="/logo.svg" alt="">PSYROB</a><span class="test d-none d-sm-inline">TESTNET v${TESTNET_MAJOR}</span>` +
       `<button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="${T('Open menu')}">${icon('menu')}</button>` +
-      `<div class="collapse navbar-collapse" id="siteNav"><ul class="navbar-nav ms-auto">${nav}${langMenu}</ul></div></div></nav>` +
-      `<div class="tn-banner" role="note">${T('Test network. No presale. Wallet loss is permanent.')}</div>` + this.pauseBanner() + this.interimBanner() +
-      `<main class="container py-4">${body}</main><footer class="container foot">${esc(foot)}</footer>` +
-      '<script src="/vendor/bootstrap.bundle.min.js"></script><script src="/live.js"></script>' + scripts + '</body></html>';
+      `<div class="collapse navbar-collapse" id="siteNav"><form class="nav-search ms-lg-3 my-2 my-lg-0" action="/search" method="get" role="search"><input class="form-control form-control-sm" id="nav-q" name="q" aria-label="${T('Search the chain')}" placeholder="${T('Search')} ( / )" required></form>` +
+      `<ul class="navbar-nav ms-auto">${nav}${langMenu}</ul></div></div></nav>` +
+      `<div class="tn-banner" role="note">${T('Test network. No presale. Wallet loss is permanent.')}</div>` + this.pauseBanner() + this.interimBanner() + '</header>' +
+      `<main class="container py-4" id="main" tabindex="-1">${body}</main><footer class="container foot"><nav class="foot-links" aria-label="PSYROB"><a href="https://psyrob.com">psyrob.com</a><a href="https://psyrob.com/members">${T('Members Hub')}</a><a href="/developers">${T('Developers')}</a></nav>${esc(foot)}</footer>` +
+      '<script src="/vendor/bootstrap.bundle.min.js"></script><script src="/live.js"></script><script src="/ui.js"></script>' + scripts + '</body></html>';
   }
 
   /** Shown on every page while the network is in Interim mode (fewer than 60 elected NGOs after the first 3 months). */
@@ -409,14 +468,15 @@ export class Explorer {
   }
 
   searchBox(q = '') {
-    return `<form class="row g-2 my-3" action="/search" method="get"><div class="col"><input class="form-control" name="q" value="${esc(q)}" placeholder="${T('Address, transaction hash, chain height or block hash')}" required></div><div class="col-auto"><button class="btn btn-cyan" type="submit">${T('Search')}</button></div></form>`;
+    return `<form class="row g-2 my-3 align-items-end" action="/search" method="get" role="search"><div class="col"><label class="form-label" for="search-q">${T('Search the chain')}</label><input class="form-control" id="search-q" name="q" value="${esc(q)}" placeholder="${T('Address, tx hash or block')}" title="${T('Address, transaction hash, chain height or block hash')}" required></div><div class="col-auto"><button class="btn btn-cyan" type="submit">${T('Search')}</button></div></form>`;
   }
 
   addr(hexOrBytes) {
     if (!hexOrBytes || hexOrBytes.length === 0) return `<span class="muted">${T('contract creation')}</span>`;
     const h = typeof hexOrBytes === 'string' ? hexOrBytes.replace(/^0x/, '').toLowerCase() : bytesToHex(hexOrBytes);
     const label = this.labels.get(h);
-    return `<a href="/address/0x${h}">${label ? esc(T(label)) : esc(short('0x' + h))}</a>`;
+    const full = h.length === 40 ? checksum(h) : '0x' + h;
+    return `<a href="/address/0x${h}" title="${esc(full)}">${label ? esc(T(label)) : esc(short(full))}</a>`;
   }
 
   blockLink(e) { return `<a href="/block/0x${e.hash}"><code>${esc(short('0x' + e.hash))}</code></a>`; }
@@ -427,6 +487,7 @@ export class Explorer {
       const id = `f-${contractName}-${fn}-${i}`;
       if (type === 'file-hash') return `<label for="${id}">${esc(T(label))}</label><input class="form-control" id="${id}" data-i="${i}" data-kind="file-hash" type="file"><input class="form-control mt-1" data-hash-for="${i}" placeholder="${T('or paste the 0x SHA-256 hash')}" value="${esc(val)}">`;
       if (type === 'select') return `<label for="${id}">${esc(T(label))}</label><select class="form-select" id="${id}" data-i="${i}">${ph}</select>`;
+      if (type === 'select-bool') return `<label for="${id}">${esc(T(label))}</label><select class="form-select" id="${id}" data-i="${i}" data-kind="bool">${ph}</select>`;
       if (type === 'select-address') return `<label for="${id}">${esc(T(label))}</label><select class="form-select" id="${id}" data-i="${i}" data-kind="address">${ph}</select>`;
       return `<label for="${id}">${esc(T(label))}</label><input class="form-control" id="${id}" data-i="${i}" data-kind="${type}" placeholder="${esc(T(ph))}" value="${esc(val)}"${type === 'hidden' ? ' type="hidden"' : ''}>`;
     }).join('');
@@ -434,6 +495,66 @@ export class Explorer {
     const w = warn === 'loss' ? `<div class="warn"><label class="d-flex gap-2 m-0" style="text-transform:none;letter-spacing:0;font:inherit;color:inherit"><input type="checkbox" data-confirm required> ${T('I understand that this wallet is the NGO\'s identity. If its key is lost, nothing can recover or reassign it: the NGO must restart the whole process with a new wallet.')}</label></div>` : '';
     return `<form class="tx panel" data-c="${contractName}" data-f="${fn}" data-n="${fields.length}"><h3 class="h5">${esc(T(title))}</h3>${note ? `<p class="muted small">${T(note)}</p>` : ''}${inputs}${v}${w}` +
       `<button class="btn btn-cyan mt-3" type="submit">${T('Send with wallet')}</button><div class="out muted"></div></form>`;
+  }
+
+  /**
+   * A one-button transaction for a table row (app.js sends it): args are [kind, value] pairs in argument order, e.g.
+   * [['address', ngo]]. `needs: 'voucher'` lets app.js disable it, with the reason, for a wallet that may not vouch.
+   */
+  rowTx(contractName, fn, label, args, { value = null, needs = '', line = false } = {}) {
+    const inputs = args.map(([kind, v], i) => `<input type="hidden" data-i="${i}" data-kind="${kind}" value="${esc(v)}">`).join('');
+    return `<form class="tx row-tx" data-c="${contractName}" data-f="${fn}" data-n="${args.length}">${inputs}${value === null ? '' : `<input type="hidden" data-value="wei" value="${value}">`}` +
+      `<button class="btn btn-sm ${line ? 'btn-line' : 'btn-cyan'}" type="submit"${needs ? ` data-needs="${needs}"` : ''}>${esc(T(label))}</button><div class="out muted small"></div></form>`;
+  }
+
+  /** A form that acts on one proposal chosen from a list (the ones the action applies to now), plus extra fields. */
+  pickForm(contractName, fn, title, list, KIND, extra, empty) {
+    if (!list.length) return `<div class="panel"><h3 class="h5">${esc(T(title))}</h3><p class="muted mb-0">${T(empty)}</p></div>`;
+    const opts = list.map(({ id, p }) => `<option value="${id}">${esc(T('#{id} · {kind} · voting ends {t}', { id, kind: T(KIND[Number(p.kind)]), t: when(p.end) }))}</option>`).join('');
+    return this.txForm(contractName, fn, title, [['Proposal', 'select', opts], ...extra]);
+  }
+
+  /**
+   * The guided proposal builder (proposal.js): one template per kind, so nobody has to write calldata. The page
+   * passes what the templates need (parameters with their bounds, elected NGOs, pausable contracts, addresses) as
+   * JSON; the browser encodes the call with the node's ABI and shows it in plain words before the wallet signs.
+   */
+  proposalBuilder(d, ngos) {
+    const normal = d.mode === 1;
+    const name = (k) => Buffer.from(k.slice(2), 'hex').toString().replace(/\0+$/, '');
+    const data = {
+      mode: d.mode, total: String(d.total ?? 0n),
+      params: d.params.filter(({ b }) => b).map(({ k, b }) => ({ key: k, name: name(k), unit: PARAM_UNIT[name(k)] ?? 'psy', value: String(b[0]), min: String(b[1]), max: String(b[2]), shown: fmtParam(k, b[0]) })),
+      elected: ngos.filter((x) => x.elected).map((x) => ({ address: x.address, name: x.name })),
+      challenged: ngos.filter((x) => x.kase && x.kase.challenger !== '0x0000000000000000000000000000000000000000' && !x.kase.done).map((x) => ({ address: x.address, name: x.name })),
+      pausable: this.pausableTargets().map(([n, a]) => ({ name: T(n), address: a })),
+    };
+    const kinds = [['signal', 'Ordinary: a decision or statement in words (no contract call)', true], ['decide', 'Ordinary: decide an attestation challenge by token vote', true],
+      ['treasury', 'Treasury: pay PSY from the Treasury', normal], ['param', 'Parameter: change one parameter', normal], ['removal', 'Removal: remove an elected NGO', normal],
+      ['emergency', 'Emergency: pause a contract (up to 30 days)', normal], ['fund', 'Fund: approve a volunteer-fund transfer (BNB Chain)', normal]];
+    const opt = ([v, label, ok]) => `<option value="${v}"${ok ? '' : ' disabled'}>${esc(T(label))}${ok ? '' : ' · ' + esc(T('needs Normal mode'))}</option>`;
+    const f = (id, label, input) => `<label class="form-label mt-2" for="${id}">${esc(T(label))}</label>${input}`;
+    const inp = (id, ph = '', type = 'text') => `<input class="form-control" id="${id}" type="${type}" placeholder="${esc(T(ph))}">`;
+    const sel = (id, opts) => `<select class="form-select" id="${id}">${opts}</select>`;
+    const ngoOpts = (list) => list.map((x) => `<option value="${x.address}">${esc(x.name)} · ${esc(short(x.address))}</option>`).join('');
+    return `<form class="panel builder mt-3" id="proposal-builder" novalidate><script type="application/json" id="pb-data">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>` +
+      `<h2 class="h4">${T('Make a proposal')}</h2><p class="muted">${T('Choose what the proposal should do and fill in the form. The page writes the contract call for you and shows it in plain words, with the rules it must meet, before your wallet signs.')}</p>` +
+      (normal ? '' : `<p class="warn">${T('Until 60 NGOs are elected (Normal mode), only Ordinary proposals can be made.')}</p>`) +
+      f('pb-kind', 'What should it do?', sel('pb-kind', kinds.map(opt).join(''))) +
+      `<fieldset data-for="decide" hidden>${f('pb-decide-ngo', 'NGO with an open challenge', data.challenged.length ? sel('pb-decide-ngo', ngoOpts(data.challenged)) : `<p class="muted">${T('No NGO has an open challenge.')}</p>`)}` +
+      f('pb-decide-up', 'Decision', sel('pb-decide-up', `<option value="true">${T('Uphold the challenge (the NGO is rejected)')}</option><option value="false">${T('Dismiss the challenge (the NGO stays)')}</option>`)) + '</fieldset>' +
+      `<fieldset data-for="treasury" hidden>${f('pb-t-to', 'Recipient address', inp('pb-t-to', '0x…'))}${f('pb-t-amount', 'Amount (PSY)', inp('pb-t-amount', '0', 'text'))}${f('pb-t-memo', 'Memo (stored on chain)', inp('pb-t-memo', 'What the payment is for'))}` +
+      `<p class="muted small">${T('A role holder cannot receive Treasury payments; the contract refuses it.')}</p></fieldset>` +
+      `<fieldset data-for="param" hidden>${f('pb-p-key', 'Parameter', sel('pb-p-key', data.params.map((x, i) => `<option value="${i}">${esc(x.name)} · ${esc(T('now {v}', { v: x.shown }))}</option>`).join('')))}` +
+      f('pb-p-value', 'New value', inp('pb-p-value', '')) + `<p class="muted small" id="pb-p-hint"></p></fieldset>` +
+      `<fieldset data-for="removal" hidden>${f('pb-r-ngo', 'Elected NGO', data.elected.length ? sel('pb-r-ngo', ngoOpts(data.elected)) : `<p class="muted">${T('No NGO is elected.')}</p>`)}${f('pb-r-reason', 'Reason (published text; its SHA-256 is stored)', '<textarea class="form-control" id="pb-r-reason" rows="3"></textarea>')}</fieldset>` +
+      `<fieldset data-for="emergency" hidden>${f('pb-e-target', 'Contract to pause', sel('pb-e-target', data.pausable.map((x) => `<option value="${x.address}">${esc(x.name)}</option>`).join('')))}` +
+      f('pb-e-hours', 'For how many hours (1 to 720)', inp('pb-e-hours', '72', 'number')) + f('pb-e-reason', 'Reason (published text; its SHA-256 is stored)', '<textarea class="form-control" id="pb-e-reason" rows="3"></textarea>') + '</fieldset>' +
+      `<fieldset data-for="fund" hidden>${f('pb-f-token', 'Token contract on BNB Chain', inp('pb-f-token', '0x…'))}${f('pb-f-to', 'Recipient on BNB Chain', inp('pb-f-to', '0x…'))}` +
+      f('pb-f-amount', 'Amount in the token\'s smallest unit', inp('pb-f-amount', '0')) + f('pb-f-chain', 'BNB Chain ID', inp('pb-f-chain', '56')) + f('pb-f-fund', 'Volunteer fund contract on BNB Chain', inp('pb-f-fund', '0x…')) + '</fieldset>' +
+      f('pb-desc', 'Title and explanation (stored on chain with the proposal)', '<textarea class="form-control" id="pb-desc" rows="4" required></textarea>') +
+      `<div class="d-flex gap-2 flex-wrap mt-3"><button class="btn btn-line" type="button" id="pb-review">${T('Review')}</button><button class="btn btn-cyan" type="submit" id="pb-send" disabled>${T('Send with wallet')}</button></div>` +
+      `<div id="pb-summary" class="mt-3" aria-live="polite"></div><div class="out muted mt-2"></div></form>`;
   }
 
   walletBar() {
@@ -601,12 +722,18 @@ export class Explorer {
       `<ul class="hm-radar-list" id="hm-radar-list" aria-label="${T('Network health figures')}">${radar.map((x) => `<li><b>${esc(x.axis)}</b> ${esc(x.text)}</li>`).join('')}</ul></div>` +
       `<div class="hm-gauge hm-heat"><h3>${T('Transactions by chain height')}</h3><div class="hm-strip" id="hm-strip" aria-hidden="true"></div>` +
       `<div class="hm-axis"><span>0</span><span>${T('BLOCK')}</span><span id="hm-axis-end"></span></div><ul class="hm-chips" id="hm-chips"></ul></div>` +
-      `<div class="hm-gauge hm-count"><h3>${T('Chain height')}</h3><div class="hm-num" id="hm-blk">0</div>` +
+      `<div class="hm-gauge hm-count"><h3>${T('Chain height')}</h3><div class="hm-num" id="hm-blk">${num(c.tip.chainHeight)}</div>` +
       `<p>${T('<span id="hm-txc">0</span> transactions on the map<br><span id="hm-moved">0</span> PSY moved')}</p>` +
       `<div class="hm-bar" title="${T('Time to the next block')}" aria-hidden="true"><i id="hm-next"></i></div></div></div></section>`;
-    const stats = (await this.stats()).map(([k, v]) => `<div class="hm-stat"><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('');
+    // what a newcomer should read in each figure (same order as stats(); the page updates only the values)
+    const hints = [null, null, T('1 to 3 is normal: parallel blocks are merged, not lost'), T('more peers make the network harder to cut off'),
+      T('rises only when a chain block uses more than {n} gas', { n: num(this.p.baseFeeTarget) }), null, null, null, null, null, null,
+      T('locked PSY is voting weight'), T('60 are needed for Normal mode; 100 seats in all'), T('21 members sign checkpoints; until then 3 bootstrap keys do'),
+      T('a checkpoint every {n} chain blocks makes them final', { n: this.p.checkpointInterval }), T('Bootstrap, then Normal or Interim')];
+    const stats = (await this.stats()).map(([k, v], i) => `<div class="hm-stat"><dt>${esc(k)}${hints[i] ? `<small class="hm-hint">${esc(hints[i])}</small>` : ''}</dt><dd>${esc(v)}</dd></div>`).join('');
     const supply = await this.supplyTable();
     const body = '<div class="hm" id="hm"><div class="hm-hero"><section class="hm-intro"><p class="eyebrow">' + T('{name} explorer', { name: TESTNET_NAME }) + '</p><h1>PSYROB</h1>' + lead +
+      `<p class="d-flex gap-2 flex-wrap mt-3"><a class="btn btn-cyan" href="/mine">${T('Start mining')}</a><a class="btn btn-line" href="/run-a-node">${T('Run a node')}</a></p>` +
       this.searchBox() + `<div class="rail" id="block-rail" aria-label="${T('Latest chain blocks')}"></div>` +
       '</section>' + map + '</div>' +
       `<dl class="hm-stats" id="hm-stats" aria-label="${T('Network figures')}">${stats}</dl>` + supply +
@@ -614,9 +741,10 @@ export class Explorer {
     return this.layout(T('Home'), body, '/', { head: '<link href="/home.css" rel="stylesheet"><style>.hm-radar-list{list-style:none;padding:0;margin:8px 0 0;font-size:13px;color:var(--mute)}.hm-radar-list b{color:var(--cyan);font:600 11px/1 "Barlow Condensed",sans-serif;letter-spacing:.1em;margin-right:4px}</style>', scripts: '<script src="/home-map.js"></script>' });
   }
 
-  txTable(txs, now = this.now()) {
+  txTable(txs, now = this.now(), { lookalike = new Set() } = {}) {
+    const flag = (a) => (a && lookalike.has(a) ? ` <span class="st warn" title="${T('Another address in this list starts and ends with the same characters. Compare every character before you send to it.')}">${T('look-alike')}</span>` : '');
     const rows = txs.map((t) => `<tr><td><a href="/block/${t.block}">${t.block}</a><div class="muted">${esc(ago(t.ts, now))}</div></td><td><a href="/tx/${t.hash}">${esc(short(t.hash))}</a>${t.status === 0 ? ` <span class="muted">${T('failed')}</span>` : ''}</td>` +
-      `<td>${this.addr(t.from)}</td><td>${t.to ? this.addr(t.to) : this.addr(t.contract) + ` <span class="muted">${T('(new contract)')}</span>`}${t.call ? `<div class="muted">${esc(t.call)}</div>` : ''}</td><td>${esc(t.valueText)} PSY</td></tr>`);
+      `<td>${this.addr(t.from)}${flag(t.from)}</td><td>${t.to ? this.addr(t.to) + flag(t.to) : this.addr(t.contract) + ` <span class="muted">${T('(new contract)')}</span>`}${t.call ? `<div class="muted">${esc(t.call)}</div>` : ''}</td><td>${esc(t.valueText)} PSY</td></tr>`);
     return `<div class="table-responsive"><table><thead><tr><th>${T('Chain block')}</th><th>${T('Transaction')}</th><th>${T('From')}</th><th>${T('To')}</th><th>${T('Value')}</th></tr></thead><tbody>${rows.join('') || `<tr><td colspan="5">${T('No transactions yet.')}</td></tr>`}</tbody></table></div>`;
   }
 
@@ -649,6 +777,18 @@ export class Explorer {
     return this.layout(T('Chain blocks'), body, '/blocks');
   }
 
+  /**
+   * Where a chain height stands: accepted (with its depth in chain blocks), then final once a signed checkpoint covers
+   * it (every {interval} chain blocks; a final block can never be undone). Not Bitcoin's "N confirmations".
+   */
+  finalityHtml(h) {
+    const c = this.chain, iv = this.p.checkpointInterval, fc = c.finalCheckpoint.number;
+    if (fc > 0 && h <= fc * iv) return `${badge('final', true)} <span class="muted">${T('covered by signed checkpoint {n}; it can never be undone', { n: num(Math.ceil(Math.max(h, 1) / iv)) })}</span>`;
+    const depth = c.tip.chainHeight - h, covering = Math.max(Math.ceil(Math.max(h, 1) / iv), fc + 1);
+    const minutes = Math.max(1, Math.ceil((covering * iv - c.tip.chainHeight) * this.p.targetSpacing / 60) + 1);
+    return `${badge('accepted', true)} <span class="muted">${T('{d} chain blocks deep · final with checkpoint {n}, in about {m} min', { d: num(Math.max(0, depth)), n: num(covering), m: num(minutes) })}</span>`;
+  }
+
   entryFor(ref) {
     const c = this.chain;
     if (/^\d{1,12}$/.test(ref)) return c.chain[Number(ref)] ? c.dag.get(c.chain[Number(ref)]) : null;
@@ -658,11 +798,12 @@ export class Explorer {
 
   blockPage(ref) {
     const e = this.entryFor(ref), c = this.chain;
-    if (!e) return this.layout(T('Block'), `<h1>${T('Block not found')}</h1>` + this.searchBox(ref), '/blocks');
+    if (!e) return notFound(this.layout(T('Block'), `<h1>${T('Block not found')}</h1><p class="muted">${T('No block has the height or hash {ref} on this node.', { ref: `<code>${esc(ref)}</code>` })}</p>` + this.searchBox(ref) + `<p><a href="/blocks">${T('See the latest chain blocks')}</a></p>`, '/blocks'));
     const onChain = c.chain[e.chainHeight] === e.hash;
     const hd = e.header;
     const kv = [
-      ['Hash', `<code>0x${e.hash}</code>`], ['Position', onChain ? T('chain block at height {h}', { h: e.chainHeight }) : T('parallel block (not on the selected chain)')],
+      ['Hash', `<code>0x${e.hash}</code>${copyBtn('0x' + e.hash)}`], ['Position', onChain ? T('chain block at height {h}', { h: e.chainHeight }) : T('parallel block (not on the selected chain)')],
+      ...(onChain ? [['Finality', this.finalityHtml(e.chainHeight)]] : c.acceptedBy.get(e.hash) ? [['Finality', T('merged by a chain block: ') + this.finalityHtml(c.dag.get(c.acceptedBy.get(e.hash).by)?.chainHeight ?? 0)]] : []),
       ['Blue score', e.blueScore], ['Parents', e.parents.map((p) => `<a href="/block/0x${p}"><code>${short('0x' + p)}</code></a>${p === e.selectedParent ? ` <span class="muted">${T('(selected)')}</span>` : ''}`).join('<br>') || T('none (genesis)')],
       ['Merged blue', (e.mergesetBlues ?? []).map((x) => `<a href="/block/0x${x}"><code>${short('0x' + x)}</code></a>`).join(' ') || '–'],
       ['Merged red', (e.mergesetReds ?? []).map((x) => `<a href="/block/0x${x}"><code>${short('0x' + x)}</code></a>`).join(' ') || '–'],
@@ -688,41 +829,57 @@ export class Explorer {
   }
 
   txPage(ref) {
-    if (!/^0x[0-9a-fA-F]{64}$/.test(ref)) return this.layout(T('Transaction'), `<h1>${T('Not a transaction hash')}</h1>` + this.searchBox(ref), '/txs');
+    if (!/^0x[0-9a-fA-F]{64}$/.test(ref)) return notFound(this.layout(T('Transaction'), `<h1>${T('Not a transaction hash')}</h1>` + this.searchBox(ref) + `<p><a href="/blocks">${T('See the latest chain blocks')}</a></p>`, '/txs'));
     const rpc = this.node.rpc;
     const t = rpc.methods.eth_getTransactionByHash.call(rpc, ref);
-    if (!t) return this.layout(T('Transaction'), `<h1>${T('Transaction not found')}</h1>` + this.searchBox(ref), '/txs');
+    if (!t) return notFound(this.layout(T('Transaction'), `<h1>${T('Transaction not found')}</h1><p class="muted">${T('This node does not know the transaction {ref}. A transaction sent moments ago may still be on its way; try again in a minute.', { ref: `<code>${esc(short(ref))}</code>` })}</p>` + this.searchBox(ref) + `<p><a href="/blocks">${T('See the latest chain blocks')}</a></p>`, '/txs'));
     const r = rpc.methods.eth_getTransactionReceipt.call(rpc, ref);
-    const kv = [['Hash', `<code>${t.hash}</code>`], ['Status', r ? (r.status === '0x1' ? badge('success', true) : badge('failed')) : badge('pending')], ['From', this.addr(t.from)],
+    const kv = [['Hash', `<code>${t.hash}</code>${copyBtn(t.hash)}`], ['Status', r ? (r.status === '0x1' ? badge('success', true) : badge('failed')) : badge('pending')], ['From', this.addr(t.from)],
       ['To', t.to ? this.addr(t.to) : T('contract creation')], ['Value', psy(BigInt(t.value)) + ' PSY'], ['Nonce', Number(t.nonce)], ['Gas limit', num(BigInt(t.gas))],
-      ...(r ? [['Chain block', `<a href="/block/${Number(r.blockNumber)}">#${Number(r.blockNumber)}</a>`], ['Contained in DAG block', `<a href="/block/${r.dagBlock}"><code>${short(r.dagBlock)}</code></a>`],
+      ...(r ? [['Chain block', `<a href="/block/${Number(r.blockNumber)}">#${Number(r.blockNumber)}</a>`], ['Finality', this.finalityHtml(Number(r.blockNumber))], ['Contained in DAG block', `<a href="/block/${r.dagBlock}"><code>${short(r.dagBlock)}</code></a>`],
         ['Gas used', num(BigInt(r.gasUsed))], ['Effective gas price', gwei(BigInt(r.effectiveGasPrice)) + ' gwei'], ['Contract created', r.contractAddress ? this.addr(r.contractAddress) : '–'], ['Logs', r.logs.length]] : []),
       ['Input', `<code>${esc(t.input.length > 300 ? t.input.slice(0, 300) + '…' : t.input)}</code>`]].map(([k, v]) => `<tr><th>${T(k)}</th><td>${v}</td></tr>`).join('');
     return this.layout(T('Transaction'), `<h1>${T('Transaction')}</h1><div class="table-responsive"><table>${kv}</table></div>${this.internalTransfers(r)}`, '/txs');
   }
 
   async addressPage(ref) {
-    if (!/^0x[0-9a-fA-F]{40}$/.test(ref)) return this.layout(T('Address'), `<h1>${T('Not an address')}</h1>` + this.searchBox(ref), '');
+    if (!/^0x[0-9a-fA-F]{40}$/.test(ref)) return notFound(this.layout(T('Address'), `<h1>${T('Not an address')}</h1><p class="muted">${T('An address is 0x followed by 40 hexadecimal characters.')}</p>` + this.searchBox(ref) + `<p><a href="/blocks">${T('See the latest chain blocks')}</a></p>`, ''));
     const a = fromHex(ref);
     const info = await this.reads(async (read, view) => ({
       acc: view.getAccount(a), code: view.getCode(a).length, miner: await read('MinerRegistry', 'isRegistered', [ref]), mined: await read('MinerRegistry', 'minedTotal', [ref]),
       ngo: await read('NGORegistry', 'status', [ref]), elected: await read('NGOElection', 'isElected', [ref]), role: await read('RoleElection', 'isRoleHolder', [ref]),
       locked: await read('VoteEscrow', 'locked', [ref]),
     }));
-    const txs = this.recentTxs(500, 5000).filter((t) => t.from === ref.toLowerCase() || t.to === ref.toLowerCase()).slice(0, 25);
-    const kv = [['Address', `<code>${esc(ref)}</code>${this.labels.get(ref.slice(2).toLowerCase()) ? ` <span class="muted">(${esc(T(this.labels.get(ref.slice(2).toLowerCase())))})</span>` : ''}`],
+    const me = ref.toLowerCase();
+    const txs = this.recentTxs(500, 5000).filter((t) => t.from === me || t.to === me).slice(0, 50);
+    // address poisoning: zero-value and dust transfers sent to this address by others are folded away, and addresses
+    // that share their first and last four characters with another one in the list are marked
+    const dust = (t) => t.to === me && t.from !== me && t.kind === 'transfer' && BigInt(t.value) < 10n ** 14n;
+    const shown = txs.filter((t) => !dust(t)).slice(0, 25), hidden = txs.filter(dust);
+    const groups = new Map();
+    for (const x of new Set([me, ...txs.flatMap((t) => [t.from, t.to, t.contract])].filter(Boolean))) {
+      const k = x.slice(2, 6) + x.slice(-4);
+      groups.set(k, [...(groups.get(k) ?? []), x]);
+    }
+    const lookalike = new Set([...groups.values()].filter((g) => g.length > 1).flat());
+    const kv = [['Address', `<code>${esc(checksum(ref))}</code>${copyBtn(checksum(ref))}${this.labels.get(ref.slice(2).toLowerCase()) ? ` <span class="muted">(${esc(T(this.labels.get(ref.slice(2).toLowerCase())))})</span>` : ''}`],
       ['Balance', psy(info.acc.balance) + ' PSY'], ['Nonce', String(info.acc.nonce)], ['Kind', info.code ? T('contract') : T('account')],
       ['Miner', info.miner ? T('registered · {n} blue blocks', { n: num(info.mined ?? 0n) }) : T('{n} blue blocks · not registered', { n: num(info.mined ?? 0n) })],
       ['NGO', info.ngo ? `<a href="/ngo/${esc(ref)}">${T(NGO_STATUS[Number(info.ngo)])}</a>${info.elected ? ' · ' + badge('elected', true) : ''}` : '–'],
       ['Role holder', info.role ? badge('in office (cannot vote)', true) : '–'], ['Locked for voting', psy(info.locked ?? 0n) + ' PSY']].map(([k, v]) => `<tr><th>${T(k)}</th><td>${v}</td></tr>`).join('');
-    return this.layout(T('Address'), `<h1>${T('Address')}</h1><div class="table-responsive"><table>${kv}</table></div><h2 class="mt-4">${T('Recent transactions')}</h2>${this.txTable(txs)}${this.addressRewards(ref.toLowerCase())}`, '');
+    return this.layout(T('Address'), `<h1>${T('Address')}</h1><div class="table-responsive"><table>${kv}</table></div><h2 class="mt-4">${T('Recent transactions')}</h2>` +
+      (lookalike.size ? `<div class="warn">${T('Some addresses below look alike: they share the first and last characters. Scammers send small transfers from such addresses so that you copy the wrong one from your history. Always compare the whole address.')}</div>` : '') +
+      this.txTable(shown, this.now(), { lookalike }) +
+      (hidden.length ? `<details class="mt-2"><summary>${T('{n} zero-value or tiny incoming transfers hidden', { n: num(hidden.length) })}</summary><p class="muted small">${T('Transfers of almost nothing from unknown addresses are a common trick to plant a look-alike address in your history. Never copy an address from them.')}</p>${this.txTable(hidden, this.now(), { lookalike })}</details>` : '') +
+      `<p class="mt-2"><a href="/api/address/${esc(me)}/txs.csv" download>${T('Download these transactions (CSV)')}</a></p>` +
+      this.addressRewards(me), '');
   }
 
   search(q) {
     if (/^\d{1,12}$/.test(q)) return { redirect: '/block/' + q };
     if (/^0x[0-9a-fA-F]{40}$/.test(q)) return { redirect: '/address/' + q };
     if (/^0x[0-9a-fA-F]{64}$/.test(q)) return { redirect: this.chain.dag.has(q.slice(2).toLowerCase()) ? '/block/' + q : '/tx/' + q };
-    return this.layout(T('Search'), `<h1>${T('Nothing found')}</h1><p class="muted">${T('Search for an address, a transaction hash, a chain height or a block hash.')}</p>` + this.searchBox(q), '');
+    return notFound(this.layout(T('Search'), `<h1>${T('Nothing found')}</h1><p class="muted">${T('Search for an address, a transaction hash, a chain height or a block hash.')}</p>` + this.searchBox(q) + `<p><a href="/blocks">${T('See the latest chain blocks')}</a></p>`, ''));
   }
 
   /** Emission charts: reward per blue block and cumulative issue of each pool over the years, the allocation. */
@@ -739,10 +896,10 @@ export class Explorer {
     const fmtY = (v) => (v >= 100 ? Math.round(v).toLocaleString(locale()) : v.toLocaleString(locale(), { minimumFractionDigits: v < 1 ? 3 : 1, maximumFractionDigits: v < 1 ? 3 : 1 }));
     const year = (v) => T('year {n}', { n: Math.round(v) });
     return '<div class="charts">' +
-      `<div class="panel"><h3>${T('Reward per blue block, each pool (PSY)')}</h3>${lineChart({ title: T('Reward per blue block over 40 years'), series: [{ name: T('Mining pool and NGO pool (same schedule)'), color: COLORS[0], points: reward }], fmtX: year, fmtY, marker: { x: now, label: T('now') } })}</div>` +
-      `<div class="panel"><h3>${T('PSY issued so far, each pool (millions)')}</h3>${lineChart({ title: T('Cumulative issue of each pool over 40 years'), series: [{ name: T('Each pool, of 360 million'), color: COLORS[1], points: issued }], fmtX: year, fmtY, marker: { x: now, label: T('now') } })}</div>` +
-      `<div class="panel"><h3>${T('Allocation of the {n} PSY', { n: num(1e9) })}</h3>${donut({ title: T('Allocation'), center: T('1B'), sub: T('PSY maximum'), parts: [{ label: T('Miners'), value: 36, color: COLORS[0] }, { label: T('NGOs'), value: 36, color: COLORS[1] }, { label: T('Treasury'), value: 16, color: COLORS[2] }, { label: T('Team (vesting)'), value: 12, color: COLORS[3] }] })}</div>` +
-      `<div class="panel"><h3>${T('Issued and burned so far (PSY)')}</h3>${barChart({ title: T('Issued and burned'), items: [{ label: T('Mining pool'), value: P(s.issuedMining), color: COLORS[0] }, { label: T('NGO pool'), value: P(s.issuedNGO), color: COLORS[1] }, { label: T('Burned'), value: P(s.burned), color: COLORS[4] }], fmt: (v) => v.toLocaleString(locale(), { maximumFractionDigits: 2 }) })}</div>` +
+      `<div class="panel"><h2 class="h3">${T('Reward per blue block, each pool (PSY)')}</h2>${lineChart({ title: T('Reward per blue block over 40 years'), series: [{ name: T('Mining pool and NGO pool (same schedule)'), color: COLORS[0], points: reward }], fmtX: year, fmtY, marker: { x: now, label: T('now') } })}</div>` +
+      `<div class="panel"><h2 class="h3">${T('PSY issued so far, each pool (millions)')}</h2>${lineChart({ title: T('Cumulative issue of each pool over 40 years'), series: [{ name: T('Each pool, of 360 million'), color: COLORS[1], points: issued }], fmtX: year, fmtY, marker: { x: now, label: T('now') } })}</div>` +
+      `<div class="panel"><h2 class="h3">${T('Allocation of the {n} PSY', { n: num(1e9) })}</h2>${donut({ title: T('Allocation'), center: T('1B'), sub: T('PSY maximum'), parts: [{ label: T('Miners'), value: 36, color: COLORS[0] }, { label: T('NGOs'), value: 36, color: COLORS[1] }, { label: T('Treasury'), value: 16, color: COLORS[2] }, { label: T('Team (vesting)'), value: 12, color: COLORS[3] }] })}</div>` +
+      `<div class="panel"><h2 class="h3">${T('Issued and burned so far (PSY)')}</h2>${barChart({ title: T('Issued and burned'), items: [{ label: T('Mining pool'), value: P(s.issuedMining), color: COLORS[0] }, { label: T('NGO pool'), value: P(s.issuedNGO), color: COLORS[1] }, { label: T('Burned'), value: P(s.burned), color: COLORS[4] }], fmt: (v) => v.toLocaleString(locale(), { maximumFractionDigits: 2 }) })}</div>` +
       '</div>';
   }
 
@@ -849,26 +1006,40 @@ export class Explorer {
   async attestationPage() {
     const d = await this.ngoList();
     const params = await this.reads(async (read) => ({ bond: await read('Params', 'get', [pkey('vouchBond')]), cb: await read('Params', 'get', [pkey('challengeBond')]), minBlocks: await read('Params', 'get', [pkey('vouchMinBlocks')]), cap: await read('Params', 'get', [pkey('maxActiveVouches')]), epochs: await read('Params', 'get', [pkey('vouchMinEpochs')]) }));
-    const waiting = d.out.filter((x) => Number(x.status) === 1);
+    const waiting = d.out.filter((x) => Number(x.status) === 1), now = this.now();
     const rows = waiting.map((x) => {
       const k = x.kase, ch = k && k.challenger !== '0x0000000000000000000000000000000000000000';
       const sw = x.sharesWith.length ? (x.sharesWith.length > 1 ? T('{n} other NGOs:', { n: x.sharesWith.length }) : T('1 other NGO:')) + ' ' + x.sharesWith.slice(0, 5).map((y) => `<a href="/ngo/${y.address}">${esc(y.name)}</a>`).join(', ') + (x.sharesWith.length > 5 ? ' …' : '') : T('none');
-      return `<tr><td><a href="/ngo/${x.address}">${esc(x.name)}</a></td><td>${x.vouches} / 5</td><td>${sw}</td><td>${Number(k?.windowEnds ?? 0n) ? when(k.windowEnds) : T('after the fifth vouch')}</td><td>${ch ? T('challenged · {a} uphold / {b} dismiss', { a: k.upholdVotes, b: k.dismissVotes }) : '–'}</td><td><code>${x.address}</code></td></tr>`;
+      // the actions that apply to this NGO now, in its own row (the contracts check again; app.js dry-runs first)
+      const ends = Number(k?.windowEnds ?? 0n), open = ends > 0 && ends > now && !ch;
+      const acts = [];
+      if (!ends && Number(x.vouches) < 5) acts.push(this.rowTx('Attestation', 'vouch', 'Vouch', [['address', x.address]], { value: String(params.bond ?? 0n), needs: 'voucher' }));
+      if (open) acts.push(`<button type="button" class="btn btn-sm btn-line" data-fill="f-Attestation-challenge-0" data-value="${x.address}" data-focus="[data-i='1']">${T('Challenge')}</button>`);
+      if (ch && !k.done) {
+        acts.push(`<div class="d-flex gap-1 flex-wrap"><span class="muted small w-100">${T('Elected NGOs decide:')}</span>` + this.rowTx('Attestation', 'decisionVote', 'Uphold', [['address', x.address], ['bool', 'true']], { line: true }) +
+          this.rowTx('Attestation', 'decisionVote', 'Dismiss', [['address', x.address], ['bool', 'false']], { line: true }) + '</div>');
+        if (now >= Number(k.challengedAt) + 5 * 86400) acts.push(this.rowTx('Attestation', 'resolve', 'Close the challenge', [['address', x.address]], { line: true }));
+      }
+      if (ends && ends <= now && !ch && !k.done) acts.push(this.rowTx('Attestation', 'finalize', 'Finalise', [['address', x.address]]));
+      return `<tr><td><a href="/ngo/${x.address}">${esc(x.name)}</a><div class="muted small">${this.addr(x.address)}</div></td><td>${x.vouches} / 5</td><td>${sw}</td><td>${ends ? when(ends) : T('after the fifth vouch')}</td><td>${ch ? T('challenged · {a} uphold / {b} dismiss', { a: k.upholdVotes, b: k.dismissVotes }) : '–'}</td><td class="acts">${acts.join('') || '–'}</td></tr>`;
     }).join('');
     const body = `<p class="eyebrow">${T('Attestation')}</p><h1>${T('Five miners vouch, anyone may challenge.')}</h1>` +
       `<p class="lead">${T('A registered miner with at least {blocks} blue blocks, mined in at least {weeks} different weeks, can vouch for an NGO by locking {bond} PSY for one term, for at most {cap} NGOs at a time. After five vouches a 7-day challenge window opens. A challenge locks {cb} PSY and is decided by the elected NGOs (the Interim Council in Interim mode), or by a token vote while too few NGOs are elected. If upheld, the vouchers\' locks are burned.', { blocks: num(params.minBlocks ?? 100n), weeks: num(params.epochs ?? 4n), bond: psy(params.bond ?? 0n), cap: num(params.cap ?? 10n), cb: psy(params.cb ?? 0n) })}</p>` +
       `<p>${T('New here? First <a href="/register/miner">register your miner</a>. NGOs: <a href="/register/ngo">register a miner for your NGO</a>.')}</p>` +
       `<p class="muted">${T('The five vouchers of an NGO must declare five different operators. "Its vouchers also back" lists the other NGOs vouched for by the same miners: many NGOs sharing vouchers can mean one party behind them, which is a reason to look closely and, if warranted, to challenge.')}</p>` +
       this.walletBar() +
-      `<div class="table-responsive"><table><thead><tr><th>${T('NGO')}</th><th>${T('Vouches')}</th><th>${T('Its vouchers also back')}</th><th>${T('Window ends')}</th><th>${T('Challenge')}</th><th>${T('Wallet')}</th></tr></thead><tbody>${rows || `<tr><td colspan="6">${T('No NGO is waiting for attestation.')}</td></tr>`}</tbody></table></div>` +
+      `<div class="table-responsive"><table><thead><tr><th>${T('NGO')}</th><th>${T('Vouches')}</th><th>${T('Its vouchers also back')}</th><th>${T('Window ends')}</th><th>${T('Challenge')}</th><th>${T('Act')}</th></tr></thead><tbody>${rows || `<tr><td colspan="6">${T('No NGO is waiting for attestation.')}</td></tr>`}</tbody></table></div>` +
+      `<p class="muted small" id="voucher-status" aria-live="polite">${T('Connect your wallet: the Vouch buttons then show whether this wallet may vouch.')}</p>` +
       '<div class="grid2 mt-3">' +
+      this.txForm('Attestation', 'challenge', 'Challenge an attestation', [['NGO wallet', 'address', '0x…'], ['Reason (its keccak hash is stored; publish the text yourself)', 'text-hash', 'The registration number does not exist']], { value: String(params.cb ?? 0n), note: 'Use the Challenge button in the NGO\'s row, or enter its wallet here. If the challenge is upheld you get the bond back; if it is dismissed it goes to the NGO\'s vouchers.' }) +
+      '</div>' +
+      `<details class="mt-3"><summary class="btn btn-line">${T('All attestation actions by NGO wallet (advanced)')}</summary><div class="grid2 mt-3">` +
       this.txForm('Attestation', 'vouch', 'Vouch for an NGO', [['NGO wallet', 'address', '0x…']], { value: String(params.bond ?? 0n) }) +
-      this.txForm('Attestation', 'challenge', 'Challenge an attestation', [['NGO wallet', 'address', '0x…'], ['Reason (its keccak hash is stored; publish the text yourself)', 'text-hash', 'The registration number does not exist']], { value: String(params.cb ?? 0n) }) +
-      this.txForm('Attestation', 'decisionVote', 'Decide a challenge (elected NGOs)', [['NGO wallet', 'address', '0x…'], ['Uphold the challenge? (true/false)', 'bool', 'true']]) +
+      this.txForm('Attestation', 'decisionVote', 'Decide a challenge (elected NGOs)', [['NGO wallet', 'address', '0x…'], ['Decision', 'select-bool', `<option value="true">${T('Uphold the challenge (the NGO is rejected)')}</option><option value="false">${T('Dismiss the challenge (the NGO stays)')}</option>`]]) +
       this.txForm('Attestation', 'resolve', 'Close a decided challenge', [['NGO wallet', 'address', '0x…']]) +
       this.txForm('Attestation', 'finalize', 'Finalise an attestation after the window', [['NGO wallet', 'address', '0x…']]) +
       this.txForm('Attestation', 'withdrawVouch', 'Take back a vouch bond after one term', [['NGO wallet', 'address', '0x…']]) +
-      '</div>';
+      '</div></details>';
     return this.layout(T('Attestation'), body, '/attestation', { scripts: this.appScripts() });
   }
 
@@ -921,6 +1092,7 @@ export class Explorer {
       for (const k of keys) params.push({ k, b: await read('Params', 'bounds', [k]) });
       return { ps: ps.reverse(), params, total: await read('VoteEscrow', 'totalLocked'), baseline: await read('Governor', 'baseline'), mode: Number(await read('GovernanceMode', 'mode') ?? 0n) };
     });
+    const ngos = (await this.ngoList()).out, now = this.now();
     const KIND = ['Ordinary', 'Treasury', 'Parameter', 'Fund', 'Removal', 'Upgrade', 'Emergency'];
     const STATE = ['voting', 'defeated', 'queued', 'executed'];
     const rows = d.ps.map(({ id, p, q, passes }) => `<tr><td>${id}</td><td>${T(KIND[Number(p.kind)])}</td><td>${this.addr(p.proposer)}</td><td>${psy(p.yes, 0)} / ${psy(p.no, 0)} / ${psy(p.abstain, 0)}<div class="muted">${T('{n} yes voters', { n: p.yesVoters })}</div></td>` +
@@ -930,15 +1102,19 @@ export class Explorer {
       this.walletBar() + `<div class="grid2"><div class="panel stat">${T('Locked PSY')}<strong>${psy(d.total ?? 0n, 0)}</strong></div><div class="panel stat">${T('Turnout baseline')}<strong>${psy(d.baseline ?? 0n, 0)}</strong></div><div class="panel stat">${T('Mode')}<strong>${T(MODES[d.mode])}</strong></div></div>` +
       `<div class="table-responsive"><table><thead><tr><th>#</th><th>${T('Kind')}</th><th>${T('Proposer')}</th><th>${T('Yes / no / abstain')}</th><th>${T('Needs')}</th><th>${T('Now')}</th><th>${T('State')}</th><th>${T('Voting ends')}</th></tr></thead><tbody>${rows || `<tr><td colspan="8">${T('No proposals yet.')}</td></tr>`}</tbody></table></div>` +
       '<div class="grid2 mt-3">' +
-      this.txForm('Governor', 'vote', 'Vote', [['Proposal number', 'uint', '0'], ['Vote', 'select', `<option value="1">${T('Yes')}</option><option value="0">${T('No')}</option><option value="2">${T('Abstain')}</option>`]]) +
-      this.txForm('Governor', 'decide', 'Count a finished vote (anyone)', [['Proposal number', 'uint', '0']]) +
-      this.txForm('Governor', 'execute', 'Execute after the timelock (anyone)', [['Proposal number', 'uint', '0']]) +
+      // pick proposals from lists of the ones each action applies to, instead of typing their numbers
+      this.pickForm('Governor', 'vote', 'Vote', d.ps.filter(({ p }) => Number(p.state) === 0 && Number(p.end) > now), KIND,
+        [['Vote', 'select', `<option value="1">${T('Yes')}</option><option value="0">${T('No')}</option><option value="2">${T('Abstain')}</option>`]], 'No proposal is open for voting.') +
+      this.pickForm('Governor', 'decide', 'Count a finished vote (anyone)', d.ps.filter(({ p }) => Number(p.state) === 0 && Number(p.end) <= now), KIND, [], 'No finished vote waits to be counted.') +
+      this.pickForm('Governor', 'execute', 'Execute after the timelock (anyone)', d.ps.filter(({ p }) => Number(p.state) === 2), KIND, [], 'No passed proposal waits to be executed.') +
+      '</div>' + this.proposalBuilder(d, ngos) +
+      `<details class="mt-3"><summary class="btn btn-line">${T('Advanced: a proposal from raw calldata')}</summary><div class="grid2 mt-3">` +
       this.txForm('Governor', 'propose', 'Make a proposal', [['Kind', 'select', ['Ordinary', 'Treasury', 'Parameter', 'Fund', 'Removal of an elected NGO', 'Upgrade (UpgradeRegistry)', 'Emergency (EmergencyPause)'].map((k, i) => `<option value="${i}">${T(k)}</option>`).join('')],
         ['Target contract addresses (one per line)', 'address[]', '0x7070…'], ['Values in wei (one per line)', 'uint[]', '0'], ['Calldata (one 0x… per line)', 'bytes[]', '0x…'], ['Description', 'string', 'What and why']],
         { note: 'Treasury proposals may only call the Treasury, parameter proposals only Params, fund proposals only FundApprovals, removal proposals only <code>NGOElection.remove(ngo, reasonHash)</code>, upgrade proposals only UpgradeRegistry (they also need yes votes from a majority of the elected NGOs), emergency proposals only EmergencyPause (2 days of voting, no timelock). Build calldata with the wallet tool: <code>psyrob-wallet calldata …</code>.' }) +
-      '</div>' +
+      '</div></details>' +
       `<h2 class="mt-4">${T('Parameters')}</h2><div class="table-responsive"><table><thead><tr><th>${T('Name')}</th><th>${T('Value')}</th><th>${T('Allowed range')}</th></tr></thead><tbody>${prow}</tbody></table></div>`;
-    return this.layout(T('Governance'), body, '/governance', { scripts: this.appScripts() });
+    return this.layout(T('Governance'), body, '/governance', { scripts: this.appScripts() + '<script type="module" src="/proposal.js"></script>' });
   }
 
   async rolesPage() {
@@ -1018,7 +1194,7 @@ export class Explorer {
         `${T('The contract function <code>RoleElection.pick(sourceHash, round, role, count)</code> returns the index, and the RoleDrawn event in the block above carries every value.')}</p></div>`;
     }
     const body = `<h1>${T('{role} election, round {id}', { role: T(ROLE_NAMES[Number(r.role)]), id })}</h1><p class="muted">${T('Opened {t}', { t: when(r.opens) })} · ${r.finalized ? T('decided') : T('not decided yet')}${r.winner !== '0x0000000000000000000000000000000000000000' ? ' · ' + T('holder {a}', { a: this.addr(r.winner) }) : ''}</p>` +
-      tie + `<div class="table-responsive"><table><thead><tr><th>${T('Candidate')}</th><th>${T('NGO votes')}</th><th></th></tr></thead><tbody>${rows || `<tr><td colspan="3">${T('No candidates.')}</td></tr>`}</tbody></table></div>`;
+      tie + `<div class="table-responsive"><table><thead><tr><th>${T('Candidate')}</th><th>${T('NGO votes')}</th><th>${T('Result')}</th></tr></thead><tbody>${rows || `<tr><td colspan="3">${T('No candidates.')}</td></tr>`}</tbody></table></div>`;
     return this.layout(T('Role election'), body, '/roles');
   }
 
@@ -1069,8 +1245,8 @@ export class Explorer {
     const st = this.node.finality?.status();
     const body = `<p class="eyebrow">${T('Finality committee')}</p><h1>${T('21 members, 15 to finalise.')}</h1><p class="lead">${T('Each week 6 elected NGOs and 15 registered miners are drawn among those who bonded PSY; no operator holds more than 3 seats. Every 30 chain blocks they sign a checkpoint; with 15 signatures it is final. Signing two different checkpoints for the same number burns 90 % of the bond.')}</p>` +
       bootPanel + this.walletBar() +
-      '<div class="charts">' + `<div class="panel"><h3>${T('This week\'s 21 seats')}</h3>${seats({ title: T('Committee seats'), groups: [{ label: T('NGO seats'), count: 6, filled: d.rows.filter((x) => Number(x.seat) === 1).length, color: COLORS[1] }, { label: T('Miner seats'), count: 15, filled: d.rows.filter((x) => Number(x.seat) !== 1).length, color: COLORS[0] }] })}</div>` +
-      `<div class="panel"><h3>${T('Finality')}</h3>${gauge({ title: T('Checkpoints signed'), value: d.rows.length && Number(d.cps ?? 0n) ? d.rows.reduce((a, x) => a + Number(x.signed ?? 0n), 0) / (d.rows.length * Number(d.cps)) : 0, center: '#' + num(c.finalCheckpoint.number), sub: T('latest final checkpoint') })}</div></div>` +
+      '<div class="charts">' + `<div class="panel"><h2 class="h3">${T('This week\'s 21 seats')}</h2>${seats({ title: T('Committee seats'), groups: [{ label: T('NGO seats'), count: 6, filled: d.rows.filter((x) => Number(x.seat) === 1).length, color: COLORS[1] }, { label: T('Miner seats'), count: 15, filled: d.rows.filter((x) => Number(x.seat) !== 1).length, color: COLORS[0] }] })}</div>` +
+      `<div class="panel"><h2 class="h3">${T('Finality')}</h2>${gauge({ title: T('Checkpoints signed'), value: d.rows.length && Number(d.cps ?? 0n) ? d.rows.reduce((a, x) => a + Number(x.signed ?? 0n), 0) / (d.rows.length * Number(d.cps)) : 0, center: '#' + num(c.finalCheckpoint.number), sub: T('latest final checkpoint') })}</div></div>` +
       `<div class="grid2"><div class="panel stat">${T('Finality')}<strong>${d.active ? T('active') : T('not yet (needs Normal mode)')}</strong></div><div class="panel stat">${T('Epoch')}<strong>${d.e ?? 0n}</strong></div><div class="panel stat">${T('Final checkpoint')}<strong>#${c.finalCheckpoint.number}</strong></div><div class="panel stat">${T('Bonded candidates')}<strong>${d.bonded}</strong></div></div>` +
       `<div class="table-responsive"><table><thead><tr><th>${T('Member')}</th><th>${T('Seat')}</th><th>${T('Checkpoints signed (of {n})', { n: d.cps ?? 0n })}</th><th>${T('State')}</th></tr></thead><tbody>${rows || `<tr><td colspan="4">${T('No committee this epoch.')}</td></tr>`}</tbody></table></div>` +
       (st?.collecting?.length ? `<p class="muted">${T('Collecting: {list}', { list: st.collecting.map((x) => T('checkpoint {c} ({s})', { c: x.checkpoint, s: x.signatures })).join(', ') })}</p>` : '') +
@@ -1139,10 +1315,10 @@ export class Explorer {
     const lorenz = [[0, 0], ...bal.map((b, i) => { acc += b; return [(i + 1) / bal.length * 100, tot ? acc / tot * 100 : 0]; })];
     const pc = (v) => `${Math.round(v)} %`;
     return '<div class="charts">' +
-      `<div class="panel"><h3>${T('Share of blue blocks by miner (last day)')}</h3>${barChart({ title: T('Miner shares'), items: mining, max: 1 })}</div>` +
-      `<div class="panel"><h3>${T('Mining spread')}</h3>${gauge({ title: T('Mining spread'), value: d.mining.holders ? 1 - d.mining.hhi : 0, center: String(d.mining.nakamoto), sub: T('miners needed for a majority') })}</div>` +
-      `<div class="panel"><h3>${T('How evenly PSY is held (Lorenz curve)')}</h3>${lineChart({ title: T('Lorenz curve of holdings'), series: [{ name: T('Actual'), color: COLORS[0], points: bal.length ? lorenz : [] }, { name: T('Perfectly equal'), color: COLORS[2], points: [[0, 0], [100, 100]] }], fmtX: pc, fmtY: pc, yMin: 0, area: false })}</div>` +
-      `<div class="panel"><h3>${T('Participation')}</h3><div class="grid2">${gauge({ title: T('Locked for voting'), value: g.lockedShareOfCirculating / 100, center: g.lockedShareOfCirculating + ' %', sub: T('of PSY locked') })}` +
+      `<div class="panel"><h2 class="h3">${T('Share of blue blocks by miner (last day)')}</h2>${barChart({ title: T('Miner shares'), items: mining, max: 1 })}</div>` +
+      `<div class="panel"><h2 class="h3">${T('Mining spread')}</h2>${gauge({ title: T('Mining spread'), value: d.mining.holders ? 1 - d.mining.hhi : 0, center: String(d.mining.nakamoto), sub: T('miners needed for a majority') })}</div>` +
+      `<div class="panel"><h2 class="h3">${T('How evenly PSY is held (Lorenz curve)')}</h2>${lineChart({ title: T('Lorenz curve of holdings'), series: [{ name: T('Actual'), color: COLORS[0], points: bal.length ? lorenz : [] }, { name: T('Perfectly equal'), color: COLORS[2], points: [[0, 0], [100, 100]] }], fmtX: pc, fmtY: pc, yMin: 0, area: false })}</div>` +
+      `<div class="panel"><h2 class="h3">${T('Participation')}</h2><div class="grid2">${gauge({ title: T('Locked for voting'), value: g.lockedShareOfCirculating / 100, center: g.lockedShareOfCirculating + ' %', sub: T('of PSY locked') })}` +
       `${gauge({ title: T('NGO seats'), value: g.ngos.elected / 100, center: `${g.ngos.elected}/100`, sub: T('NGO seats filled') })}${gauge({ title: T('Committee signing'), value: g.committee.signingRate ?? 0, center: g.committee.signingRate === null ? '–' : Math.round(g.committee.signingRate * 100) + ' %', sub: T('signatures given') })}</div></div>` +
       '</div>';
   }
@@ -1231,10 +1407,12 @@ function pkey(name) { return '0x' + Buffer.from(name).toString('hex').padEnd(64,
 
 installPages(Explorer, { esc, num, psy, when, badge, short, h0x, pkey, ROLE_NAMES, MODES, NGO_STATUS });
 installV8Pages(Explorer, { esc, num, when, badge, short });
+/** The unit of each parameter (Params.sol): PSY amounts in wei, plain counts, or basis points. */
+const PARAM_UNIT = { vouchMinBlocks: 'count', maxActiveVouches: 'count', vouchMinEpochs: 'count', firstElectionMinVoters: 'count', maxBallotWeightBps: 'bps' };
 function fmtParam(k, v) {
   const name = Buffer.from(k.slice(2), 'hex').toString().replace(/\0+$/, '');
   if (name === 'maxBallotWeightBps') return T('{n} % of locked PSY', { n: (Number(v) / 100).toLocaleString(locale()) });
-  return ['vouchMinBlocks', 'maxActiveVouches', 'vouchMinEpochs'].includes(name) ? num(v) : psy(v, 2) + ' PSY';
+  return PARAM_UNIT[name] === 'count' ? num(v) : psy(v, 2) + ' PSY';
 }
 
 export { encodeParams, decodeParams, toQuantity };

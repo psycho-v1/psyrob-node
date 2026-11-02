@@ -12,6 +12,6 @@
   "0xed186dd953942be292bbb96d09be61b3dd861c77"
  ],
  "bootstrapQuorum": 2,
- "extra": "PSYROB v10 genesis 87870",
- "note": "Launch ceremony of testnet v10.0: psyrob-node --prelaunch genesis/launch-87870.json. The three Dev Account wallets sign their seats and council keys at /launch; the signed base also names the three bootstrap finality keys (dedicated keys that do not mine and hold no PSY; any 2 of them finalise checkpoints until the first finality committee is sealed, for 12 months at most). genesis/build.js --launch builds the genesis from the signed file."
+ "extra": "PSYROB v11 genesis 87870",
+ "note": "Launch ceremony of testnet v11.0 (a fresh chain that replaces v10; chain ID 87870 and the keys of v10 are kept): psyrob-node --prelaunch genesis/launch-87870.json. The three Dev Account wallets sign their seats and council keys at /launch; the signed base also names the three bootstrap finality keys (dedicated keys that do not mine and hold no PSY; any 2 of them finalise checkpoints until the first finality committee is sealed, for 12 months at most). genesis/build.js --launch builds the genesis from the signed file."
 }

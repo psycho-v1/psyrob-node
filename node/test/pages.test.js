@@ -105,6 +105,62 @@ test('explorer pages: every route, 404s, pagination, escaping, banners, radar, n
   assert.match(HEADERS['Content-Security-Policy'], /script-src 'self';/);
   assert.doesNotMatch(HEADERS['Content-Security-Policy'], /https:/);
 
+  // ---- addresses: EIP-55 checksum, full value on hover, copy button with the full value
+  {
+    const a = '0x5aaeb6053f3e94c9b9a09f33669435e7ef1beaed'; // the EIP-55 test vector
+    const page = await get('/address/' + a);
+    assert.ok(page.includes('<code>0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed</code>'), 'checksummed address');
+    assert.ok(page.includes('data-copy="0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"'), 'copy button copies the full address');
+    const home = await get('/');
+    assert.match(home, /<a href="\/address\/0x[0-9a-f]{40}" title="0x[0-9a-fA-F]{40}">/, 'shortened addresses carry the full one');
+    assert.ok(home.includes('<header>') && home.includes('href="#main"') && home.includes('id="main"'), 'header landmark and skip link');
+    assert.ok(home.includes('<label class="form-label" for="search-q">'), 'the search field has a visible label');
+    assert.ok(home.includes('<meta name="description"') && home.includes('property="og:title"'), 'link previews');
+    assert.match(home, /id="hm-blk">\d/, 'the chain height is the real number from the first paint');
+  }
+
+  // ---- My account and /api/account: one source for both; the vouch checklist states where each rule stands
+  {
+    const j = await ex.accountJson(hex(rich.addr));
+    assert.equal(j.address, hex(rich.addr).toLowerCase());
+    assert.equal(j.roles.miner, true, 'a registered miner');
+    assert.equal(j.roles.holder, true);
+    assert.equal(typeof j.balance, 'string', 'amounts are decimal strings (wei)');
+    assert.ok(BigInt(j.locked) === 10_000n * PSY, 'locked PSY');
+    assert.equal(typeof j.tip.chainHeight, 'number');
+    assert.ok(JSON.stringify(j), 'serialisable');
+    assert.equal(await ex.accountJson('0x123'), null);
+    const acct = await get('/account?address=' + hex(rich.addr));
+    assert.ok(acct.includes('<ul class="check">') && /of \d[\d,]* blue blocks mined/.test(acct), 'vouch checklist with the numbers');
+    // finality in steps on blocks and transactions
+    const blk = await get('/block/1');
+    assert.match(blk, /chain blocks deep · final with checkpoint 1, in about \d+ min|covered by signed checkpoint/, 'finality step on a block');
+  }
+  // ---- participation: actions in the rows, proposals picked from lists, the guided proposal builder
+  {
+    const att = await get('/attestation');
+    assert.ok(att.includes('class="tx row-tx" data-c="Attestation" data-f="vouch"') && att.includes('data-needs="voucher"'), 'Vouch in the NGO row');
+    assert.ok(att.includes('id="voucher-status"'), 'where the wallet\'s eligibility is shown');
+    assert.ok(!/true\/false/.test(att) && att.includes('data-kind="bool"'), 'decisions are chosen, not typed as true/false');
+    const gov = await get('/governance');
+    assert.ok(gov.includes('id="proposal-builder"') && gov.includes('<script type="module" src="/proposal.js"></script>'), 'the proposal builder');
+    const data = JSON.parse(/<script type="application\/json" id="pb-data">([^<]*)<\/script>/.exec(gov)[1]);
+    assert.ok(data.params.some((x) => x.name === 'vouchBond' && x.unit === 'psy') && data.params.some((x) => x.name === 'firstElectionMinVoters' && x.unit === 'count'), 'parameters with their units');
+    assert.ok(data.pausable.length > 3, 'pausable contracts');
+    assert.match(gov, /<option value="treasury" disabled>/, 'spending needs Normal mode');
+    assert.ok(gov.includes('data-f="vote"') && /<select class="form-select" id="f-Governor-vote-0" data-i="0"><option value="0">#0 · /.test(gov), 'vote on a proposal picked from the open ones');
+    assert.ok(gov.includes('Advanced: a proposal from raw calldata'), 'raw calldata stays available');
+  }
+
+  // ---- address poisoning: look-alike addresses are marked; zero-value transfers from others are folded away
+  {
+    const a = '0x1234' + '0'.repeat(32) + 'abcd', b = '0x1234' + 'f'.repeat(32) + 'abcd';
+    const row = (from, to, value) => ({ hash: '0x' + '22'.repeat(32), block: 1, ts: 0, from, to, contract: null, value: String(value), valueText: '0', kind: 'transfer', status: 1, call: null });
+    const html = ex.txTable([row(a, b, 0)], 0, { lookalike: new Set([a, b]) });
+    assert.equal((html.match(/look-alike/g) ?? []).length, 2, 'both look-alikes are marked');
+    assert.ok(!ex.txTable([row(a, b, 0)], 0).includes('look-alike'), 'no mark without a look-alike');
+  }
+
   // ---- 404 for unknown or malformed ids
   for (const r of ['/proposal/1', '/proposal/999999', '/proposal/abc', '/proposal/-1', '/election-round/99', '/election-round/x', '/committee/999999', '/committee/1e3',
     '/contract/Nope', '/contract/__proto__', '/contract/constructor', '/contract/toString']) assert.equal(await get(r), null, '404 for ' + r);
@@ -185,6 +241,12 @@ test('explorer pages: every route, 404s, pagination, escaping, banners, radar, n
     assert.equal((await req('/vendor/bootstrap.min.css', 'explorer.psyrob.com')).code, 200);
     assert.equal((await req('/vendor/fonts/barlow-condensed-latin-600-normal.woff2', 'explorer.psyrob.com')).code, 200);
     assert.equal((await req('/proposal/424242', 'explorer.psyrob.com')).code, 404);
+    // a block, transaction or address that does not exist is a 404 too (link checkers, caches), with a way on
+    for (const r of ['/block/999999', '/block/abc', '/tx/0x' + '11'.repeat(32), '/tx/xyz', '/address/notanaddress', '/search?q=zzzz']) {
+      assert.equal((await req(r, 'explorer.psyrob.com')).code, 404, r);
+    }
+    assert.equal((await req('/block/0', 'explorer.psyrob.com')).code, 200);
+    assert.equal((await req('/ui.js', 'explorer.psyrob.com')).code, 200);
     // rate limits follow the real client behind the tunnel (CF-Connecting-IP on a loopback connection), so one busy
     // client cannot use up everyone's budget
     const cf = (path, ip) => new Promise((resolve, reject) => {
@@ -210,6 +272,20 @@ test('explorer pages: every route, 404s, pagination, escaping, banners, radar, n
       });
       r.on('error', reject); r.end();
     });
+    // CSV downloads and the account API over HTTP
+    {
+      const h = await fetchRaw('/api/holders.csv', '192.0.2.50');
+      assert.equal(h.code, 200);
+      assert.match(h.headers['content-type'], /text\/csv/);
+      assert.match(h.body.toString(), /^rank,address,label,balance_psy\r\n1,0x[0-9a-fA-F]{40},/);
+      const tx = await fetchRaw(`/api/address/${hex(rich.addr)}/txs.csv`, '192.0.2.50');
+      assert.equal(tx.code, 200);
+      assert.ok(tx.body.toString().split('\r\n').length > 3, 'the address has transactions');
+      assert.match(tx.body.toString(), /,1000,transfer,,success\r\n/, 'exact PSY amounts');
+      assert.equal((await fetchRaw('/api/account/' + hex(ngo.addr), '192.0.2.50')).code, 200);
+      assert.equal((await fetchRaw('/api/account/nope', '192.0.2.50')).code, 404);
+      assert.equal((await fetchRaw('/psy-tokens.css', '192.0.2.50')).code, 200);
+    }
     try {
       server.explorer.downloads = new Downloads(dl, { perHour: 2 });
       server.explorer.cache.clear();

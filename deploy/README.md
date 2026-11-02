@@ -22,6 +22,12 @@ user `psyrob`. Adjust the paths at the top of each file for another server.
 
 ## Launch (chain 87870)
 
+Testnet v11 (2 November 2026) was a relaunch: a fresh chain from a new genesis on the same chain ID, Dev Accounts and
+keys as v10. For a relaunch, skip steps 0 and 1 (the keys exist), commit and tag `vX.0.0-prelaunch` with the new label in
+`genesis/launch-87870.json` (`extra`), set `TAG` in `PRELAUNCH.sh` and `LAUNCH.sh`, then run steps 2 and 3.
+`PRELAUNCH.sh` stops the watchdog and moves the earlier ceremony file aside; `LAUNCH.sh` accepts only a ceremony with
+the new label; the node moves the blocks of the earlier chain aside by itself when it starts on the new genesis.
+
 0. The production clone: `git clone /home/psycho/psyrob /home/psycho/psyrob-node && cd /home/psycho/psyrob-node && npm ci`
    (as `psycho`), and an empty data folder: `sudo install -d -m 0750 -o psyrob -g psyrob /var/lib/psyrob-node`.
 1. `sudo bash deploy/KEYS.sh`, then commit `genesis/launch-87870.json` and `docs/RELEASE-KEY.pem` and tag

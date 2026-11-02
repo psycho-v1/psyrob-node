@@ -51,7 +51,7 @@ for (const f of SERVER) {
 keys.add('Burn address');
 for (const n of [1, 2, 3]) keys.add(`Dev Account ${n}`), keys.add(`Dev Account ${n} vesting`);
 // 3. the browser scripts
-for (const k of clientKeysOf(['app.js', 'register.js', 'pages.js', 'home-map.js'].map((f) => read('node/web/' + f)))) keys.add(k);
+for (const k of clientKeysOf(['app.js', 'register.js', 'pages.js', 'home-map.js', 'proposal.js'].map((f) => read('node/web/' + f)))) keys.add(k);
 
 // 4. render every page of a test chain with some activity (as node/test/pages.test.js does)
 const PSY = 10n ** 18n, A = artifacts(), hex = (a) => '0x' + bytesToHex(a);

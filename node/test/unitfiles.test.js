@@ -135,3 +135,12 @@ test('psyrob-miner.service: the full unit starts the real miner, which mines blo
     fs.rmdirSync(dir);
   }
 });
+
+test('Windows launcher: the node listens on the port the explorer and the miner name (8770)', () => {
+  const bat = fs.readFileSync(path.join(REPO, 'Start-PSYROB.bat'), 'utf8');
+  const port = /--http-port (\d+)/.exec(bat)?.[1];
+  const nodeDefault = /opt\('http-port', (\d+)\)/.exec(fs.readFileSync(path.join(REPO, 'node/bin/psyrob-node.js'), 'utf8'))?.[1];
+  assert.equal(port, nodeDefault, 'Start-PSYROB.bat uses the node default port');
+  assert.ok(fs.readFileSync(path.join(REPO, 'node/src/explorer-pages.js'), 'utf8').includes(`127.0.0.1:${port}`), '/mine and /run-a-node name the same port');
+  assert.ok(fs.readFileSync(path.join(REPO, 'docs/WINDOWS-NODE.md'), 'utf8').includes(`127.0.0.1:${port}`), 'the Windows guide names the same port');
+});

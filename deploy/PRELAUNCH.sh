@@ -11,7 +11,7 @@
 # The Cloudflare tunnel is not touched. Log: /var/log/psyrob-prelaunch.log.
 set -euo pipefail
 
-TAG=v10.0.0-prelaunch
+TAG=v11.0.0-prelaunch
 R=/home/psycho/psyrob-node
 DEV=/home/psycho/psyrob
 LOG=/var/log/psyrob-prelaunch.log
@@ -23,8 +23,16 @@ exec > >(tee -a "$LOG") 2>&1
 say() { echo "$(date -u '+%F %T UTC') | $*"; }
 asme() { sudo -u psycho -H "$@"; }
 
+# the watchdog checks for a running chain: during the ceremony it would restart the pre-launch page every minute
+# (deploy/LAUNCH.sh starts it again)
+systemctl stop psyrob-watchdog.timer 2>/dev/null || true
 say "production clone -> $TAG"
 systemctl stop psyrob-node 2>/dev/null || true
+# the signed ceremony of an earlier network (a relaunch): moved aside, so only signatures of this ceremony are used
+if [ -f /var/lib/psyrob-node/launch.json ]; then
+  old=/var/lib/psyrob-node/launch.before-$(date +%s).json
+  mv /var/lib/psyrob-node/launch.json "$old"; say "moved the earlier ceremony file aside to $old"
+fi
 asme git -C "$R" fetch --tags origin
 asme git -C "$R" checkout --detach "$TAG"
 

@@ -1,4 +1,4 @@
-# PSYROB testnet v10.0
+# PSYROB testnet v11.0
 
 A block-DAG network with CPU mining. NGOs are elected on-chain and share the emission with miners.
 
@@ -33,7 +33,7 @@ A block-DAG network with CPU mining. NGOs are elected on-chain and share the emi
 
 | | |
 |---|---|
-| Network | PSYROB **testnet** (v10), chain ID **87870** (`0x1573e`), symbol PSY |
+| Network | PSYROB **testnet** (v11), chain ID **87870** (`0x1573e`), symbol PSY. v11 is a fresh chain from a new genesis (2 November 2026); it replaces v10, whose balances do not carry over |
 | RPC | `https://rpc.psyrob.com` |
 | Explorer | `https://explorer.psyrob.com` |
 | P2P seed | `wss://rpc.psyrob.com/p2p` (in `genesis/seeds.txt`; no port forwarding needed to connect out) |

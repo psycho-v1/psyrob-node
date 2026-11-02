@@ -167,6 +167,22 @@ contract GovernanceTest is Fixture {
         assertEq(auditor.balance, 5_000 ether);
     }
 
+    /// The explorer's proposal builder makes a statement-only Ordinary proposal as one call to address(0) with no
+    /// calldata and no value: it must be accepted, and once passed it must execute (a call to an empty account succeeds).
+    function test_ordinaryStatementOnlyProposalExecutes() public {
+        address p = voter("proposer", 1_000 ether);
+        address w = voter("whale", 9_000 ether);
+        vm.prank(p);
+        uint256 id = gov.propose(0, _one(address(0)), _zero(), _data(""), "We thank the testers");
+        vm.roll(block.number + 1);
+        vm.prank(w);
+        gov.vote(id, 1);
+        skipTime(5 days);
+        gov.decide(id);
+        skipTime(48 hours);
+        gov.execute(id);
+    }
+
     function test_governorFloorFailsWithoutEnoughYes() public {
         electFirst(60);
         address p = voter("proposer", 1_000 ether);

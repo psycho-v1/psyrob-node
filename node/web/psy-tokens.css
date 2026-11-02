@@ -1,0 +1,53 @@
+/* PSYROB design tokens: one file for the explorer, psyrob.com and the Members Hub.
+   The explorer serves it at /psy-tokens.css; the website and the hub load their own copy (each site's CSP allows
+   only its own origin). One accent colour for UI and icons; #00F0FF appears only inside the logo glow. */
+:root {
+  /* surfaces */
+  --psy-bg: #071014; --psy-panel: #0c181c; --psy-field: #081216; --psy-line: #1c3336;
+  /* text */
+  --psy-ink: #e7f4f2; --psy-mute: #8aa8a6; --psy-on-accent: #06201e;
+  /* accent */
+  --psy-accent: #3ee0d6; --psy-accent-weak: rgba(62, 224, 214, .14);
+  /* meaning: always paired with a word or an icon, never colour alone */
+  --psy-ok: #8de9b8; --psy-ok-bg: #0b1a12;
+  --psy-warn: #e8b04a; --psy-warn-ink: #e8d9a8; --psy-warn-bg: #151208; --psy-warn-line: #6b5a2a;
+  --psy-danger: #e07a72; --psy-danger-ink: #f0c4c4; --psy-danger-bg: #1a0b0b; --psy-danger-line: #6b3a3a;
+  /* DAG */
+  --psy-blue-block: #3ee0d6; --psy-red-block: #b97b7b; --psy-pending: #8aa8a6;
+  /* type */
+  --psy-serif: "Source Serif 4", "Palatino Linotype", Palatino, Georgia, serif;
+  --psy-cond: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --psy-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --psy-fs-display: clamp(42px, 7vw, 72px); --psy-fs-h1: clamp(36px, 7vw, 64px); --psy-fs-h2: 28px; --psy-fs-h3: 22px;
+  --psy-fs-body: 18px; --psy-fs-small: 15px; --psy-fs-label: 13px;
+  --psy-lh-body: 1.5; --psy-lh-head: .95;
+  --psy-track-label: .14em; --psy-track-nav: .08em; --psy-track-button: .1em;
+  /* shape and motion */
+  --psy-radius: 0; --psy-border: 1px solid var(--psy-line);
+  --psy-focus: 2px solid var(--psy-accent); --psy-focus-offset: 2px;
+  --psy-dur: 160ms;
+}
+:focus-visible { outline: var(--psy-focus); outline-offset: var(--psy-focus-offset); }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* shared components (plain classes, no framework) */
+.psy-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 10px 14px; border-radius: 0; cursor: pointer;
+  font: 600 14px/1 var(--psy-cond); letter-spacing: var(--psy-track-button); text-transform: uppercase;
+  background: transparent; color: var(--psy-accent); border: 1px solid var(--psy-accent); }
+.psy-btn.primary { background: var(--psy-accent); color: var(--psy-on-accent); border-color: var(--psy-accent); }
+.psy-btn.ghost { color: var(--psy-mute); border-color: transparent; }
+.psy-btn.danger { color: var(--psy-danger); border-color: var(--psy-danger-line); }
+.psy-btn:disabled { opacity: .4; cursor: not-allowed; }
+.psy-tabs { display: flex; gap: 18px; border-bottom: var(--psy-border); }
+.psy-tabs [role="tab"] { background: none; border: 0; padding: 10px 0; color: var(--psy-mute); font: 600 14px/1 var(--psy-cond); letter-spacing: var(--psy-track-nav); text-transform: uppercase; border-bottom: 2px solid transparent; }
+.psy-tabs [role="tab"][aria-selected="true"] { color: var(--psy-ink); border-bottom-color: var(--psy-accent); }
+.psy-chip { display: inline-block; padding: 4px 7px; font: 600 12px/1 var(--psy-cond); letter-spacing: var(--psy-track-label); text-transform: uppercase; border: 1px solid var(--psy-accent); color: var(--psy-accent); }
+.psy-badge { display: inline-block; padding: 3px 6px; font: 600 12px/1 var(--psy-cond); letter-spacing: .12em; text-transform: uppercase; border: 1px solid var(--psy-line); color: var(--psy-mute); white-space: nowrap; }
+.psy-badge.on, .psy-badge.ok { background: var(--psy-accent); color: var(--psy-on-accent); border-color: var(--psy-accent); }
+.psy-badge.warn { border-color: var(--psy-warn-line); color: var(--psy-warn-ink); }
+.psy-badge.danger { border-color: var(--psy-danger-line); color: var(--psy-danger-ink); }
+.psy-alert { padding: 12px 14px; margin: 12px 0; border: 1px solid var(--psy-line); background: var(--psy-panel); color: var(--psy-ink); }
+.psy-alert.warn { border-color: var(--psy-warn-line); background: var(--psy-warn-bg); color: var(--psy-warn-ink); }
+.psy-alert.danger { border-color: var(--psy-danger-line); background: var(--psy-danger-bg); color: var(--psy-danger-ink); }
+.psy-card { background: var(--psy-panel); border: var(--psy-border); padding: 14px; }
+.psy-label { color: var(--psy-mute); font: 500 var(--psy-fs-label)/1 var(--psy-cond); letter-spacing: var(--psy-track-nav); text-transform: uppercase; }

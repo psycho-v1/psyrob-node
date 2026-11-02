@@ -31,6 +31,9 @@ export function installV8Pages(Explorer, H) {
   const ago = (t, now) => { const d = Number(t) - now; const h = Math.round(Math.abs(d) / 3600); return d > 0 ? (h < 48 ? T('in {n} h', { n: h }) : T('in {n} days', { n: Math.round(h / 24) })) : T('reached'); };
 
   /** Council, registry and pause state at the tip, cached per tip. */
+  /** The contracts an emergency pause can name, [name, address] (the proposal builder offers the same list). */
+  P.pausableTargets = function () { return PAUSABLE; };
+
   P.v8State = async function () {
     const c = this.chain;
     if (this.v8Cache?.tip === c.tip.hash) return this.v8Cache.value;
@@ -174,7 +177,7 @@ export function installV8Pages(Explorer, H) {
     const body = `<p class="eyebrow">${T('Emergency pause')}</p><h1>${T('A brake, not a lever.')}</h1>` +
       `<p class="lead">${T('In a hack or a serious bug, one contract or all transactions can be paused for at most 72 hours. Mining, rewards, votes, upgrades, finality and the 12 % vesting keep running; nobody can move PSY while the whole network is paused, the Dev Account wallets included. Only a DAO vote can pause for longer or end a pause early.')}</p>` +
       this.walletBar() +
-      `<div class="grid2"><div class="panel stat">${T('Paused now')}<strong>${live.length ? live.map((x) => esc(T(x.name))).join(', ') : T('nothing')}</strong></div><div class="panel stat">${T('Dev council')}<strong>${d.retired ? T('pause only') : T('active')}</strong></div></div>` +
+      `<div class="grid2"><div class="panel stat">${T('Paused now')}<strong>${live.length ? live.map((x) => esc(T(x.name))).join(', ') : T('Not paused: everything runs normally')}</strong></div><div class="panel stat">${T('Dev council')}<strong>${d.retired ? T('pause only') : T('active')}</strong></div></div>` +
       kv([['Who can pause', d.retired ? T('2 of 3 dev council keys, or the finality committee (14 of 21 members, at least 4 of them NGOs, within 6 hours)') : T('2 of 3 dev council keys')],
         ['How long', T('72 hours at most, then it lifts by itself; a DAO Emergency proposal (2 days of voting, no timelock) can pause up to 30 days or end a pause')],
         ['Limits', cooldown + ' ' + T('If the DAO ends a council pause early, the council cannot pause for 30 days. The committee cannot pause the same target again within 7 days.')],

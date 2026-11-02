@@ -52,10 +52,17 @@ export class Node {
     // with the progress, so the node never looks dead and nobody restarts it or deletes its data
     this.startup = { replayed: 0, of: raws.length, since: Date.now() };
     const standIn = o.httpPort === null || !raws.length ? null : await startingServer(this, g, o).catch(() => null);
+    // give the stand-in server a turn every ~50 ms (not every n blocks: late blocks are slower to apply), and log the
+    // progress every 5,000 blocks, so an operator sees it in the journal and the progress page answers at once
+    let turn = Date.now();
     for (const raw of raws) {
       try { const r = await this.chain.addBlock(raw, { trusted: true }); if (r.status === 'added') ok++; } catch (e) { this.log('stored block rejected: ' + e.message); }
       this.startup.replayed++;
-      if (this.startup.replayed % 100 === 0) await new Promise((r) => setImmediate(r));
+      if (this.startup.replayed % 5000 === 0) {
+        const s = (Date.now() - this.startup.since) / 1000, left = (s / this.startup.replayed) * (raws.length - this.startup.replayed);
+        this.log(`replaying stored blocks: ${this.startup.replayed}/${raws.length} (${Math.floor((100 * this.startup.replayed) / raws.length)} %), about ${Math.ceil(left / 60)} min left`);
+      }
+      if (Date.now() - turn > 50) { await new Promise((r) => setImmediate(r)); turn = Date.now(); }
     }
     if (standIn) await new Promise((r) => { standIn.closeAllConnections?.(); standIn.close(r); });
     this.startup = null;

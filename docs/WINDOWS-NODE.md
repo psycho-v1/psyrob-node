@@ -1,7 +1,7 @@
 # Run a PSYROB node on Windows
 
 This guide runs a follower node of the PSYROB testnet (chain ID **87870**, `0x1573e`) on a Windows PC. The node
-does not mine. Node 10.0.0 or newer is required.
+does not mine. Node 11.0.0 or newer is required: v11 is a new chain (2 November 2026), and older nodes stay on the ended v10 chain.
 
 > **Use a new wallet key for this network.** Never reuse a key that was used on any other network.
 
@@ -41,7 +41,7 @@ It must end with:
 
 ```
 chain ID:              87870 (0x1573e), network testnet
-genesis hash:          0xe80031e7dec18c0693f15cfc685b01dd6a226b2392ff08c85ec6e782549d7a15
+genesis hash:          0x0000000000000000000000000000000000000000000000000000000000000000
 ```
 
 If it prints anything else, or a line starting with `MISMATCH`, stop: you are not on the PSYROB testnet. Don't edit anything in `genesis\`.
@@ -57,8 +57,8 @@ Double-click **`Start-PSYROB.bat`** in the `psyrob-node` folder, or in PowerShel
 Keep the window open. You should see:
 
 ```
-psyrob 10.0.0: chain 87870, genesis 0xe80031e7dec18c0693f15cfc685b01dd6a226b2392ff08c85ec6e782549d7a15
-P2P on …, HTTP/RPC and explorer on http://127.0.0.1:8787
+psyrob 11.0.0: chain 87870, genesis 0x0000000000000000000000000000000000000000000000000000000000000000
+P2P on …, HTTP/RPC and explorer on http://127.0.0.1:8770
 ```
 
 The node then downloads the block DAG into `psyrob-node\data`. If Windows asks whether to allow Node.js through
@@ -68,10 +68,10 @@ the firewall, you can click **Cancel**: the node listens only on `127.0.0.1` and
 
 Compare `chainHeight` and `tip` on these two pages; they must match (or differ by a block or two for a few seconds):
 
-- your node: http://127.0.0.1:8787/health
+- your node: http://127.0.0.1:8770/health
 - public node: https://rpc.psyrob.com/health
 
-Your own copy of the explorer is at http://127.0.0.1:8787/
+Your own copy of the explorer is at http://127.0.0.1:8770/
 
 ## Everyday use
 
@@ -83,7 +83,7 @@ Your own copy of the explorer is at http://127.0.0.1:8787/
   npm ci
   npm run genesis:check
   ```
-- Wallet: network name `PSYROB testnet`, RPC `https://rpc.psyrob.com` (or your own `http://127.0.0.1:8787/rpc`),
+- Wallet: network name `PSYROB testnet`, RPC `https://rpc.psyrob.com` (or your own `http://127.0.0.1:8770/rpc`),
   chain ID `87870`, symbol `PSY`.
 
 ## Troubleshooting
@@ -93,5 +93,5 @@ Your own copy of the explorer is at http://127.0.0.1:8787/
 | `node` is not recognized | Reinstall Node.js 22+ and open a **new** PowerShell window |
 | `MISMATCH` from `genesis:check` | Stop, and open an issue on GitHub with the hash it prints |
 | no new blocks after a minute | Check that https://rpc.psyrob.com/health opens in your browser; if it does, open an issue on GitHub |
-| port 8787 already in use | Another program uses the port: close it, or change `--http-port 8787` to `8788` in `Start-PSYROB.bat` |
+| port 8770 already in use | Another program uses the port: close it, or change `--http-port 8770` to `8771` in `Start-PSYROB.bat` |
 

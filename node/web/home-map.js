@@ -341,14 +341,8 @@ function schedule(T0) {
   introEnd = timed.length ? Math.max(timed[timed.length - 1].at + .8, T0 + INTRO_SECONDS - .5) : T0;
   for (const t of txLog) { const e = edges.find(x => x.hash === t.hash); t.at = e ? e.at : T0; }
 }
-function heightAt(T) {                 // the chain-height counter climbs with the draw-in, then follows the feed
-  if (T >= introEnd || !timeline.length) return shownTip;
-  let prev = [timeline[0][0] - .5, 0];
-  for (const p of timeline) {
-    if (T < p[0]) return prev[1] + (p[1] - prev[1]) * clamp((T - prev[0]) / Math.max(.001, p[0] - prev[0]));
-    prev = p;
-  }
-  return prev[1];
+function heightAt() {                  // the chain-height counter always shows the true tip (no count-up from 0)
+  return shownTip;
 }
 
 // drop nodes and lines that have finished fading out

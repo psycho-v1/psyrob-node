@@ -42,7 +42,7 @@ test('i18n keys: every literal T() text on the server and in the browser scripts
       if (!KEEP.has(k)) assert.ok(keys.has(k), `${f}: T('${k}') is not in keys.json (run scripts/i18n-keys.mjs)`);
     }
   }
-  const client = clientKeysOf(['app.js', 'register.js', 'pages.js', 'home-map.js'].map((f) => read('node/web/' + f)));
+  const client = clientKeysOf(['app.js', 'register.js', 'pages.js', 'home-map.js', 'proposal.js'].map((f) => read('node/web/' + f)));
   assert.ok(client.length > 50, 'browser texts found');
   assert.deepEqual(client.filter((k) => !keys.has(k)), [], 'browser texts in keys.json');
 });

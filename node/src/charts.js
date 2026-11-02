@@ -17,7 +17,7 @@ export const CHART_CSS =
   '.chart .big{fill:var(--ink);font:600 26px "Barlow Condensed",sans-serif}.chart .seat{animation:chart-fade .6s ease-out both}' +
   '.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin:6px 0 0;padding:0;list-style:none;font:500 13px "Barlow Condensed",sans-serif;letter-spacing:.06em;color:var(--mute)}' +
   '.legend i{display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:-1px}' +
-  '.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin:14px 0}.charts .panel h3{font-size:16px;margin-bottom:8px}' +
+  '.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin:14px 0}.charts .panel h2,.charts .panel h3{font-size:16px;margin-bottom:8px}' +
   '@keyframes chart-draw{to{stroke-dashoffset:0}}@keyframes chart-fade{to{opacity:1}}@keyframes chart-grow{from{transform:scaleX(0)}}@keyframes chart-rise{from{transform:scaleY(0)}}' +
   '@keyframes chart-pulse{0%,100%{opacity:1}50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.chart *{animation:none!important;stroke-dashoffset:0!important;opacity:1!important}}';
 

@@ -206,17 +206,12 @@ export function installPages(Explorer, H) {
 
   // ------------------------------------------------------------------ my account (read-only)
 
-  P.accountPage = async function (q) {
-    const raw = String(q.get('address') ?? '').trim();
-    const form = '<form class="row g-2 my-3" action="/account" method="get"><div class="col"><input class="form-control" name="address" value="' + esc(raw) + `" placeholder="${T('0x… address')}" pattern="0x[0-9a-fA-F]{40}"></div>` +
-      `<div class="col-auto"><button class="btn btn-line" type="submit">${T('Show')}</button></div><div class="col-auto"><button class="btn btn-cyan" type="button" id="account-connect">${T('Use my wallet address')}</button></div></form>` +
-      `<p class="muted small">${T('Read-only. "Use my wallet address" only asks your browser wallet which address is selected; nothing is signed or sent.')}</p>`;
-    const head = `<p class="eyebrow">${T('My account')}</p><h1>${T('Your PSY, votes and duties.')}</h1><p class="lead">${T('Locked PSY and holds, ballots, vouches, PSY owed to you, NGO rewards, role pay and committee bond, for one address.')}</p>`;
-    if (!raw) return this.layout('My account', head + form, '/account', { scripts: '<script type="module" src="/pages.js"></script>' });
-    if (!/^0x[0-9a-fA-F]{40}$/.test(raw)) return this.layout('My account', head + form + `<div class="warn">${T('That is not an address (0x and 40 hex characters).')}</div>`, '/account', { scripts: '<script type="module" src="/pages.js"></script>' });
-    const a = raw.toLowerCase();
-    const now = this.now();
-    const d = await this.reads(async (read, view) => {
+  /**
+   * Everything one address holds and owes on chain, read at the tip in one consistent state: the My account page and
+   * /api/account/{address} (for the Members Hub and other tools) both use it, so they can never disagree.
+   */
+  P.accountData = async function (a, now = this.now()) {
+    return this.reads(async (read, view) => {
       const acct = view.getAccount(Uint8Array.from(Buffer.from(a.slice(2), 'hex')));
       const owed = [];
       for (const name of Object.keys(this.c)) {
@@ -253,9 +248,70 @@ export function installPages(Explorer, H) {
         bond: await read('FinalityCommittee', 'bonds', [a]), epoch: e, epochs,
         // the evidence window: locked until 14 days after its last committee was replaced
         lastServed: Number(await read('FinalityCommittee', 'lastServed', [a]) ?? 0n),
+        vouchRules: { minBlocks: await read('Params', 'get', [pkey('vouchMinBlocks')]) ?? 0n, minWeeks: await read('Params', 'get', [pkey('vouchMinEpochs')]) ?? 0n,
+          bond: await read('Params', 'get', [pkey('vouchBond')]) ?? 0n, cap: await read('Params', 'get', [pkey('maxActiveVouches')]) ?? 0n },
         retiredAt: await (async () => { const s = Number(await read('FinalityCommittee', 'lastServed', [a]) ?? 0n); return s ? Number(await read('FinalityCommittee', 'retiredAt', [BigInt(s - 1)]) ?? 0n) : 0; })(),
       };
     });
+  };
+
+  /** /api/account/{address}: accountData as JSON (amounts in wei as decimal strings), with the tip it was read at. */
+  P.accountJson = async function (ref) {
+    if (!/^0x[0-9a-fA-F]{40}$/.test(ref)) return null;
+    const a = ref.toLowerCase();
+    const d = await this.accountData(a);
+    const ix = this.events().byVoter.get(a) ?? [];
+    const plain = (v) => {
+      if (typeof v === 'bigint') return v.toString();
+      if (v instanceof Uint8Array) return '0x' + bytesToHex(v);
+      if (Array.isArray(v)) {
+        const named = Object.keys(v).filter((k) => !/^\d+$/.test(k)); // a decoded struct: keep its field names
+        return named.length ? Object.fromEntries(named.map((k) => [k, plain(v[k])])) : v.map(plain);
+      }
+      return v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, plain(x)])) : v;
+    };
+    return plain({
+      ...d, claim: undefined,
+      address: a, tip: { chainHeight: this.chain.tip.chainHeight, hash: '0x' + this.chain.tip.hash }, timestamp: this.now(),
+      // the role set, read from the contracts (never self-declared)
+      roles: { holder: d.balance > 0n || d.locked > 0n, miner: !!d.registered, ngo: d.ngo > 0, electedNgo: !!d.elected, roleHolder: !!d.roleHolder,
+        committee: (d.bond?.amount ?? d.bond?.[0] ?? 0n) > 0n || d.epochs.length > 0 },
+      roleTerms: d.roles.map(([i, h, accrued]) => ({ role: ROLE_NAMES[i], termEnd: h.termEnd, paidUntil: h.paidUntil, accrued })),
+      owed: d.owed.map(([contract, amount]) => ({ contract, amount })), claimable: d.claim.map(([term, amount]) => ({ term, amount })),
+      ballots: ix.filter((x) => x.kind !== 'vouch'), vouchesMade: ix.filter((x) => x.kind === 'vouch'),
+    });
+  };
+
+  /** Can this address vouch for an NGO? Each rule with where it stands now ("63 of 100 blue blocks"). */
+  P.vouchChecklist = function (d) {
+    if (!d.registered && d.mined === 0n) return '';
+    const r = d.vouchRules, free = d.balance;
+    const rows = [
+      [d.registered && !d.ngo, d.ngo ? T('NGO wallets cannot vouch') : d.registered ? T('registered miner') : T('not registered as a miner yet (<a href="/register/miner">register</a>)')],
+      [d.mined >= r.minBlocks, T('{a} of {b} blue blocks mined', { a: num(d.mined), b: num(r.minBlocks) })],
+      [d.weeks >= r.minWeeks, T('mined in {a} of {b} different weeks', { a: num(d.weeks), b: num(r.minWeeks) })],
+      [free >= r.bond, T('{a} PSY free for the {b} PSY bond', { a: psy(free, 2), b: psy(r.bond, 0) })],
+      [d.vouches < r.cap, T('{a} of at most {b} active vouches', { a: num(d.vouches), b: num(r.cap) })],
+      [!d.roleHolder, d.roleHolder ? T('role holders cannot vouch while in office') : T('not a role holder')],
+    ];
+    const ok = rows.every(([x]) => x);
+    return `<h2 class="mt-4">${T('Can this miner vouch?')}</h2><div class="panel">` +
+      `<p><strong>${ok ? T('Yes: this miner meets every rule to vouch for an NGO.') : T('Not yet: the rules marked ✕ are still missing.')}</strong></p>` +
+      `<ul class="check">${rows.map(([x, t]) => `<li class="${x ? 'ok' : 'no'}"><span aria-hidden="true">${x ? '✓' : '✕'}</span> <span class="visually-hidden">${x ? T('met') : T('missing')}:</span> ${t}</li>`).join('')}</ul>` +
+      `<p class="muted small mb-0">${T('Vouch on <a href="/attestation">Attestation</a>. The bond returns one term later unless an upheld challenge burns it.')}</p></div>`;
+  };
+
+  P.accountPage = async function (q) {
+    const raw = String(q.get('address') ?? '').trim();
+    const form = `<form class="row g-2 my-3 align-items-end" action="/account" method="get"><div class="col"><label class="form-label" for="account-address">${T('Address')}</label><input class="form-control" id="account-address" name="address" value="` + esc(raw) + `" placeholder="${T('0x… address')}" pattern="0x[0-9a-fA-F]{40}"></div>` +
+      `<div class="col-auto"><button class="btn btn-line" type="submit">${T('Show')}</button></div><div class="col-auto"><button class="btn btn-cyan" type="button" id="account-connect">${T('Use my wallet address')}</button></div></form>` +
+      `<p class="muted small">${T('Read-only. "Use my wallet address" only asks your browser wallet which address is selected; nothing is signed or sent.')}</p>`;
+    const head = `<p class="eyebrow">${T('My account')}</p><h1>${T('Your PSY, votes and duties.')}</h1><p class="lead">${T('Locked PSY and holds, ballots, vouches, PSY owed to you, NGO rewards, role pay and committee bond, for one address.')}</p>`;
+    if (!raw) return this.layout('My account', head + form, '/account', { scripts: '<script type="module" src="/pages.js"></script>' });
+    if (!/^0x[0-9a-fA-F]{40}$/.test(raw)) return this.layout('My account', head + form + `<div class="warn">${T('That is not an address (0x and 40 hex characters).')}</div>`, '/account', { scripts: '<script type="module" src="/pages.js"></script>' });
+    const a = raw.toLowerCase();
+    const now = this.now();
+    const d = await this.accountData(a, now);
     const ix = this.events().byVoter.get(a) ?? [];
     const ballots = ix.filter((x) => x.kind !== 'vouch').slice(-PER_LONG).reverse().map((x) => x.kind === 'proposal'
       ? `<li>${T('Vote on <a href="/proposal/{id}">proposal {id}</a> at {b}', { id: x.id, b: blockLink(x.height) })}</li>` : `<li>${T('Ballot in <a href="/election-round/{id}">election round {id}</a> at {b}', { id: x.id, b: blockLink(x.height) })}</li>`);
@@ -279,6 +335,7 @@ export function installPages(Explorer, H) {
         ['Committee bond', bondAmt > 0n ? `${psy(bondAmt)} PSY` + (unbondAt ? ' · ' + (d.lastServed && !d.retiredAt
           ? T('leaving, withdrawable 14 days after the committee of epoch {n} is replaced (evidence window)', { n: num(d.lastServed - 1) })
           : T('leaving, withdrawable from {t}', { t: when(Math.max(unbondAt, d.lastServed ? d.retiredAt + 14 * 86400 : 0)) })) : '') : T('none')]]) +
+      this.vouchChecklist(d) +
       `<h2 class="mt-4">${T('Committee seats (last 5 epochs)')}</h2>` + table(['Epoch', 'Seat', 'Checkpoints signed', 'Slashed', 'Reward'], erows, 'No seat in the last 5 epochs.') +
       `<h2 class="mt-4">${T('Ballots')}</h2>${ballots.length ? `<ul>${ballots.join('')}</ul>` : `<p class="muted">${T('No ballots.')}</p>`}` +
       `<h2 class="mt-4">${T('Vouches')}</h2>${vouched.length ? `<ul>${vouched.join('')}</ul>` : `<p class="muted">${T('No vouches.')}</p>`}`;
@@ -356,13 +413,13 @@ export function installPages(Explorer, H) {
       '<text class="big" x="60" y="66" text-anchor="middle" style="font-size:13px">ARGON2D</text></svg>';
     const body = `<p class="eyebrow">${T('Mining statistics')}</p><h1>${T('Work, pace and red blocks.')}</h1><p class="lead">${T('Over the last chain blocks (at most 500). Each attempt is one Argon2d evaluation with 32 MiB of memory; the network rate is estimated from the work of the blocks found.')}</p>` +
       '<div class="charts">' +
-      `<div class="panel"><h3>${T('Pace')}</h3>${gauge({ title: T('Block pace'), value: pace, center: m.secondsPerChainBlock ? r(m.secondsPerChainBlock) + ' s' : '–', sub: T('per chain block (target {n} s)', { n: m.targetSpacing }) })}</div>` +
-      `<div class="panel"><h3>${T('Blue and red blocks')}</h3>${donut({ title: T('Blue and red blocks'), center: m.blueBlocks + m.redBlocks ? r((1 - m.redRate) * 100) + ' %' : '–', sub: T('blue'), parts: [{ label: T('Blue'), value: m.blueBlocks, color: COLORS[0] }, { label: T('Red'), value: m.redBlocks, color: COLORS[4] }] })}</div>` +
-      `<div class="panel"><h3>${T('CPU mining')}</h3>${cpu}<p class="text-center mb-0">${T('<strong>{n}</strong> attempts per second', { n: r(m.attemptsPerSecond, 0) })}<br><span class="muted">${T('difficulty {n} attempts per block', { n: num(BigInt(m.difficulty)) })}</span></p></div>` +
+      `<div class="panel"><h2 class="h3">${T('Pace')}</h2>${gauge({ title: T('Block pace'), value: pace, center: m.secondsPerChainBlock ? r(m.secondsPerChainBlock) + ' s' : '–', sub: T('per chain block (target {n} s)', { n: m.targetSpacing }) })}</div>` +
+      `<div class="panel"><h2 class="h3">${T('Blue and red blocks')}</h2>${donut({ title: T('Blue and red blocks'), center: m.blueBlocks + m.redBlocks ? r((1 - m.redRate) * 100) + ' %' : '–', sub: T('blue'), parts: [{ label: T('Blue'), value: m.blueBlocks, color: COLORS[0] }, { label: T('Red'), value: m.redBlocks, color: COLORS[4] }] })}</div>` +
+      `<div class="panel"><h2 class="h3">${T('CPU mining')}</h2>${cpu}<p class="text-center mb-0">${T('<strong>{n}</strong> attempts per second', { n: r(m.attemptsPerSecond, 0) })}<br><span class="muted">${T('difficulty {n} attempts per block', { n: num(BigInt(m.difficulty)) })}</span></p></div>` +
       '</div><div class="charts">' +
-      `<div class="panel"><h3>${T('Seconds between chain blocks (last {n})', { n: ser.length })}</h3>${columnChart({ title: T('Block intervals'), values: ser.map((x) => x.interval), target: m.targetSpacing, fmtY: (v) => Math.round(v) + ' s', labels: ser.length ? ['#' + ser[0].height, '#' + ser.at(-1).height] : null })}</div>` +
-      `<div class="panel"><h3>${T('Network attempts per second')}</h3>${lineChart({ title: T('Network rate'), series: [{ name: T('Estimated, 10-block window'), color: COLORS[0], points: rate }], fmtX: (v) => '#' + Math.round(v), fmtY: (v) => Math.round(v).toLocaleString(locale()) })}</div>` +
-      `<div class="panel"><h3>${T('Gas use per chain block')}</h3>${columnChart({ title: T('Gas use'), values: ser.map((x) => x.gas * 100), fmtY: (v) => v.toLocaleString(locale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %', color: COLORS[1], labels: ser.length ? ['#' + ser[0].height, '#' + ser.at(-1).height] : null })}</div>` +
+      `<div class="panel"><h2 class="h3">${T('Seconds between chain blocks (last {n})', { n: ser.length })}</h2>${columnChart({ title: T('Block intervals'), values: ser.map((x) => x.interval), target: m.targetSpacing, fmtY: (v) => Math.round(v) + ' s', labels: ser.length ? ['#' + ser[0].height, '#' + ser.at(-1).height] : null })}</div>` +
+      `<div class="panel"><h2 class="h3">${T('Network attempts per second')}</h2>${lineChart({ title: T('Network rate'), series: [{ name: T('Estimated, 10-block window'), color: COLORS[0], points: rate }], fmtX: (v) => '#' + Math.round(v), fmtY: (v) => Math.round(v).toLocaleString(locale()) })}</div>` +
+      `<div class="panel"><h2 class="h3">${T('Gas use per chain block')}</h2>${columnChart({ title: T('Gas use'), values: ser.map((x) => x.gas * 100), fmtY: (v) => v.toLocaleString(locale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' %', color: COLORS[1], labels: ser.length ? ['#' + ser[0].height, '#' + ser.at(-1).height] : null })}</div>` +
       '</div>' +
       kv([['Window', T('chain blocks {a} to {b} ({n})', { a: blockLink(m.chainHeight - m.window), b: blockLink(m.chainHeight), n: num(m.window) })], ['Current difficulty', T('{n} expected attempts per block', { n: num(BigInt(m.difficulty)) })],
         ['Estimated network rate', T('{n} attempts per second', { n: r(m.attemptsPerSecond, 0) })], ['Time per chain block', T('{a} s (target {b} s)', { a: r(m.secondsPerChainBlock), b: num(m.targetSpacing) })],
@@ -416,7 +473,8 @@ export function installPages(Explorer, H) {
     const pct = (x) => (x * 100).toLocaleString(locale(), { maximumFractionDigits: 2 }) + ' %';
     const body = `<p class="eyebrow">${T('Top holders')}</p><h1>${T('Who holds the PSY.')}</h1><p class="lead">${T('Every address by balance. System contracts (Treasury, team vesting, NGO pool, committee, vote escrow) and the burn address are labelled; PSY locked for voting sits in the vote escrow.')}</p>` +
       kv([['Addresses with PSY', num(d.total)], ['Concentration (ordinary addresses)', T('largest {a} · largest five {b} · Nakamoto coefficient {n} · Gini {g}', { a: pct(conc.top1), b: pct(conc.top5), n: num(conc.nakamoto), g: conc.gini })]]) +
-      table(['Rank', 'Address', '', 'Balance (PSY)'], rows, 'No balances.') + pager('/holders', page, pages) + `<p class="muted">${T('More figures on <a href="/metrics">Decentralisation metrics</a>.')}</p>`;
+      `<p class="muted small">${T('Nakamoto coefficient: how many of the largest holders together hold more than half. Gini: 0 means every address holds the same, 1 means one address holds everything.')}</p>` +
+      table(['Rank', 'Address', 'Kind', 'Balance (PSY)'], rows, 'No balances.') + pager('/holders', page, pages) + `<p class="muted">${T('More figures on <a href="/metrics">Decentralisation metrics</a>.')}</p>`;
     return this.layout('Top holders', body, '/holders');
   };
 
@@ -633,7 +691,7 @@ export function installPages(Explorer, H) {
       `<section class="panel" role="tabpanel" id="pane-win" aria-labelledby="tab-win"><h2 class="h4">${T('Windows 10 and 11 (64-bit)')}</h2>${win}</section><section class="panel" role="tabpanel" id="pane-lin" aria-labelledby="tab-lin"><h2 class="h4">${T('Ubuntu and Linux (64-bit)')}</h2>${lin}</section>` +
       `<p class="muted">${T('Expected genesis hash: {g}', { g: `<code>${esc(g)}</code>` })}</p>` +
       `<h2 class="h4 mt-4">${T('Reading your node’s log')}</h2><ul>` +
-      `<li>${T('<code>p2p: connecting to wss://rpc.psyrob.com/p2p</code>, then <code>p2p: connected to … (psyrob/10.0.0, blue score …)</code>: your node reached the public node and is syncing. Check progress at <code>http://127.0.0.1:8770/health</code> (<code>chainHeight</code>).')}</li>` +
+      `<li>${T('<code>p2p: connecting to wss://rpc.psyrob.com/p2p</code>, then <code>p2p: connected to … (psyrob/11.0.0, blue score …)</code>: your node reached the public node and is syncing. Check progress at <code>http://127.0.0.1:8770/health</code> (<code>chainHeight</code>).')}</li>` +
       `<li>${T('<code>p2p: no handshake with … retrying in … s</code>: the public node could not be reached or refused your address. A refusal (a ban after a node misbehaves) lasts one hour; the node retries by itself, waiting longer each time, up to 5 minutes. Leave it running, and report it if it lasts more than an hour.')}</li>` +
       `<li>${T('<code>the stored blocks belong to another genesis</code>: your data folder held blocks of another network. The node moved it to an <code>old-network-…</code> folder and starts again from the new genesis. You can delete that folder.')}</li></ul>`;
     return this.layout('Run a node', body, '/run-a-node', { scripts: '<script type="module" src="/pages.js"></script>' });

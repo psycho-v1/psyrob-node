@@ -83,6 +83,7 @@ export async function connect() {
   account = accs[0];
   const bal = await rpc('eth_getBalance', [account, 'latest']);
   if (status) status.innerHTML = T('Connected: {a} · {b} PSY', { a: `<a href="/address/${account}">${account.slice(0, 10)}…${account.slice(-6)}</a>`, b: (Number(BigInt(bal) / 10n ** 14n) / 1e4).toLocaleString(LOCALE) });
+  document.dispatchEvent(new CustomEvent('psy-connected'));
   return account;
 }
 
@@ -151,6 +152,22 @@ async function waitReceipt(hash, out) {
   out.innerHTML = T('Sent; not accepted yet.') + ` <a href="/tx/${hash}">${T('Follow it here')}</a>.`;
 }
 
+/**
+ * Send one call from the connected wallet: a dry run first (so a mistake is explained before the wallet asks for a
+ * signature), then the wallet, then the receipt, all reported in `out`. Used by the forms and the proposal builder.
+ */
+export async function sendTx(to, data, value, out) {
+  const from = account ?? await connect();
+  const tx = { from, to, data, value: '0x' + value.toString(16) };
+  try { await rpc('eth_call', [tx, 'latest']); } catch (e) { throw new Error(T('This would fail: {why}. Nothing was sent.', { why: e.message })); }
+  out.textContent = T('Waiting for your wallet…');
+  const hash = await window.ethereum.request({ method: 'eth_sendTransaction', params: [tx] });
+  out.innerHTML = T('Sent: {tx}. Waiting for a chain block to accept it…', { tx: `<a href="/tx/${hash}">${hash.slice(0, 18)}…</a>` });
+  await waitReceipt(hash, out);
+}
+
+export const connectedAccount = () => account;
+
 for (const form of document.querySelectorAll('form.tx')) {
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
@@ -159,22 +176,49 @@ for (const form of document.querySelectorAll('form.tx')) {
       const confirmBox = form.querySelector('[data-confirm]');
       if (confirmBox && !confirmBox.checked) throw new Error(T('Please confirm that you understand wallet loss is permanent.'));
       await loadAbis();
-      const from = account ?? await connect();
+      if (!account) await connect();
       const args = await collectArgs(form);
       const codec = codecFor(form.dataset.c);
       const data = u8ToHex(codec.encode(form.dataset.f, args));
       let value = 0n;
       const vEl = form.querySelector('[data-value]');
       if (vEl) value = vEl.dataset.value === 'psy' ? psyToWei(vEl.value || '0') : BigInt(vEl.value || '0');
-      const tx = { from, to: abis[form.dataset.c].address, data, value: '0x' + value.toString(16) };
-      // dry run first, so a mistake is explained before the wallet asks for a signature
-      try { await rpc('eth_call', [tx, 'latest']); } catch (e) { throw new Error(T('This would fail: {why}. Nothing was sent.', { why: e.message })); }
-      out.textContent = T('Waiting for your wallet…');
-      const hash = await window.ethereum.request({ method: 'eth_sendTransaction', params: [tx] });
-      out.innerHTML = T('Sent: {tx}. Waiting for a chain block to accept it…', { tx: `<a href="/tx/${hash}">${hash.slice(0, 18)}…</a>` });
-      await waitReceipt(hash, out);
+      await sendTx(abis[form.dataset.c].address, data, value, out);
     } catch (e) {
       out.textContent = e.message || String(e);
     }
   });
 }
+
+// Buttons in table rows that fill a form further down (for example "Challenge" fills the NGO wallet and asks for a reason)
+for (const b of document.querySelectorAll('[data-fill]')) {
+  b.addEventListener('click', () => {
+    const el = document.getElementById(b.dataset.fill);
+    if (!el) return;
+    el.value = b.dataset.value;
+    const form = el.closest('form');
+    form?.closest('details')?.setAttribute('open', '');
+    form?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    (form?.querySelector(b.dataset.focus || 'input:not([type=hidden]):not([readonly])') || el).focus({ preventScroll: true });
+  });
+}
+
+// Vouch buttons: once a wallet is connected, each one says whether this wallet may vouch, and why not (/api/account)
+async function markVouchers() {
+  const buttons = document.querySelectorAll('[data-needs="voucher"]');
+  if (!buttons.length || !account) return;
+  const j = await (await fetch('/api/account/' + account)).json().catch(() => null);
+  if (!j) return;
+  const r = j.vouchRules, why = [];
+  if (!j.registered) why.push(T('register this wallet as a miner first'));
+  if (j.ngo > 0) why.push(T('NGO wallets cannot vouch'));
+  if (BigInt(j.mined) < BigInt(r.minBlocks)) why.push(T('{a} of {b} blue blocks mined', { a: j.mined, b: r.minBlocks }));
+  if (BigInt(j.weeks) < BigInt(r.minWeeks)) why.push(T('mined in {a} of {b} different weeks', { a: j.weeks, b: r.minWeeks }));
+  if (BigInt(j.vouches) >= BigInt(r.cap)) why.push(T('{a} of at most {b} active vouches', { a: j.vouches, b: r.cap }));
+  if (BigInt(j.balance) < BigInt(r.bond)) why.push(T('not enough PSY for the bond'));
+  if (j.roleHolder) why.push(T('role holders cannot vouch while in office'));
+  const note = document.getElementById('voucher-status');
+  if (note) note.textContent = why.length ? T('This wallet cannot vouch yet: {why}.', { why: why.join('; ') }) : T('This wallet may vouch. Each vouch locks the bond for one term.');
+  for (const b of buttons) { b.disabled = why.length > 0; b.title = why.join('; '); }
+}
+document.addEventListener('psy-connected', () => markVouchers().catch(() => {}));
