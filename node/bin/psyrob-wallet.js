@@ -67,7 +67,7 @@ function errorNames() {
 
 function readKey(file) {
   if (!file) throw new Error('--key <file> is required');
-  if ((fs.statSync(file).mode & 0o077) !== 0) throw new Error(`key file ${file} must not be readable by others (chmod 600)`);
+  if (process.platform !== 'win32' && (fs.statSync(file).mode & 0o077) !== 0) throw new Error(`key file ${file} must not be readable by others (chmod 600)`);
   const hex = fs.readFileSync(file, 'utf8').trim().replace(/^0x/, '');
   if (!/^[0-9a-fA-F]{64}$/.test(hex)) throw new Error('the key file must hold one 32-byte hex private key');
   return Uint8Array.from(Buffer.from(hex, 'hex'));

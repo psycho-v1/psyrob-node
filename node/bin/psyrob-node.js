@@ -54,7 +54,9 @@ if (flag('help')) {
 
 function readKey(file) {
   const st = fs.statSync(file);
-  if ((st.mode & 0o077) !== 0) throw new Error(`key file ${file} must not be readable by others (chmod 600)`);
+  // Windows reports every file as 0666 and protects keys with ACLs (a file in the user's folder is private), so
+  // the Unix mode check applies elsewhere only
+  if (process.platform !== 'win32' && (st.mode & 0o077) !== 0) throw new Error(`key file ${file} must not be readable by others (chmod 600)`);
   const hex = fs.readFileSync(file, 'utf8').trim().replace(/^0x/, '');
   if (!/^[0-9a-fA-F]{64}$/.test(hex)) throw new Error(`key file ${file} must hold one 32-byte hex private key`);
   return Uint8Array.from(Buffer.from(hex, 'hex'));

@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 
-const BIN = new URL('../bin/psyrob-wallet.js', import.meta.url).pathname;
+const BIN = fileURLToPath(new URL('../bin/psyrob-wallet.js', import.meta.url));
 const run = (...args) => execFileSync(process.execPath, [BIN, ...args], { encoding: 'utf8' });
 
 test('wallet: new key file (0600, address only), address, calldata, contracts; refuses to overwrite', () => {
@@ -16,7 +17,7 @@ test('wallet: new key file (0600, address only), address, calldata, contracts; r
   assert.match(out, /cannot be recovered/);
   const key = fs.readFileSync(f, 'utf8').trim();
   assert.ok(!out.includes(key), 'the key is never printed');
-  assert.equal(fs.statSync(f).mode & 0o777, 0o600);
+  if (process.platform !== 'win32') assert.equal(fs.statSync(f).mode & 0o777, 0o600); // Windows reports 0666
   assert.equal(run('address', '--key', f).trim(), out.split('\n')[0].slice(8));
   assert.throws(() => run('new', '--out', f), /exists/);
   const cd = run('calldata', 'Treasury', 'spend', '0x' + '11'.repeat(20), 'psy:5', 'audit');

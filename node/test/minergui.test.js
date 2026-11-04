@@ -10,10 +10,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import http from 'node:http';
 import { spawn, execFileSync } from 'node:child_process';
 
-const BIN = new URL('../../miner/bin/psyrob-miner-gui.js', import.meta.url).pathname;
+const BIN = fileURLToPath(new URL('../../miner/bin/psyrob-miner-gui.js', import.meta.url));
 
 function req(port, p, { method = 'GET', token, session, host = `127.0.0.1:${port}`, body } = {}) {
   return new Promise((resolve, reject) => {
@@ -64,7 +65,7 @@ test('miner GUI: token and host checks, wallet handling, settings, no key in the
     const created = JSON.parse((await req(port, '/api/wallet/new', { method: 'POST', token, body: { password: 'correct horse' } })).body);
     assert.match(created.address, /^0x[0-9a-f]{40}$/);
     const walletFile = path.join(home, 'wallet.json');
-    assert.equal(fs.statSync(walletFile).mode & 0o777, 0o600);
+    if (process.platform !== 'win32') assert.equal(fs.statSync(walletFile).mode & 0o777, 0o600); // Windows reports 0666
     assert.equal(fs.existsSync(path.join(home, 'wallet.key')), false, 'no plain key file');
     assert.equal((await req(port, '/api/wallet/new', { method: 'POST', token, body: { password: 'correct horse' } })).code, 409, 'never overwrites a wallet');
     assert.equal((await req(port, '/api/wallet/import', { method: 'POST', token, body: { key: '11'.repeat(32), password: 'correct horse' } })).code, 409);
@@ -162,7 +163,7 @@ test('miner GUI: app password, sign in and out, preferences, wallet password cha
     assert.equal((await post('/api/app/password', { next: 'short' })).code, 400, 'at least 8 characters');
     const { session } = JSON.parse((await post('/api/app/password', { next: 'app secret 1' })).body);
     assert.match(session, /^[0-9a-f]{36}$/);
-    assert.equal(fs.statSync(path.join(home, 'app.json')).mode & 0o777, 0o600);
+    if (process.platform !== 'win32') assert.equal(fs.statSync(path.join(home, 'app.json')).mode & 0o777, 0o600);
     assert.ok(!fs.readFileSync(path.join(home, 'app.json'), 'utf8').includes('app secret 1'), 'only a scrypt hash is stored');
     assert.equal((await req(port, '/api/state', { token })).code, 401, 'signed out without the session');
     assert.equal((await post('/api/start', {})).code, 401, 'nothing can be changed while signed out');
@@ -202,7 +203,7 @@ test('miner GUI: app password, sign in and out, preferences, wallet password cha
       assert.equal((await p2('/api/wallet/password', { current: 'wrong one!', next: 'wallet pw 2' }, s2)).code, 400);
       assert.equal((await p2('/api/wallet/password', { current: 'wallet pw 1', next: 'short' }, s2)).code, 400);
       assert.equal((await p2('/api/wallet/password', { current: 'wallet pw 1', next: 'wallet pw 2' }, s2)).code, 200);
-      assert.equal(fs.statSync(path.join(home, 'wallet.json')).mode & 0o777, 0o600);
+      if (process.platform !== 'win32') assert.equal(fs.statSync(path.join(home, 'wallet.json')).mode & 0o777, 0o600);
       assert.equal((await p2('/api/wallet/lock', {}, s2)).code, 200);
       let st = JSON.parse((await req(h.port, '/api/state', { token: h.token, session: s2 })).body);
       assert.equal(st.wallet, 'locked');

@@ -28,7 +28,8 @@ if (argv.includes('--help') || !opt('key')) {
   process.exit(argv.includes('--help') ? 0 : 2);
 }
 const file = opt('key');
-if ((fs.statSync(file).mode & 0o077) !== 0) { console.error(`key file ${file} must not be readable by others (chmod 600)`); process.exit(2); }
+// Windows reports every file as 0666 (keys are protected by ACLs there), so the Unix mode check applies elsewhere only
+if (process.platform !== 'win32' && (fs.statSync(file).mode & 0o077) !== 0) { console.error(`key file ${file} must not be readable by others (chmod 600)`); process.exit(2); }
 const hex = fs.readFileSync(file, 'utf8').trim().replace(/^0x/, '');
 if (!/^[0-9a-fA-F]{64}$/.test(hex)) { console.error('the key file must hold one 32-byte hex private key'); process.exit(2); }
 

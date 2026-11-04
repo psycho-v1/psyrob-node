@@ -6,13 +6,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import http from 'node:http';
 import { spawnSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 const run = promisify(execFile);
 
-const REPO = new URL('../..', import.meta.url).pathname.replace(/\/$/, '');
+const REPO = fileURLToPath(new URL('../..', import.meta.url)).replace(/[\\/]$/, '');
 const userSystemd = spawnSync('systemctl', ['--user', 'is-system-running'], { encoding: 'utf8' });
 const available = userSystemd.status !== null && /running|degraded/.test(userSystemd.stdout ?? '');
 

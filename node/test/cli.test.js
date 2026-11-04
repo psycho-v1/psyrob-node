@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import net from 'node:net';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 
 async function freePort() {
@@ -22,7 +23,7 @@ test('--no-default-seeds: the node dials nobody (genesis/seeds.txt lists the pub
   const genesis = path.join(dir, 'genesis.json');
   fs.writeFileSync(genesis, JSON.stringify({ config: { chainId: 1337, timestamp: Math.floor(Date.now() / 1000), target: '0x' + ((1n << 256n) / 3000n).toString(16), devBeneficiary: '0x' + '22'.repeat(20) }, params: { pow: { memoryKiB: 8, iterations: 1 } } }));
   const http = await freePort();
-  const child = spawn(process.execPath, [new URL('../bin/psyrob-node.js', import.meta.url).pathname, '--genesis', genesis, '--datadir', path.join(dir, 'data'),
+  const child = spawn(process.execPath, [fileURLToPath(new URL('../bin/psyrob-node.js', import.meta.url)), '--genesis', genesis, '--datadir', path.join(dir, 'data'),
     '--no-listen', '--no-default-seeds', '--http-host', '127.0.0.1', '--http-port', String(http)], { stdio: 'ignore' });
   try {
     let peers = null;
@@ -53,7 +54,7 @@ test('miner --expect-address: refuses a key that belongs to another address, nev
   const { privateKeyToAddress } = await import('../../common/crypto.js');
   const right = '0x' + Buffer.from(privateKeyToAddress(Buffer.from(hex, 'hex'))).toString('hex');
   const run = (expect) => new Promise((resolve) => {
-    const c = spawn(process.execPath, [new URL('../../miner/bin/psyrob-miner.js', import.meta.url).pathname, '--key', key, '--node', 'http://127.0.0.1:9', '--expect-address', expect]);
+    const c = spawn(process.execPath, [fileURLToPath(new URL('../../miner/bin/psyrob-miner.js', import.meta.url)), '--key', key, '--node', 'http://127.0.0.1:9', '--expect-address', expect]);
     let out = '';
     c.stdout.on('data', (d) => { out += d; });
     c.stderr.on('data', (d) => { out += d; });

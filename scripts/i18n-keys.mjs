@@ -9,9 +9,10 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 if (!process.env.PSYROB_I18N_COLLECT) { console.error('run with PSYROB_I18N_COLLECT=1'); process.exit(1); }
-const ROOT = path.resolve(new URL('..', import.meta.url).pathname);
+const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const SERVER = ['node/src/explorer.js', 'node/src/explorer-pages.js', 'node/src/explorer-governance.js', 'node/src/charts.js'];
 
