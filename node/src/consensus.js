@@ -46,14 +46,18 @@ export function certQuorum(signers, rule) {
 export const ORPHAN_MAX_COUNT = 512, ORPHAN_MAX_BYTES = 64 * 1024 * 1024;
 export const ORPHAN_SOURCE_COUNT = 256, ORPHAN_SOURCE_BYTES = 16 * 1024 * 1024;
 
-/** Per-block fields moved to the cold store once a block is far below the finality depth (Chain._pruneUndo). */
-const COLD_FIELDS = ['raw', 'body', 'receipts', 'accepted', 'skipped', 'systemReceipts', 'colours', 'paid'];
+/** Per-block fields moved to the cold store once a block is more than the hot depth below the tip (Chain._pruneUndo).
+ *  undo and redo go too: they are the largest part of a block entry and are only needed for a reorganisation deeper
+ *  than the hot depth, which reads them back from the cold store. */
+const COLD_FIELDS = ['raw', 'body', 'receipts', 'accepted', 'skipped', 'systemReceipts', 'colours', 'paid', 'undo', 'redo'];
 
-const COLD_SKIP = new Set([...COLD_FIELDS, 'header', 'stateRoot', 'hashBytes', 'undo', 'redo', 'blueAnticone', 'orderedMergeset']);
+const COLD_SKIP = new Set([...COLD_FIELDS, 'header', 'stateRoot', 'hashBytes']);
 
-/** A block far below the finality depth: its bulky data is in the cold store (Chain._freeze). */
+/** A block more than the hot depth below the tip: its bulky data is in the cold store (Chain._freeze). Its GHOSTDAG
+ *  working data stays in memory until the block is far below the finality depth, where _pruneUndo drops it and its
+ *  undo/redo records for good (assigning null shadows the cold getter). */
 class ColdBlock {
-  constructor(chain, at) { this.chainRef = chain; this.coldAt = at; this.undo = null; this.redo = null; this.blueAnticone = null; this.orderedMergeset = null; }
+  constructor(chain, at) { this.chainRef = chain; this.coldAt = at; }
   get stateRoot() { return this.chainRef._coldRecord(this).stateRoot; }
   get hashBytes() { return fromHex('0x' + this.hash); }
 }
@@ -130,6 +134,7 @@ export class Chain {
     this.coldCache = new Map(); // block hash -> cold record, least recently used first
     this.minerBytes = new Map(); // miner hex -> one shared Uint8Array for the headers of cold blocks
     this.prunedTo = 0; // blue scores below this have been pruned
+    this.frozenTo = 0; // blue scores below this have their bulky data in the cold store
     this.dag = new Dag(params);
     this.state = new State();
     this.state.importRecords(genesis.records);
@@ -687,13 +692,22 @@ export class Chain {
    * for good (a full entry takes about 5.3 kB of heap, a cold one about 0.4 kB). Walks only the newly passed blue scores.
    */
   _pruneUndo() {
+    if (this.tip.chainHeight % 100 !== 0) return;
+    // blocks more than the hot depth (twice the merge depth) below the tip: bulky data and undo/redo to the cold store.
+    // New blocks read the bodies of their mergeset (within the merge depth of their selected parent) and move the state
+    // between nearby tips, so everything they normally touch stays in memory; a deeper reorganisation reads from disk
+    const hot = this.tip.blueScore - 2 * this.p.mergeDepth;
+    if (this.cold && hot > this.frozenTo) {
+      for (const e of this.dag.blocksInBlueScoreRange(this.frozenTo, hot - 1)) if (e !== this.dag.genesis && e.coldAt === undefined) this._freeze(e);
+      this.frozenTo = hot;
+    }
     const floor = this.tip.blueScore - this.p.finalityDepth - 2 * this.p.mergeDepth;
-    if (floor <= 0 || this.tip.chainHeight % 100 !== 0 || floor <= this.prunedTo) return;
+    if (floor <= 0 || floor <= this.prunedTo) return;
     for (const e of this.dag.blocksInBlueScoreRange(this.prunedTo, floor - 1)) {
       if (e === this.dag.genesis) continue;
+      if (this.cold && e.coldAt === undefined) this._freeze(e);
       e.undo = null; e.redo = null;
       e.blueAnticone = null; e.orderedMergeset = null;
-      if (this.cold && e.coldAt === undefined) this._freeze(e);
     }
     this.prunedTo = floor;
   }
@@ -717,6 +731,9 @@ export class Chain {
     let r = this.coldCache.get(e.hash);
     if (r) { this.coldCache.delete(e.hash); this.coldCache.set(e.hash, r); return r; }
     r = this.cold.getCold(e.coldAt);
+    // state values are frozen records (StateView.set); deserialising drops that, so restore it before a reorganisation
+    // puts them back into the state
+    for (const m of [r.undo, r.redo]) if (m) for (const v of m.values()) if (v) { for (const x of Object.values(v)) if (Array.isArray(x)) Object.freeze(x); Object.freeze(v); }
     this.coldCache.set(e.hash, r);
     if (this.coldCache.size > 512) this.coldCache.delete(this.coldCache.keys().next().value);
     return r;

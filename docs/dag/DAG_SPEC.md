@@ -8,7 +8,7 @@ a decision made after the literature review in `docs/research/RESEARCH.md`; the 
 
 | Item | Value |
 |---|---|
-| Node version | 11.0.0. Testnet v11 is a fresh chain from a new genesis (launch ceremony of 2 November 2026); it replaces testnet v10 (24 October 2026), whose state does not carry over. Chain ID, Dev Accounts and bootstrap keys are those of v10 |
+| Node version | 11.0.1. Testnet v11 is a fresh chain from a new genesis (launch ceremony of 2 November 2026); it replaces testnet v10 (24 October 2026), whose state does not carry over. Chain ID, Dev Accounts and bootstrap keys are those of v10 |
 | Genesis | Built at the launch ceremony (section 17.1) from the three Dev Account signatures; its hash is recorded in `genesis/chain.json` when the network starts. A node that finds blocks of another genesis in its data folder moves them to `old-network-<time>/` and starts from this genesis. |
 | Chain ID | **87870** (`0x1573e`), the testnet (owner decision, 24 October 2026); unused in the public registries (chainid.network, ethereum-lists, checked 24 October 2026). A mainnet will have a chain ID of its own. |
 | Native token | PSY, 18 decimals, maximum supply 1,000,000,000 PSY (enforced by consensus, section 7) |
@@ -374,7 +374,7 @@ These rules protect the state, the node, governance and the releases. Each has a
 - A block whose selected parent is deeper than the finality depth, or whose state can no longer be reached, is refused before any state change (no penalty for the sender). `moveTo` checks the whole path for undo/redo records before changing anything.
 - Transactions that the old chain accepted and a reorganisation drops go back into the mempool, checked against the new tip; the transaction index drops them.
 - Block templates leave out parents that validation would refuse (every parent and red mergeset block within the merge depth of the selected parent [ghostdag21; full text], the mergeset within its limit), so a stale tip (for example a block mined on an early chain while a node synced) never stops mining. A node does not hand out templates while it is still catching up (its tip is more than 10 minutes old and a peer ahead is still delivering blocks); a halted network can always restart.
-- Blocks far below the finality depth (never re-executed) move their bulky data (raw bytes, transactions, receipts, payments, the full header) to a cold file (`cold.dat`, rebuilt at every start) and keep about 0.4 kB in memory instead of about 5.3 kB; reads come back from disk through a small cache.
+- Blocks more than twice the merge depth below the tip move their bulky data (raw bytes, transactions, receipts, payments, the full header, and the undo/redo records of the state) to a cold file (`cold.dat`, rebuilt at every start); reads, including a reorganisation deeper than that, come back from disk through a small cache. Their GHOSTDAG working data stays in memory until they are far below the finality depth (never re-executed), where it and the undo/redo records are dropped for good. Since 11.0.1: before, the whole finality window (~9,360 blue score) kept full entries in memory, and on the 3.3 GB server the v11 node ran out of heap while replaying ~14,000 blocks.
 - Consensus arithmetic is integer-only (the emission step by integer division; range checks before converting epochs and counts), and every consensus sort is a total order (DAG sorts by blue work then hash; the median time sorts plain integers), as deterministic ordering requires [ghostdag21].
 
 ### 18.2 Mempool, RPC and peers

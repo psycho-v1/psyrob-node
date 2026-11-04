@@ -154,7 +154,13 @@ if (!/full node/i.test(execFileSync(path.join(bin, 'psyrob-node'), ['--help'], {
       if (!r.ok) throw new Error(`node page ${p}: HTTP ${r.status}`);
     }
     log('smoke test: the node serves /health and all pages');
-  } finally { child.kill('SIGTERM'); fs.rmSync(home, { recursive: true, force: true }); }
+  } finally {
+    // wait for the node to exit: it writes peers.json while stopping, and removing the folder before that failed
+    const exited = child.exitCode !== null ? Promise.resolve() : new Promise((r) => child.once('exit', r));
+    child.kill('SIGTERM');
+    await Promise.race([exited, sleep(20_000)]);
+    fs.rmSync(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  }
 }
 
 // ---- 6. packages

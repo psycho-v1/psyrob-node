@@ -167,6 +167,59 @@ test('cold store: old blocks leave memory and are read back on demand; new block
   }
 });
 
+test('cold store: undo/redo of blocks below the hot depth leave memory, and a deeper reorganisation reads them back', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'psy-cold-'));
+  const store = new Store(dir);
+  try {
+    // hot depth = 2 * mergeDepth = 10 blue score; the finality window (200) is far larger, so nothing is pruned for good
+    const t = await testChain({ params: { finalityDepth: 200, mergeDepth: 5 }, cold: store });
+    for (let i = 0; i < 80; i++) { t.advance(10); await mineOne(t, A); }
+    const fork = t.chain.dag.get(t.chain.chain[80]);
+    const forkTime = t.now();
+    // a transfer accepted on the main chain after the fork point: the reorganisation must revert it
+    const tx = signTx({ nonce: 0n, to: B.addr, value: 7n, gasLimit: 21000, gasPrice: 2_000_000_000n }, A.sk, t.params);
+    await t.chain.readAtTip((view, ctx) => t.mempool.add(tx.raw, view, ctx.baseFee, ctx.timestamp));
+    for (let i = 0; i < 40; i++) { t.advance(10); await mineOne(t, A); }
+    assert.ok(t.chain.txIndex.get(hex(tx.hash)), 'the transfer is on the main chain');
+    const frozenMain = t.chain.dag.get(t.chain.chain[85]);
+    assert.ok(frozenMain.coldAt !== undefined, 'a main block above the fork was moved to the cold store');
+    assert.ok(!Object.hasOwn(frozenMain, 'undo') && !Object.hasOwn(frozenMain, 'redo'), 'its undo/redo records left memory');
+    assert.ok(frozenMain.undo instanceof Map && frozenMain.redo instanceof Map, 'and are read back from the cold store');
+    assert.ok(frozenMain.blueAnticone, 'its GHOSTDAG data stays until the finality floor');
+    // a longer side branch from the fork, built by a second miner over the same time span (so the same targets)
+    t.setTime(forkTime);
+    let parent = fork.hash;
+    const mainTip = t.chain.tip;
+    for (let i = 0; i < 45; i++) {
+      t.advance(10);
+      const r = await t.chain.addBlock(await blockOn(t, [parent], B));
+      parent = r.hash;
+    }
+    assert.notEqual(t.chain.tip.hash, mainTip.hash, 'the side branch became the chain');
+    assert.equal(t.chain.tip.hash, parent);
+    assert.equal(t.chain.txIndex.get(hex(tx.hash)), undefined, 'the transfer was reverted with the main branch');
+    assert.equal(hex(t.chain.state.root()), hex(t.chain.tip.header.stateRoot), 'the state matches the new tip');
+    assert.equal(await t.chain.readAtTip((view) => view.getAccount(A.addr).nonce), 0n, "A's nonce is back to 0");
+    // and back: the old main branch overtakes again, moving forward through its cold redo records
+    t.setTime(mainTip.header.timestamp);
+    parent = mainTip.hash;
+    for (let i = 0; i < 10; i++) {
+      t.advance(10);
+      const r = await t.chain.addBlock(await blockOn(t, [parent], A));
+      parent = r.hash;
+    }
+    assert.equal(t.chain.tip.hash, parent, 'the main branch is the chain again');
+    assert.ok(t.chain.txIndex.get(hex(tx.hash)), 'with the transfer');
+    assert.equal(await t.chain.readAtTip((view) => view.getAccount(A.addr).nonce), 1n, "and A's nonce is 1 again");
+    assert.equal(hex(t.chain.state.root()), hex(t.chain.tip.header.stateRoot), 'the state matches again');
+    t.advance(10);
+    assert.equal((await mineOne(t, A)).status, 'added', 'the chain keeps growing');
+  } finally {
+    store.close();
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('starting: while blocks are replayed, /health answers 503 with the progress and pages say the node is starting', async () => {
   const t = await testChain();
   const node = { startup: { replayed: 250, of: 1000 } };
