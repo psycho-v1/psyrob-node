@@ -8,7 +8,7 @@ a decision made after the literature review in `docs/research/RESEARCH.md`; the 
 
 | Item | Value |
 |---|---|
-| Node version | 11.0.2. Testnet v11 is a fresh chain from a new genesis (launch ceremony of 2 November 2026); it replaces testnet v10 (24 October 2026), whose state does not carry over. Chain ID, Dev Accounts and bootstrap keys are those of v10 |
+| Node version | 11.0.3. Testnet v11 is a fresh chain from a new genesis (launch ceremony of 2 November 2026); it replaces testnet v10 (24 October 2026), whose state does not carry over. Chain ID, Dev Accounts and bootstrap keys are those of v10 |
 | Genesis | Built at the launch ceremony (section 17.1) from the three Dev Account signatures; its hash is recorded in `genesis/chain.json` when the network starts. A node that finds blocks of another genesis in its data folder moves them to `old-network-<time>/` and starts from this genesis. |
 | Chain ID | **87870** (`0x1573e`), the testnet (owner decision, 24 October 2026); unused in the public registries (chainid.network, ethereum-lists, checked 24 October 2026). A mainnet will have a chain ID of its own. |
 | Native token | PSY, 18 decimals, maximum supply 1,000,000,000 PSY (enforced by consensus, section 7) |

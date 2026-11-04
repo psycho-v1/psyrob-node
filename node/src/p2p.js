@@ -55,7 +55,7 @@ class Bucket {
   }
 }
 
-class Peer {
+export class Peer {
   constructor(p2p, socket, { outbound, host, port, kind = 'full' }) {
     this.p2p = p2p;
     this.socket = socket;
@@ -128,7 +128,12 @@ class Peer {
       // BLOCK is limited in onBlockMsg, where solicited blocks (the ones we asked this peer for) are told apart: a
       // sync asks for hundreds at once and must not count them against the peer that answers
       const bucket = type === MSG.BLOCK ? null : this.buckets.get(type);
-      if (bucket && !bucket.take()) { this.misbehave(5, 'rate limit on type ' + type); if (this.socket.destroyed) return; continue; }
+      if (bucket && !bucket.take()) {
+        // GETDATA over budget is dropped, not punished: a node syncing from height 0 asks in bursts (batches plus the
+        // parents of every new tip block) and was banned for it (v11.0.2). An unanswered request is asked again.
+        if (type === MSG.GETDATA) { this.droppedGetdata = (this.droppedGetdata ?? 0) + 1; this.p2p.droppedGetdata = (this.p2p.droppedGetdata ?? 0) + 1; continue; }
+        this.misbehave(5, 'rate limit on type ' + type); if (this.socket.destroyed) return; continue;
+      }
       // inQueue: messages received but not yet handled; while a peer has any, what we asked of it is still on its way
       this.inQueue++;
       const run = () => { this.queue = this.queue.then(() => this.p2p.handle(this, type, payload)).catch((e) => this.misbehave(20, 'bad message: ' + e.message)).finally(() => { this.inQueue--; }); };
@@ -571,14 +576,17 @@ export class P2P {
     }
     const r = await this.onBlock(raw, peer);
     // a batch block counts as delivered whatever became of it (added, orphan, known or invalid)
-    if (peer.batch?.delete(h)) {
+    const inBatch = !!peer.batch?.delete(h);
+    if (inBatch) {
       peer.batchAt = Date.now();
       if (!peer.batch.size && peer.syncMore) { peer.syncMore = false; this.requestChain(peer); }
     }
     if (!r) return;
     peer.known.add(r.hash);
     this.requested.delete(r.hash);
-    if (r.status === 'orphan') {
+    // a tip block that arrives as an orphan while batches are still coming from this peer: its parents are thousands
+    // of blocks away and the batches bring them; walking back to them one GETDATA at a time only floods the peer
+    if (r.status === 'orphan' && !(peer.syncMore && !inBatch)) {
       // only parents we hold nowhere: a parent waiting in the orphan pool is already on its way (re-asking for it
       // once per orphan sent hundreds of GETDATA messages during a sync and got the syncing node banned)
       const want = r.missing.filter((h) => !this.chain.orphans.has(h) && !this.chain.dag.has(h) && !this.recentlyRequested(h));

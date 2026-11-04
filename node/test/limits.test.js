@@ -11,13 +11,14 @@ import { testChain, key, mineOne, blockOn, hex } from './helpers.js';
 import { Rpc, RpcError } from '../src/rpc.js';
 import { Mempool } from '../src/mempool.js';
 import { Store } from '../src/store.js';
-import { P2P, MSG } from '../src/p2p.js';
+import { P2P, Peer, MSG } from '../src/p2p.js';
 import { decodeBlock } from '../src/block.js';
 import { startingServer } from '../src/node.js';
 import { signTx } from '../src/tx.js';
 import { makeParams } from '../src/params.js';
 import { KECCAK_EMPTY } from '../src/state.js';
 import { bytesToHex } from '../../common/bytes.js';
+import * as rlp from '../../common/rlp.js';
 
 const A = key(1), B = key(2);
 
@@ -127,6 +128,49 @@ test('sync batches: the next batch is asked for when the last one is in, whateve
   stalled.chainAskedAt = ago;
   p2p.resync();
   assert.deepEqual(stalled.sent, []);
+});
+
+test('a syncing peer is never banned for GETDATA bursts; it does not walk back to tip orphans while batches are due', async () => {
+  const t = await testChain();
+  const logs = [];
+  const p2p = new P2P({ params: t.params, chain: t.chain, mempool: t.mempool, genesisHash: t.genesis.hash, listenPort: null, seeds: [], log: (m) => logs.push(m), onBlock: (r) => t.chain.addBlock(r) });
+  // server side: 400 GETDATA frames in one burst (the limit is 200, then 50/s) are dropped over budget, not punished
+  const socket = { destroyed: false, remoteAddress: '2001:db8::1', remotePort: 1, writableLength: 0, write() {}, setNoDelay() {}, on() {}, setTimeout() {}, destroy() { this.destroyed = true; } };
+  const peer = new Peer(p2p, socket, { outbound: false });
+  peer.helloSeen = true;
+  const payload = rlp.encode([[rlp.int(1), new Uint8Array(32)]]);
+  const frame = (type, pl) => { const b = Buffer.alloc(9 + pl.length); b.writeUInt32BE(t.params.networkMagic, 0); b.writeUInt8(type, 4); b.writeUInt32BE(pl.length, 5); Buffer.from(pl).copy(b, 9); return b; };
+  peer.onData(Buffer.concat(Array.from({ length: 400 }, () => frame(MSG.GETDATA, payload))));
+  await peer.queue;
+  assert.equal(peer.score, 0, 'no points: ' + logs.join('; '));
+  assert.equal(p2p.bans.size, 0);
+  assert.equal(socket.destroyed, false);
+  assert.ok(peer.droppedGetdata >= 150, 'the excess was dropped: ' + peer.droppedGetdata);
+  // other types still cost points over their limit
+  peer.onData(Buffer.concat(Array.from({ length: 10 }, () => frame(MSG.GETADDR, rlp.encode([])))));
+  assert.ok(peer.score > 0, 'a GETADDR flood is still punished');
+
+  // client side: a tip block arriving as an orphan during a batch sync does not start a walk back to its parents
+  const t2 = await testChain();
+  t2.advance(10);
+  const raw1 = await blockOn(t2, [t2.chain.tip.hash], A);
+  await t2.chain.addBlock(raw1);
+  t2.advance(10);
+  const raw2 = await blockOn(t2, [bytesToHex(decodeBlock(raw1).hash)], A);
+  const h2 = bytesToHex(decodeBlock(raw2).hash);
+  t.advance(20);
+  const fake = (extra) => ({ ready: true, kind: 'full', outbound: true, blueScore: 9000, inQueue: 1, socket: { destroyed: false }, known: new Set(), buckets: new Map(), sent: [], sendRlp(type) { this.sent.push(type); }, ...extra });
+  const syncing = fake({ syncMore: true, batch: new Set(['ef'.repeat(32)]) });
+  p2p.markRequested(h2, syncing);
+  await p2p.onBlockMsg(syncing, raw2);
+  assert.ok(t.chain.orphans.has(h2), 'arrived as an orphan');
+  assert.deepEqual(syncing.sent, [], 'no GETDATA for the parent while batches are due');
+  // the same orphan from a peer we are not syncing from: its parent is asked for
+  t.chain.orphans.delete(h2);
+  const idle = fake({ syncMore: false });
+  p2p.markRequested(h2, idle);
+  await p2p.onBlockMsg(idle, raw2);
+  assert.deepEqual(idle.sent, [MSG.GETDATA], 'the parent is asked for once the sync is over');
 });
 
 test('cold store: old blocks leave memory and are read back on demand; new blocks still connect', async () => {
