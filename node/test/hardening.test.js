@@ -173,6 +173,8 @@ test('Host check on by default, CORS opt-in, JSON-RPC needs application/json, pe
     const ok = await request(port, { headers: { Host: 'localhost', Origin: 'https://evil.example' } });
     assert.equal(ok.code, 200);
     assert.equal(ok.headers['access-control-allow-origin'], undefined, 'no CORS unless configured');
+    const heap = JSON.parse(ok.body).heap;
+    assert.ok(heap.usedMB > 0 && heap.limitMB >= heap.usedMB, '/health reports the heap in use and its limit');
     const plain = await request(port, { method: 'POST', path: '/rpc', headers: { Host: '127.0.0.1', 'Content-Type': 'text/plain' }, body: rpc('eth_blockNumber') });
     assert.equal(plain.code, 415, 'a form-style POST from another site is refused');
     const local = await request(port, { method: 'POST', path: '/rpc', headers: { Host: '127.0.0.1', 'Content-Type': 'application/json' }, body: rpc('psy_peers') });

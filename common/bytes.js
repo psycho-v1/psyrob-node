@@ -4,10 +4,15 @@ export const EMPTY = new Uint8Array(0);
 
 const HEX_RE = /^[0-9a-fA-F]*$/;
 
+const HEX_BYTE = Array.from({ length: 256 }, (_, i) => i.toString(16).padStart(2, '0'));
+
+/** Bytes -> lowercase hex (no 0x). Built with one join, so the result is a flat string: appending byte by byte made a
+ *  rope of 32+ linked pieces in V8, and as Map keys (tx index, DAG, state) each 32-byte hash then held ~1.5 kB of heap
+ *  instead of ~100 bytes (testnet v11, 4 November 2026). */
 export function bytesToHex(b) {
-  let s = '';
-  for (let i = 0; i < b.length; i++) s += b[i].toString(16).padStart(2, '0');
-  return s;
+  const parts = new Array(b.length);
+  for (let i = 0; i < b.length; i++) parts[i] = HEX_BYTE[b[i]];
+  return parts.join('');
 }
 
 /** Hex string (no 0x) -> bytes. Requires even length and hex digits only. */
