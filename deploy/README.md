@@ -36,5 +36,5 @@ the new label; the node moves the blocks of the earlier chain aside by itself wh
    holders sign.
 3. `sudo bash deploy/LAUNCH.sh`.
 
-Memory: the node takes up to 1.4 GB (1 GiB heap). A contract compile (`forge build`, via-IR) needs about 2 GB more:
+Memory: the node may take up to 2.5 GB (2 GiB heap; usually far less since 11.0.1). A contract compile (`forge build`, via-IR) needs about 2 GB more:
 pause other services first on this 3.3 GB server.

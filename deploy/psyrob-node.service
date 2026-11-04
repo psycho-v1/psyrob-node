@@ -28,7 +28,7 @@ RuntimeDirectoryMode=0700
 ExecStartPre=/usr/bin/install -m 0600 %d/bootstrap-1.key %t/psyrob-node/bootstrap-1.key
 ExecStartPre=/usr/bin/install -m 0600 %d/bootstrap-2.key %t/psyrob-node/bootstrap-2.key
 ExecStartPre=/usr/bin/install -m 0600 %d/bootstrap-3.key %t/psyrob-node/bootstrap-3.key
-ExecStart=/usr/bin/node --max-old-space-size=1024 /home/psycho/psyrob-node/node/bin/psyrob-node.js \
+ExecStart=/usr/bin/node --max-old-space-size=2048 /home/psycho/psyrob-node/node/bin/psyrob-node.js \
   --genesis /home/psycho/psyrob-node/genesis/genesis-87870.json \
   --datadir /var/lib/psyrob-node \
   --http-host 127.0.0.1 --http-port 8787 \
@@ -44,11 +44,12 @@ UMask=0027
 
 # Memory: the server has 3.2 GiB shared with other services. Above MemoryHigh the kernel reclaims; at MemoryMax the
 # node is OOM-killed and Restart=always brings it back (blocks are stored before they are applied, so it replays to
-# its last block). Blocks far below the finality depth keep about 0.4 kB in memory (the rest is in cold.dat); the heap
-# is 1 GiB and the cgroup limits sit above it.
-MemoryHigh=1152M
-MemoryMax=1408M
-MemorySwapMax=512M
+# its last block). Blocks more than twice the merge depth below the tip keep their bulky data and undo/redo records in
+# cold.dat (since 11.0.1); the heap is 2 GiB and the cgroup limits sit above it. 1 GiB was too small for the v11 replay
+# of ~14,000 blocks on 11.0.0 (4 November 2026), so the margin stays.
+MemoryHigh=2G
+MemoryMax=2560M
+MemorySwapMax=1G
 
 # Code: the clone, bind-mounted read-only; the rest of /home is hidden (empty tmpfs)
 ProtectHome=tmpfs
