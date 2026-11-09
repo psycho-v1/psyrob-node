@@ -74,11 +74,17 @@ export class Dag {
   }
 
   /** GHOSTDAG data of a would-be block with these parents (all known). Does not add anything. */
+  /** The selected parent GHOSTDAG will choose (highest blue work, then hash): from the parents alone, no walk. */
+  selectedParentOf(parents) {
+    let sp = parents[0];
+    for (const x of parents) if (cmpBlock(x, sp) > 0) sp = x;
+    return sp;
+  }
+
   ghostdag(parentHashes) {
     const parents = parentHashes.map((p) => this.blocks.get(hx(p)));
     if (parents.some((x) => !x)) throw new Error('ghostdag: unknown parent');
-    let sp = parents[0];
-    for (const x of parents) if (cmpBlock(x, sp) > 0) sp = x;
+    const sp = this.selectedParentOf(parents);
     const mergeset = this.mergesetOf(parents, sp);
     const ordered = mergeset.map((h) => this.blocks.get(h)).sort(cmpBlock);
     const data = { selectedParent: sp.hash, mergesetBlues: [sp.hash], mergesetReds: [], blueAnticone: new Map([[sp.hash, 0]]) };

@@ -197,3 +197,24 @@ test('F-05: a full mergeset of the worst cheap workload validates within 25 % of
   const fullMergeset = seconds * Number(t.params.mergesetGasLimit) / 10_000_000;
   assert.ok(fullMergeset <= 0.25 * t.params.targetSpacing, `a full mergeset of ecrecover calls takes ${fullMergeset.toFixed(1)} s (block interval ${t.params.targetSpacing} s)`);
 });
+
+// ---------------------------------------------------------------- F-04: deep parents
+
+test('F-04: a block naming one parent below the merge depth is refused before any DAG walk', async () => {
+  const t = await testChain({ params: { mergeDepth: 20 } });
+  const hashes = [];
+  for (let i = 0; i < 60; i++) { t.advance(10); await mineOne(t, M); hashes.push(t.chain.tip.hash); }
+  t.advance(10);
+  const evil = await blockOn(t, [t.chain.tip.hash, hashes[2]], key(9));
+  // count reachability walks during intake: there must be none
+  let walks = 0;
+  const isAncestor = t.chain.dag.isAncestor.bind(t.chain.dag), mergesetOf = t.chain.dag.mergesetOf.bind(t.chain.dag);
+  t.chain.dag.isAncestor = (...a) => { walks++; return isAncestor(...a); };
+  t.chain.dag.mergesetOf = (...a) => { walks++; return mergesetOf(...a); };
+  await assert.rejects(t.chain.addBlock(evil), /parent below the merge depth/);
+  assert.equal(walks, 0, 'no reachability walk for a block the merge-depth rule refuses');
+  // an honest block on the tip is still accepted
+  t.chain.dag.isAncestor = isAncestor; t.chain.dag.mergesetOf = mergesetOf;
+  const ok = await blockOn(t, [t.chain.tip.hash], key(10));
+  assert.equal((await t.chain.addBlock(ok)).status, 'added');
+});

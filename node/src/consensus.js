@@ -330,6 +330,14 @@ export class Chain {
 
   async _connect(b, txs, trusted, raw) {
     const hd = b.header;
+    // the merge-depth rule on parents, from the parents' own blue scores, before any DAG walk: a block naming one very
+    // old parent used to cost a reachability walk over the DAG above it (GHOSTDAG, redundant-parent checks) before
+    // this same rule refused it (audit F-04). Same rule and same selected parent as below, so validity is unchanged
+    const pe = hd.parents.map((p) => this.dag.get(hx(p)));
+    if (pe.every(Boolean)) {
+      const sp0 = this.dag.selectedParentOf(pe);
+      for (const x of pe) if (x.blueScore + this.p.mergeDepth < sp0.blueScore) throw new BlockError('parent below the merge depth', { ban: 100 });
+    }
     let gd;
     try { gd = this.dag.ghostdag(hd.parents); } catch (e) { throw new BlockError('ghostdag: ' + e.message, { ban: 100 }); }
     if (gd.mergesetSize > this.p.mergesetLimit) throw new BlockError('mergeset too large', { ban: 100 });
