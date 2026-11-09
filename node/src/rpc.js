@@ -22,6 +22,27 @@ export function metricsWindow(w) {
   return METRICS_WINDOWS.reduce((best, x) => (Math.abs(x - n) < Math.abs(best - n) ? x : best), METRICS_WINDOWS[0]);
 }
 
+/**
+ * eth_call / eth_estimateGas limits (audit F-03). Simulations run on a state snapshot outside the chain lock and yield
+ * to the event loop, and only a few run at a time, so unauthenticated calls cannot hold up block intake.
+ */
+export const SIM_LIMITS = { concurrent: 2, queued: 8, deadlineMs: 500, yieldEvery: 1024 };
+
+/** A counting semaphore with a bounded wait queue: run(fn) or throw busy() when the queue is full. */
+class Gate {
+  constructor(max, queue) { this.max = max; this.queue = queue; this.active = 0; this.waiting = []; }
+  async run(fn, busy) {
+    if (this.active >= this.max) {
+      if (this.waiting.length >= this.queue) throw busy();
+      await new Promise((resolve) => this.waiting.push(resolve));
+    } else this.active++;
+    try { return await fn(); } finally {
+      const next = this.waiting.shift();
+      if (next) next(); else this.active--;
+    }
+  }
+}
+
 /** A token bucket shared by every client: the proof-of-work checks psy_submitBlock may run. */
 class Bucket {
   constructor(burst, perSec) { this.burst = burst; this.perSec = perSec; this.tokens = burst; this.at = Date.now(); }
@@ -35,6 +56,7 @@ class Bucket {
   }
 }
 
+const min = (a, b) => (a < b ? a : b);
 const ZERO32 = '0x' + '00'.repeat(32);
 const BLOOM = '0x' + '00'.repeat(256);
 const h0x = (b) => '0x' + bytesToHex(b);
@@ -69,6 +91,13 @@ export class Rpc {
     this.knownMiners = new Map(); // miner hex -> unix seconds of its last block added through psy_submitBlock
     this.powPerMiner = new Map(); // miner hex -> Bucket(4, 1), least recently used first
     this.templates = new Map(); // id -> template (last 32)
+    this.simGate = new Gate(SIM_LIMITS.concurrent, SIM_LIMITS.queued);
+    // template builds run a whole mergeset and a state root under the chain lock: recent ones are cached per miner, tips
+    // and mempool size, and miners that have not had a block added here in the last day share a build budget, so rotating
+    // miner addresses cannot keep the lock busy (audit F-03); known miners have a budget of their own
+    this.templateCache = new Map(); // key -> { at, json }, least recently used first
+    this.buildBudget = new Bucket(10, 2);
+    this.buildKnown = new Bucket(20, 5);
   }
 
   async handle(method, params = []) {
@@ -152,27 +181,31 @@ export class Rpc {
 
   async readCall(call, { forEstimate = false } = {}) {
     const c = this.chain;
-    return c.readAtTip(async (view, ctx) => {
+    const busy = () => new RpcError(-32005, 'too many calls are running on this node; try again shortly');
+    // the snapshot is taken under the chain lock; the simulation runs outside it (audit F-03)
+    return this.simGate.run(() => c.readSnapshot(async (view, ctx) => {
       try {
-        return await simulate(view, c.p, ctx, call.forEstimate === undefined ? { ...call, forEstimate } : call, { deadlineMs: 1000 });
+        return await simulate(view, c.p, ctx, call.forEstimate === undefined ? { ...call, forEstimate } : call,
+          { deadlineMs: SIM_LIMITS.deadlineMs, yieldEvery: SIM_LIMITS.yieldEvery });
       } catch (e) {
         if (e instanceof CallError) throw new RpcError(e.revert ? 3 : -32000, e.message, e.data ? h0x(e.data) : undefined);
         throw e;
       }
-    });
+    }), busy);
   }
 
   parseCall(o) {
     if (!o || typeof o !== 'object') throw new RpcError(-32602, 'call object expected');
     return {
       from: o.from ? parseAddr(o.from) : null, to: o.to ? parseAddr(o.to) : new Uint8Array(0), data: parseData(o.data ?? o.input),
-      value: o.value ? parseQuantity(o.value) : 0n, gas: o.gas ? parseQuantity(o.gas, 64) : this.chain.p.blockGasLimit,
+      // never more than one block's gas: a call cannot do more than a transaction could
+      value: o.value ? parseQuantity(o.value) : 0n, gas: o.gas ? min(parseQuantity(o.gas, 64), this.chain.p.blockGasLimit) : this.chain.p.blockGasLimit,
     };
   }
 
   /** Read-only call of a system contract at the tip (explorer and pages). */
   async view(to, sig, types = [], values = []) {
-    return this.chain.readAtTip(async (view, ctx) => contractCall(view, this.chain.p, ctx, { to, data: abi.call(sig, types, values), commit: false }));
+    return this.chain.readSnapshot(async (view, ctx) => contractCall(view, this.chain.p, ctx, { to, data: abi.call(sig, types, values), commit: false }));
   }
 
   /** The chain block that accepted e (merged it) and the colour it gave e; null while no chain block merged it. */
@@ -345,14 +378,19 @@ export class Rpc {
       if (sync) throw new RpcError(-32005, `the node is still syncing (blue score ${sync.blueScore} of about ${sync.target}); mining starts when it has caught up`);
       // the same template for the same miner and the same DAG tips for 3 seconds
       const key = minerAddr.toLowerCase() + [...this.chain.dag.tips].sort().join('') + this.mempool.size;
-      if (this.lastTemplate?.key === key && Date.now() - this.lastTemplate.at < 3000) return this.lastTemplate.json;
+      const hit = this.templateCache.get(key);
+      if (hit && Date.now() - hit.at < 3000) return hit.json;
+      const known = (this.knownMiners.get(bytesToHex(miner)) ?? 0) > Math.floor(Date.now() / 1000) - 86_400;
+      if (!(known ? this.buildKnown : this.buildBudget).take()) throw new RpcError(-32005, 'the node is busy building templates; try again in a second');
       const certs = (await this.finality?.certsForTemplate()) ?? [];
       const t = await buildTemplate(this.chain, this.mempool, miner, { certs });
       this.templates.set(t.id, t);
       // many public miners share the public node: keep enough outstanding templates (each is small)
       if (this.templates.size > 512) this.templates.delete(this.templates.keys().next().value);
       const json = templateJson(t, this.chain.p);
-      if (this.templates.size) this.lastTemplate = { key, at: Date.now(), json };
+      this.templateCache.delete(key);
+      this.templateCache.set(key, { at: Date.now(), json });
+      if (this.templateCache.size > 64) this.templateCache.delete(this.templateCache.keys().next().value);
       return json;
     },
     async psy_submitBlock(id, nonceHex, sigHex) {

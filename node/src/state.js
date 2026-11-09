@@ -122,9 +122,36 @@ export class StateView extends Reader {
   }
 }
 
+/**
+ * A read-only, copy-on-write picture of a State at one moment. It costs nothing to take; while it is open, the State
+ * keeps the previous value of every record it changes (first change only), so the snapshot keeps reading the old
+ * state while blocks are connected. Used to run eth_call and explorer reads outside the chain lock. Always release.
+ */
+export class StateSnapshot extends Reader {
+  constructor(state) {
+    super();
+    this.state = state;
+    this.saved = new Map(); // key -> value at snapshot time (undefined = absent)
+    this.open = true;
+  }
+
+  get(key) {
+    if (!this.open) throw new Error('state: snapshot used after release');
+    return this.saved.has(key) ? this.saved.get(key) : this.state.data.get(key);
+  }
+
+  release() {
+    if (!this.open) return;
+    this.open = false;
+    this.state.snapshots.delete(this);
+    this.saved.clear();
+  }
+}
+
 export class State extends Reader {
   constructor() {
     super();
+    this.snapshots = new Set(); // open StateSnapshots
     this.data = new Map();
     this.leaves = new Map(); // key -> cached leaf hash
     this.slotsByAddr = new Map(); // addrHex -> Set of storage keys (for clearStorage)
@@ -134,6 +161,7 @@ export class State extends Reader {
   get(key) { return this.data.get(key); }
 
   _put(key, value) {
+    for (const snap of this.snapshots) if (!snap.saved.has(key)) snap.saved.set(key, this.data.get(key));
     if (value === undefined) {
       if (this.data.delete(key)) {
         this.leaves.delete(key);
@@ -173,6 +201,13 @@ export class State extends Reader {
   root() {
     if (!this.sortedKeys) this.sortedKeys = [...this.data.keys()].sort();
     return merkleRootFromLeafHashes(this.sortedKeys.map((k) => this.leaves.get(k)));
+  }
+
+  /** A copy-on-write snapshot of the state as it is now (see StateSnapshot). The caller must release it. */
+  snapshot() {
+    const snap = new StateSnapshot(this);
+    this.snapshots.add(snap);
+    return snap;
   }
 
   /** Root this state would have with `view` applied, without keeping the changes. */

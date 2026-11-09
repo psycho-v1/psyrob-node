@@ -767,6 +767,19 @@ export class Chain {
     });
   }
 
+  /**
+   * Run fn(reader, ctx) on a copy-on-write snapshot of the tip state. Only taking the snapshot is serialised with
+   * block intake; fn itself runs outside the chain lock, so a slow read (eth_call, eth_estimateGas, explorer contract
+   * views) never delays block intake (audit F-03). fn gets a throwaway view of the snapshot; writes stay in it.
+   */
+  async readSnapshot(fn) {
+    const { snap, ctx } = await this.exclusive(async () => {
+      this.moveTo(this.tip.hash);
+      return { snap: this.state.snapshot(), ctx: this.readContext() };
+    });
+    try { return await fn(snap.view(), ctx); } finally { snap.release(); }
+  }
+
   supply() {
     const g = this.state.getGlobal();
     return { genesisSupply: g.genesisSupply, issuedMining: g.issuedMining, issuedNGO: g.issuedNGO, burned: g.burned + this.state.getAccount(BURN_ADDRESS).balance };

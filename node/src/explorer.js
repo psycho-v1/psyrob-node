@@ -212,7 +212,8 @@ export class Explorer {
 
   /** Run several contract reads on one consistent tip state: fn(read) where read(contract, fn, args) -> decoded. */
   reads(fn) {
-    return this.chain.readAtTip(async (view, ctx) => {
+    // on a snapshot, outside the chain lock: a page full of contract reads never delays block intake (audit F-03)
+    return this.chain.readSnapshot(async (view, ctx) => {
       const read = async (name, f, args = []) => {
         const c = this.c[name];
         const r = await contractCall(view, this.p, ctx, { to: c.addr, data: c.codec.encode(f, args), commit: false });

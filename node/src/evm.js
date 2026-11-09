@@ -215,8 +215,12 @@ export async function genesisCreate(view, p, ctx, { address, initCode, value = 0
   return res;
 }
 
-/** eth_call / eth_estimateGas on a discarded view (deadline in wall-clock ms only aborts the simulation). */
-export async function simulate(view, p, ctx, call, { deadlineMs = 1000 } = {}) {
+/**
+ * eth_call / eth_estimateGas on a discarded view (deadline in wall-clock ms only aborts the simulation).
+ * `yieldEvery`: hand the event loop back every so many EVM steps, so a long simulation running outside the chain lock
+ * cannot starve block intake, P2P or HTTP either (audit F-03). 0 = never (tests, tools).
+ */
+export async function simulate(view, p, ctx, call, { deadlineMs = 1000, yieldEvery = 0 } = {}) {
   const intrinsic = intrinsicGas({ to: call.to, data: call.data }, p);
   if (call.gas < intrinsic) throw new CallError('gas below intrinsic gas');
   const deadline = Date.now() + deadlineMs;
@@ -225,13 +229,21 @@ export async function simulate(view, p, ctx, call, { deadlineMs = 1000 } = {}) {
     const state = new EvmState(v.view(), v);
     const { evm, block } = await buildEvm(p, state, ctx);
     let steps = 0, timedOut = false;
-    evm.events.on('step', () => { if (++steps % 512 === 0 && Date.now() > deadline) { timedOut = true; throw new Error('simulation time limit exceeded'); } });
+    const check = () => { if (++steps % 512 === 0 && Date.now() > deadline) { timedOut = true; throw new Error('simulation time limit exceeded'); } };
+    if (yieldEvery > 0) evm.events.on('step', (_e, done) => { check(); if (steps % yieldEvery === 0) setImmediate(done); else done(); });
+    else evm.events.on('step', check);
     const from = call.from ?? new Uint8Array(20);
     warm(evm, [from, ...(call.to.length ? [call.to] : [])]);
-    const res = await evm.runCall({
-      caller: new Address(from), origin: new Address(from), to: call.to.length ? new Address(call.to) : undefined,
-      value: call.value, data: call.data, gasLimit: gas - intrinsic, gasPrice: 0n, block, skipBalance: true,
-    });
+    let res;
+    try {
+      res = await evm.runCall({
+        caller: new Address(from), origin: new Address(from), to: call.to.length ? new Address(call.to) : undefined,
+        value: call.value, data: call.data, gasLimit: gas - intrinsic, gasPrice: 0n, block, skipBalance: true,
+      });
+    } catch (e) {
+      if (timedOut) throw new CallError('simulation time limit exceeded');
+      throw e;
+    }
     if (timedOut) throw new CallError('simulation time limit exceeded');
     const r = res.execResult;
     const used = intrinsic + r.executionGasUsed;
