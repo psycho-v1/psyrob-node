@@ -1,6 +1,6 @@
 // Argon2d proof of work (DAG_SPEC.md section 3). Shared by the node (verification) and the miner (search).
 //
-//   powHash = Argon2d(password = header signing bytes, salt = "PSYROB-PoW", m = memoryKiB, t = iterations, p = 1, 32 bytes)
+//   powHash = Argon2d(password = full header RLP including minerSig, salt = "PSYROB-PoW", m = memoryKiB, t = iterations, p = 1, 32 bytes)
 //   valid  <=>  uint256(powHash) <= target
 //
 // The network uses m = 32,768 KiB (32 MiB), t = 1. Tests and local devnets may use a smaller memory size; it is part of
@@ -38,7 +38,7 @@ export function argon2Impl() {
   return impl;
 }
 
-/** powHash of the header signing bytes under the chain's PoW settings ({ memoryKiB, iterations }). */
+/** powHash of the full encoded header (with nonce and minerSig) under the chain's PoW settings ({ memoryKiB, iterations }). */
 export function powHash(signing, pow = MAINNET_POW, im = argon2Impl()) {
   return im.hash(signing, POW_SALT, pow.memoryKiB, pow.iterations);
 }

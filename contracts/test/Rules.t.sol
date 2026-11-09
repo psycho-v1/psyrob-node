@@ -54,8 +54,14 @@ contract RulesTest is FinalityTest {
         address[] memory dup = new address[](2);
         dup[0] = makeAddr("a");
         dup[1] = dup[0];
+        // quorum 2 of 2 passes the majority check, so the duplicate check is what refuses this list
         vm.expectRevert(FinalityCommittee.NoBootstrapSigners.selector);
-        new FinalityCommittee(dup, 1);
+        new FinalityCommittee(dup, 2);
+        address[] memory two = new address[](2);
+        two[0] = makeAddr("a");
+        two[1] = makeAddr("b");
+        vm.expectRevert(FinalityCommittee.BadBootstrapQuorum.selector);
+        new FinalityCommittee(two, 1); // 1 of 2 is not a majority
     }
 
     // ---- no committee without NGO signatures ----

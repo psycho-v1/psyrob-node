@@ -43,7 +43,7 @@ a decision made after the literature review in `docs/research/RESEARCH.md`; the 
 Block = header + transaction list. The header is RLP-encoded:
 
 ```
-[ version=7, parents[1..10] (32 B each, sorted ascending), timestamp, target (32 B),
+[ version=1, parents[1..10] (32 B each, sorted ascending), timestamp, target (32 B),
   blueScore, blueWork, stateRoot, txRoot, receiptsRoot, acceptedTxRoot,
   gasLimit, gasUsed, baseFee, miner (20 B), extra (≤ 32 B), nonce (8 B), minerSig (65 B) ]
 ```
