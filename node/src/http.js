@@ -8,7 +8,7 @@ import { Downloads } from './downloads.js';
 import { RpcError } from './rpc.js';
 import { clientIp } from './ws.js';
 import { banKey } from './p2p.js';
-import { NODE_VERSION, versionText } from './params.js';
+import { NODE_VERSION, PROTOCOL_VERSION, versionText } from './params.js';
 import v8 from 'node:v8';
 
 const heapMB = () => { const h = v8.getHeapStatistics(); return { usedMB: Math.round(h.used_heap_size / 2 ** 20), limitMB: Math.round(h.heap_size_limit / 2 ** 20) }; };
@@ -117,7 +117,7 @@ export async function startHttp({ node, host, port, rate = [200, 50], vhosts = n
       if (url.pathname === '/health') {
         const c = node.chain;
         res.writeHead(200, { 'Content-Type': 'application/json', ...cors });
-        res.end(json({ ok: true, version: NODE_VERSION, chainId: Number(node.params.chainId), chainHeight: c.tip.chainHeight, blueScore: c.tip.blueScore, tip: '0x' + c.tip.hash,
+        res.end(json({ ok: true, version: NODE_VERSION, protocol: PROTOCOL_VERSION, chainId: Number(node.params.chainId), chainHeight: c.tip.chainHeight, blueScore: c.tip.blueScore, tip: '0x' + c.tip.hash,
           tips: c.dag.tips.size, genesis: '0x' + Buffer.from(c.genesisHash).toString('hex'), peers: node.p2p ? [...node.p2p.peers].filter((p) => p.ready).length : 0,
           syncing: node.p2p?.syncing?.() ?? false, finalCheckpoint: c.finalCheckpoint.number, mempool: node.mempool.size, systemCallFailures: node.systemCallFailures ?? 0,
           // heap in use and its limit (MB): lets an operator see memory trouble coming without access to the service

@@ -15,7 +15,7 @@ import { PowPool } from './powpool.js';
 import { startHttp } from './http.js';
 import { selfTest } from '../../common/pow.js';
 import { bytesToHex } from '../../common/bytes.js';
-import { NODE_VERSION } from './params.js';
+import { NODE_VERSION, PROTOCOL_VERSION } from './params.js';
 
 export class Node {
   /**
@@ -90,7 +90,7 @@ export class Node {
   }
 
   onChainEvent(type, d) {
-    if (type === 'upgradeRequired') this.log(`UPGRADE REQUIRED: an approved node update is in force; this network now needs node ${d.version} or newer. This node (${NODE_VERSION}) stops following the chain until it is updated.`);
+    if (type === 'upgradeRequired') this.log(`UPGRADE REQUIRED: an approved node update is in force; this network now needs protocol ${d.version}. This node (${NODE_VERSION}, protocol ${PROTOCOL_VERSION}) stops following the chain until it is updated.`);
     if (type === 'systemCallFailed') {
       this.systemCallFailures = (this.systemCallFailures ?? 0) + 1;
       if (!this.replaying) this.log(`system call ${d.label} reverted in block ${d.hash} (chain height ${d.chainHeight}, gas ${d.gasUsed}): ${d.reason || 'no reason'}`);

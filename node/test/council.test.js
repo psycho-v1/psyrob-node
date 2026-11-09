@@ -241,7 +241,7 @@ test('council: network pause in pool and blocks, contract update, node update st
   assert.equal(neverReplaceable(ADDR.devCouncil), true);
   assert.equal(neverReplaceable(ADDR.treasury), false);
 
-  // ---- node update: version 11.1.0 approved (by the DAO stand-in); 14 days later this 11.0.0 node stops
+  // ---- node update: protocol 11.1.0 approved (by the DAO stand-in); 14 days later this node (protocol 10.0.0) stops
   const nodePlan = await read('UpgradeRegistry', ADDR.upgradeRegistry, 'planCount');
   await send(council[0], ADDR.upgradeRegistry, C.UpgradeRegistry.encode('submit', [1n, '0x' + '00'.repeat(20), '0x' + '00'.repeat(20), 11_001_000n, '0x' + '01'.repeat(20), hex(keccak256(Uint8Array.of(1))), '11.1.0']));
   await flush(council[0]);
@@ -255,7 +255,7 @@ test('council: network pause in pool and blocks, contract update, node update st
   assert.equal(await t.chain.readAtTip((v) => requiredVersion(v)), 11_001_000);
   assert.equal(versionText(11_001_000), '11.1.0');
   t.advance(10);
-  await assert.rejects(mineOne(t, council[0]), /upgrade required: this network now needs node 11.1.0/);
+  await assert.rejects(mineOne(t, council[0]), /upgrade required: this network now needs protocol 11.1.0/);
   const raw2 = await blockOn(t, [t.chain.tip.hash], council[0]).catch((e) => e);
   if (raw2 instanceof Uint8Array) await assert.rejects(t.chain.addBlock(raw2), /upgrade required/);
   assert.ok(t.events.some(([type, d]) => type === 'upgradeRequired' && d.version === '11.1.0'));

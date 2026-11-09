@@ -372,7 +372,7 @@ export class Chain {
     const need = requiredVersion(this.state);
     if (need > OWN_VERSION) {
       if (this.upgradeRequired !== need) { this.upgradeRequired = need; this.onEvent('upgradeRequired', { version: versionText(need) }); }
-      throw new BlockError(`upgrade required: this network now needs node ${versionText(need)} or newer`, { ban: 0 });
+      throw new BlockError(`upgrade required: this network now needs protocol ${versionText(need)} (a newer node release)`, { ban: 0 });
     }
     const pending = { header: hd, txs, certs: b.certs, hash: hx(b.hash), hashBytes: b.hash };
     const res = await this.acceptMergeset(pending, gd, sp, baseFee);

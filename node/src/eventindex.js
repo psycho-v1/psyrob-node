@@ -27,8 +27,10 @@ export class EventIndex {
       Attestation: ['Vouched', 'Challenged', 'DecisionVote', 'ChallengeDecided'],
       FinalityCommittee: ['Slashed'],
       NGORewards: ['Claimed', 'Forfeited'],
+      UpgradeRegistry: ['Submitted'],
+      DevCouncil: ['Proposed'],
     };
-    const addrOf = { Governor: ADDR.governor, NGOElection: ADDR.ngoElection, Attestation: ADDR.attestation, FinalityCommittee: ADDR.finalityCommittee, NGORewards: ADDR.ngoRewards };
+    const addrOf = { Governor: ADDR.governor, NGOElection: ADDR.ngoElection, Attestation: ADDR.attestation, FinalityCommittee: ADDR.finalityCommittee, NGORewards: ADDR.ngoRewards, UpgradeRegistry: ADDR.upgradeRegistry, DevCouncil: ADDR.devCouncil };
     for (const [contract, names] of Object.entries(want)) {
       for (const ev of artifacts[contract].abi.filter((x) => x.type === 'event' && names.includes(x.name))) {
         const sig = `${ev.name}(${ev.inputs.map((i) => i.type).join(',')})`;
@@ -49,6 +51,8 @@ export class EventIndex {
     this.byVoter = new Map(); // address -> [{ kind, id, height }]
     this.slashes = new Map(); // epoch -> [{ member, reporter, burned, reward, height }]
     this.claims = []; // NGO pool payouts, oldest first: [{ term, ngo, amount, height, tx }]
+    this.plans = new Map(); // UpgradeRegistry plan id -> { description, height, tx } (the text is only in the event)
+    this.planActions = new Map(); // plan id -> [{ action, kind, seat, height, tx }]: dev council approve/cancel actions
     this.entries = []; // [{ height, undo }] for reorgs: undo() reverses one entry
   }
 
@@ -110,7 +114,8 @@ export class EventIndex {
         ev[inp.name] = inp.type === 'address' ? '0x' + bytesToHex(word.slice(12)) : inp.type.startsWith('uint') ? BigInt(h(word)) : h(word);
       } else ev[inp.name] = vals[vi++];
     }
-    this._apply(spec.name, ev, height, tx);
+    // Governor and DevCouncil both have a Proposed event
+    this._apply(spec.contract === 'DevCouncil' ? 'CouncilProposed' : spec.name, ev, height, tx);
   }
 
   _push(list, item) { if (list.length < CAP) { list.push(item); return true; } return false; }
@@ -207,6 +212,22 @@ export class EventIndex {
         this.claims.push(item);
         if (this.claims.length > 2 * CAP) this.claims.splice(0, CAP);
         this._record(height, () => { n.claims.pop(); this.claims.pop(); });
+        break;
+      }
+      case 'CouncilProposed': {
+        const kind = Number(e.kind);
+        if (kind > 1) break; // 0 = approve a plan, 1 = cancel a plan (arg = plan id)
+        const plan = Number(e.arg);
+        if (!this.planActions.has(plan)) this.planActions.set(plan, []);
+        const list = this.planActions.get(plan);
+        list.push({ action: Number(e.id), kind, seat: Number(e.seat), height, tx });
+        this._record(height, () => { list.pop(); if (!list.length) this.planActions.delete(plan); });
+        break;
+      }
+      case 'Submitted': {
+        const id = Number(e.id);
+        this.plans.set(id, { description: String(e.description).slice(0, 20_000), height, tx });
+        this._record(height, () => this.plans.delete(id));
         break;
       }
       case 'Forfeited': {

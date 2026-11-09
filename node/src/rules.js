@@ -8,7 +8,7 @@
 import { keccak256, recoverAddress } from '../../common/crypto.js';
 import { bytesToHex, hexToBytes, bytesToBigint, utf8, concat } from '../../common/bytes.js';
 import { readResourceText } from '../../common/resources.js';
-import { ADDR, DEV_ACCOUNTS, PUBLIC_CHAIN_IDS, NODE_VERSION, versionNumber, TESTNET_NAME } from './params.js';
+import { ADDR, DEV_ACCOUNTS, PUBLIC_CHAIN_IDS, PROTOCOL_VERSION, versionNumber, TESTNET_NAME } from './params.js';
 
 const word = (n) => { const b = new Uint8Array(32); let x = BigInt(n); for (let i = 31; i >= 0; i--) { b[i] = Number(x & 0xffn); x >>= 8n; } return b; };
 const addrWord = (a) => { const b = new Uint8Array(32); b.set(a, 12); return b; };
@@ -31,7 +31,8 @@ export function requiredVersion(view) {
   return Number(BigInt(view.getStorage(ADDR.upgradeRegistry, REQUIRED_VERSION_SLOT)) & 0xffffffffn);
 }
 
-export const OWN_VERSION = versionNumber(NODE_VERSION);
+/** The protocol version this node implements (params.js PROTOCOL_VERSION), compared with requiredVersion. */
+export const OWN_VERSION = versionNumber(PROTOCOL_VERSION);
 
 const sel = (sig) => bytesToHex(keccak256(utf8(sig)).subarray(0, 4));
 const DEV_VESTINGS = DEV_ACCOUNTS.map((a) => bytesToHex(ADDR[a.key]));

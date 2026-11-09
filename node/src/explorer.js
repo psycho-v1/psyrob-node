@@ -95,14 +95,14 @@ const NAV = [
   ['Register', 'badge', [['/register/miner', 'cpu', 'Register your miner'], ['/register/ngo', 'id', 'Register a miner for your NGO']]],
   ['Governance', 'shield', [['/ngos', 'list', 'NGO register'], ['/ngo-submit', 'upload', 'Submit and mint'], ['/attestation', 'badge', 'Attestation'],
     ['/election', 'check', 'NGO election'], ['/election-rounds', 'check', 'All election rounds'], ['/proposals', 'clipboard', 'Proposals'], ['/governance', 'clipboard', 'Vote and propose'],
-    ['/roles', 'id', 'Roles and candidacy'], ['/treasury', 'wallet', 'Treasury and funds'], ['/upgrades', 'refresh', 'Upgrades and council'], ['/pause', 'pause', 'Emergency pause']]],
+    ['/roles', 'id', 'Roles and candidacy'], ['/treasury', 'wallet', 'Treasury and funds'], ['/upgrades', 'refresh', 'Upgrades and council'], ['/upgrade', 'check', 'Node upgrade approval'], ['/pause', 'pause', 'Emergency pause']]],
   ['Network', 'globe', [['/network', 'globe', 'Network and peers'], ['/mining', 'cpu', 'Mining statistics'], ['/committee', 'lock', 'Finality committee'],
     ['/metrics', 'chart-line', 'Decentralisation metrics'], ['/run-a-node', 'server', 'Run a node'], ['/mine', 'cpu', 'Mine'], ['/wallet', 'key', 'Wallet set-up']]],
   ['Developers', 'server', [['/developers', 'clipboard', 'RPC and API'], ['/contracts', 'box', 'Contracts (read)'], ['/about', 'info', 'About']]],
 ];
 const RAIL = new Set(['/dag', '/blocks']);
 const BAND = new Set(['/dag', '/blocks', '/txs', '/emission', '/network', '/ngos', '/ngo-submit', '/attestation', '/election', '/governance', '/roles', '/treasury', '/committee', '/metrics', '/run-a-node', '/mine', '/wallet', '/about',
-  '/mempool', '/holders', '/account', '/tokens', '/election-rounds', '/proposals', '/mining', '/developers', '/contracts', '/upgrades', '/pause']);
+  '/mempool', '/holders', '/account', '/tokens', '/election-rounds', '/proposals', '/mining', '/developers', '/contracts', '/upgrades', '/upgrade', '/pause']);
 /** PSY still held by the three Dev Account vesting contracts. */
 const devHeld = (view) => DEV_ACCOUNTS.reduce((t, a) => t + view.getAccount(ADDR[a.key]).balance, 0n);
 const ROLE_NAMES = ['CEO', 'CTO', 'Treasurer', 'Community Lead', 'Security Lead'];
@@ -278,6 +278,7 @@ export class Explorer {
       if (p === '/api/dag') return send(200, JSON.stringify(this.dagData(Number(url.searchParams.get('n') || 60))), 'application/json');
       await this.refreshMode();
       await this.refreshPause();
+      await this.refreshUpgrades();
       // pages are cached per tip for 5 seconds: many contract reads hold the chain lock
       const key = lang() + ':' + p + '?' + url.searchParams.toString();
       const hit = this.cache.get(key);
@@ -334,6 +335,8 @@ export class Explorer {
     if (p === '/roles') return this.rolesPage();
     if (p === '/treasury') return this.treasuryPage();
     if (p === '/upgrades') return this.upgradesPage();
+    if (p === '/upgrade') return this.upgradeInbox();
+    if (p.startsWith('/upgrade/')) return this.upgradePage(decodeURIComponent(p.slice(9)));
     if (p === '/pause') return this.pausePage();
     if (p.startsWith('/role-round/')) return this.roleRoundPage(decodeURIComponent(p.slice(12)));
     if (p === '/committee') return this.committeePage();
@@ -455,7 +458,7 @@ export class Explorer {
       `<button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#siteNav" aria-controls="siteNav" aria-expanded="false" aria-label="${T('Open menu')}">${icon('menu')}</button>` +
       `<div class="collapse navbar-collapse" id="siteNav"><form class="nav-search ms-lg-3 my-2 my-lg-0" action="/search" method="get" role="search"><input class="form-control form-control-sm" id="nav-q" name="q" aria-label="${T('Search the chain')}" placeholder="${T('Search')} ( / )" required></form>` +
       `<ul class="navbar-nav ms-auto">${nav}${langMenu}</ul></div></div></nav>` +
-      `<div class="tn-banner" role="note">${T('Test network. No presale. Wallet loss is permanent.')}</div>` + this.pauseBanner() + this.interimBanner() + '</header>' +
+      `<div class="tn-banner" role="note">${T('Test network. No presale. Wallet loss is permanent.')}</div>` + this.pauseBanner() + this.upgradeBanner() + this.interimBanner() + '</header>' +
       `<main class="container py-4" id="main" tabindex="-1">${body}</main><footer class="container foot"><nav class="foot-links" aria-label="PSYROB"><a href="https://psyrob.com">psyrob.com</a><a href="https://psyrob.com/members">${T('Members Hub')}</a><a href="/developers">${T('Developers')}</a></nav>${esc(foot)}</footer>` +
       '<script src="/vendor/bootstrap.bundle.min.js"></script><script src="/live.js"></script><script src="/ui.js"></script>' + scripts + '</body></html>';
   }

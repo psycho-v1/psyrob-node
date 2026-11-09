@@ -4,6 +4,15 @@ import { fromHex, hexToBytes } from '../../common/bytes.js';
 import { RATIO_COMPLEMENT } from './emission.js';
 
 export const NODE_VERSION = '11.0.3';
+/**
+ * The consensus protocol version this node implements, as UpgradeRegistry counts node updates (BASE_VERSION 10.0.0 on
+ * every fresh genesis). It is not the release number: a release that changes consensus rules raises it by one step
+ * (10.0.0 -> 10.1.0 for new rules, -> 10.0.1 for a required fix), and the dev council approves that step as a node
+ * update plan, without a new genesis; a release that changes no consensus rule keeps it and needs no plan. The node
+ * stops following the chain when UpgradeRegistry requires a higher protocol version (rules.js OWN_VERSION).
+ * docs/NODE-UPGRADES.md.
+ */
+export const PROTOCOL_VERSION = '10.0.0';
 /** The network's name on pages, in the launch ceremony and in downloads, derived from NODE_VERSION so labels cannot
  *  drift apart again. */
 export const TESTNET_MAJOR = Number(NODE_VERSION.split('.')[0]);

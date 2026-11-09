@@ -31,7 +31,7 @@ export function buildTemplate(chain, mempool, miner, { certs = [], extra = 'psyr
     const timestamp = Math.max(chain.now(), chain.pastMedianTime(sp) + 1);
     chain.moveTo(sp.hash);
     const need = requiredVersion(chain.state);
-    if (need > OWN_VERSION) throw new Error(`upgrade required: this network now needs node ${versionText(need)} or newer`);
+    if (need > OWN_VERSION) throw new Error(`upgrade required: this network now needs protocol ${versionText(need)} (a newer node release)`);
     const header = {
       version: HEADER_VERSION, parents: parents.map((h) => fromHex('0x' + h)), timestamp, target: chain.expectedTarget(sp), blueScore: BigInt(gd.blueScore),
       blueWork: gd.blueWork, gasLimit: p.blockGasLimit, baseFee, miner, extra: utf8(extra).slice(0, 32), nonce: 0n, minerSig: new Uint8Array(65),
