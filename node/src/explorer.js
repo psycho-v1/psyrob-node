@@ -1367,12 +1367,24 @@ export class Explorer {
 
   // ---------------------------------------------------------------- take part
 
-  minePage() {
+  /** The /mine page for the separate miner download (until a PSYROB Suite release is published). */
+  mineLegacyPage() {
     const body = `<p class="eyebrow">${T('Mine')}</p><h1>${T('CPU mining with Argon2d.')}</h1><p class="lead">${T('Anyone can mine. PSYROB Miner searches with Argon2d (32 MiB per attempt), signs every attempt with your miner wallet and submits the blocks it finds; the reward goes to that wallet. Mining is the only way to obtain PSY at the start.')}</p>` +
       `<div class="panel"><h2 class="h4">${T('Start in three steps')}</h2><ol class="steps"><li>${T('Download PSYROB Miner for Windows or Ubuntu on <a href="/run-a-node">Run a node</a> and double-click it.')}</li>` +
       `<li>${T('On the dashboard that opens in your browser, create a wallet and back up its key on paper. The dashboard has 11 languages.')}</li><li>${T('Choose the threads and press Start mining. Running your own node? Choose “My node on this PC” under Nodes.')}</li></ol>` +
       `<a class="btn btn-cyan" href="/run-a-node">${T('Download the miner')}</a></div>` +
       `<p class="mt-3">${T('The miner works through the public node <code>https://rpc.psyrob.com</code>, or through your own node (Nodes: <code>http://127.0.0.1:8770</code>). Progress is on the <a href="/mining">mining</a> page.')}</p>` +
+      `<div class="warn">${T('The miner wallet is also your identity for NGO registration, vouching and committee seats. An NGO mines with its own NGO wallet. Back the key up offline: a lost key cannot be recovered.')}</div>`;
+    return this.layout(T('Mine'), body, '/mine');
+  }
+
+  minePage() {
+    if (!this.downloads?.manifest()?.files?.some((f) => f.program === 'suite')) return this.mineLegacyPage();
+    const body = `<p class="eyebrow">${T('Mine')}</p><h1>${T('CPU mining with Argon2d.')}</h1><p class="lead">${T('Anyone can mine. PSYROB Suite searches with Argon2d (32 MiB per attempt), signs every attempt with your miner wallet and submits the blocks it finds; the reward goes to that wallet. Mining is the only way to obtain PSY at the start.')}</p>` +
+      `<div class="panel"><h2 class="h4">${T('Start in three steps')}</h2><ol class="steps"><li>${T('Download PSYROB Suite for Windows or Linux on <a href="/run-a-node">Run a node</a> and install it.')}</li>` +
+      `<li>${T('Create a wallet in the welcome window and save its backup somewhere off this PC. A lost key cannot be recovered.')}</li><li>${T('Choose the threads and press <strong>Start mining</strong>. To run your own node too, choose <strong>Own local node</strong> on the <strong>Node</strong> page.')}</li></ol>` +
+      `<a class="btn btn-cyan" href="/run-a-node">${T('Download PSYROB Suite')}</a></div>` +
+      `<p class="mt-3">${T('PSYROB Suite mines through the public node <code>https://rpc.psyrob.com</code> until your own node is in sync. Progress is on the <a href="/mining">mining</a> page.')}</p>` +
       `<div class="warn">${T('The miner wallet is also your identity for NGO registration, vouching and committee seats. An NGO mines with its own NGO wallet. Back the key up offline: a lost key cannot be recovered.')}</div>`;
     return this.layout(T('Mine'), body, '/mine');
   }

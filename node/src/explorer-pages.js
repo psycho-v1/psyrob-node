@@ -640,7 +640,8 @@ export function installPages(Explorer, H) {
     return this.layout('Register a miner for your NGO', body, '/register/ngo', { head: REG_STYLE, scripts: '<script type="module" src="/register.js"></script>' });
   };
 
-  P.runNodeTabsPage = function () {
+  /** The separate node and miner downloads (shown until a PSYROB Suite release is in the manifest). */
+  P.runNodeLegacyPage = function () {
     const g = h0x(this.chain.genesisHash);
     const m = this.downloads?.manifest() ?? null;
     const file = (os, program, ext) => m?.files.find((f) => f.os === os && f.program === program && f.name.endsWith(ext)) ?? null;
@@ -690,6 +691,69 @@ export function installPages(Explorer, H) {
       `<p class="muted small">${T('Every node checks every block against the rules itself, so a changed copy of a program cannot change the network for anyone else. Download only from this page and check the checksum.')}</p>` +
       `<div class="tabs" role="tablist"><button class="btn btn-line" type="button" role="tab" id="tab-win" aria-controls="pane-win" aria-selected="true">Windows</button><button class="btn btn-line" type="button" role="tab" id="tab-lin" aria-controls="pane-lin" aria-selected="false">${T('Ubuntu and Linux')}</button></div>` +
       `<section class="panel" role="tabpanel" id="pane-win" aria-labelledby="tab-win"><h2 class="h4">${T('Windows 10 and 11 (64-bit)')}</h2>${win}</section><section class="panel" role="tabpanel" id="pane-lin" aria-labelledby="tab-lin"><h2 class="h4">${T('Ubuntu and Linux (64-bit)')}</h2>${lin}</section>` +
+      `<p class="muted">${T('Expected genesis hash: {g}', { g: `<code>${esc(g)}</code>` })}</p>` +
+      `<h2 class="h4 mt-4">${T('Reading your node’s log')}</h2><ul>` +
+      `<li>${T('<code>p2p: connecting to wss://rpc.psyrob.com/p2p</code>, then <code>p2p: connected to … (psyrob/11.0.0, blue score …)</code>: your node reached the public node and is syncing. Check progress at <code>http://127.0.0.1:8770/health</code> (<code>chainHeight</code>).')}</li>` +
+      `<li>${T('<code>p2p: no handshake with … retrying in … s</code>: the public node could not be reached or refused your address. A refusal (a ban after a node misbehaves) lasts one hour; the node retries by itself, waiting longer each time, up to 5 minutes. Leave it running, and report it if it lasts more than an hour.')}</li>` +
+      `<li>${T('<code>the stored blocks belong to another genesis</code>: your data folder held blocks of another network. The node moved it to an <code>old-network-…</code> folder and starts again from the new genesis. You can delete that folder.')}</li></ul>`;
+    return this.layout('Run a node', body, '/run-a-node', { scripts: '<script type="module" src="/pages.js"></script>' });
+  };
+
+  P.runNodeTabsPage = function () {
+    const g = h0x(this.chain.genesisHash);
+    const m = this.downloads?.manifest() ?? null;
+    // until PSYROB Suite packages are published, the page keeps the separate node and miner downloads
+    if (!m?.files?.some((f) => f.program === 'suite')) return this.runNodeLegacyPage();
+    // PSYROB Suite: the node and the miner in one desktop app, one package per operating system and processor
+    const suite = (os, arch, ext) => m?.files.find((f) => f.program === 'suite' && f.os === os && (f.arch ?? 'x64') === arch && f.name.endsWith(ext)) ?? null;
+    const mb = (b) => (b / 1e6).toLocaleString(locale(), { maximumFractionDigits: 1 }) + ' MB';
+    const sum = (f) => `<div class="small muted mt-1">SHA-256 <code class="mono">${esc(f.sha256)}</code></div>`;
+    const button = (f, label) => (f ? `<a class="btn btn-cyan" href="/downloads/${esc(f.name)}" download>${esc(T(label))}</a> <span class="muted small">${mb(f.bytes)}</span>${sum(f)}` : `<span class="muted">${T('not available on this node')}</span>`);
+    const also = (f, label) => (f ? `<li><a href="/downloads/${esc(f.name)}" download>${esc(T(label))}</a> <span class="muted small">${mb(f.bytes)}</span>${sum(f)}</li>` : '');
+    const wSetup = m?.files.find((f) => f.program === 'suite' && f.os === 'Windows' && (f.arch ?? 'x64') === 'x64' && /Setup/.test(f.name)) ?? null;
+    const wPortable = m?.files.find((f) => f.program === 'suite' && f.os === 'Windows' && (f.arch ?? 'x64') === 'x64' && /portable/.test(f.name)) ?? null;
+    const wArm = m?.files.find((f) => f.program === 'suite' && f.os === 'Windows' && f.arch === 'arm64' && /Setup/.test(f.name)) ?? null;
+    const wArmPortable = m?.files.find((f) => f.program === 'suite' && f.os === 'Windows' && f.arch === 'arm64' && /portable/.test(f.name)) ?? null;
+    const deb = suite('Linux', 'x64', '.deb'), debArm = suite('Linux', 'arm64', '.deb');
+    const appImage = suite('Linux', 'x64', '.AppImage'), appImageArm = suite('Linux', 'arm64', '.AppImage');
+    const tgz = suite('Linux', 'x64', '.tar.gz'), tgzArm = suite('Linux', 'arm64', '.tar.gz');
+    const version = m?.suite?.version ?? null;
+    const cards = m && (wSetup || deb || appImage)
+      ? `<h2 class="h4 mt-3">PSYROB Suite${version ? ' ' + esc(version) : ''}</h2>` +
+        `<p class="muted">${T('The node and the miner in one desktop app, in 11 languages. It mines through the public node until your own node is in sync, then through your node.')}</p>` +
+        '<div class="dl-grid">' +
+        `<div class="panel dl"><h3>${T('Windows 10 and 11')}</h3>${button(wSetup, T('Download the installer (x64)'))}<ul class="small mt-2 mb-0">${also(wPortable, T('Portable, no installation (x64)'))}${also(wArm, T('Installer for ARM processors (ARM64)'))}${also(wArmPortable, T('Portable for ARM processors (ARM64)'))}</ul></div>` +
+        `<div class="panel dl"><h3>${T('Ubuntu and Debian')}</h3>${button(deb, T('Download .deb (x64)'))}<ul class="small mt-2 mb-0">${also(debArm, T('.deb for ARM processors (ARM64)'))}</ul></div>` +
+        `<div class="panel dl"><h3>${T('Other Linux')}</h3>${button(appImage, T('Download AppImage (x64)'))}<ul class="small mt-2 mb-0">${also(tgz, T('.tar.gz (x64)'))}${also(appImageArm, T('AppImage for ARM processors (ARM64)'))}${also(tgzArm, T('.tar.gz for ARM processors (ARM64)'))}</ul></div>` +
+        '</div>' +
+        `<p class="muted small">${T('PSYROB Suite {v} with node {n}, built {d}. Nothing else to install.', { v: esc(version ?? '?'), n: esc(m.suite?.engine ?? m.version), d: esc(String(m.suite?.built ?? m.built).slice(0, 10)) })} ` +
+        `${T('Check a download against <a href="/downloads/SHA256SUMS.txt">SHA256SUMS.txt</a>: on Windows <code>Get-FileHash .\\file</code> in PowerShell, on Linux <code>sha256sum file</code>.')}</p>`
+      : `<div class="panel"><p class="mb-0">${T('The downloads are offered on <a href="https://explorer.psyrob.com/run-a-node">explorer.psyrob.com/run-a-node</a>.')}</p></div>`;
+    const setupName = wSetup ? esc(wSetup.name) : 'PSYROB-Suite-Setup-…-x64.exe';
+    const debName = deb ? esc(deb.name) : 'psyrob-suite_…_amd64.deb';
+    const steps = (items) => '<ol class="steps">' + items.map((x) => `<li>${x}</li>`).join('') + '</ol>';
+    const genesisStep = T('Open the <strong>Node</strong> page: it shows the sync, and the genesis must be {g}. Your own explorer is at <code>http://127.0.0.1:8770</code> while your node runs.', { g: `<code>${esc(g)}</code>` });
+    const win = steps([
+      T('Download {file} above and double-click it.', { file: `<code>${setupName}</code>` }),
+      T('If Windows shows “Windows protected your PC”: click <strong>More info</strong>, then <strong>Run anyway</strong>. The program is not signed with a paid certificate yet; compare its checksum first if you like.'),
+      T('Choose the folder and install. PSYROB Suite starts by itself, in your language (change it under <strong>Settings</strong>).'),
+      T('Create a wallet in the welcome window and save its backup somewhere off this PC. A lost key cannot be recovered.'),
+      T('Choose the threads and press <strong>Start mining</strong>. To run your own node too, choose <strong>Own local node</strong> on the <strong>Node</strong> page.'),
+      genesisStep]) +
+      `<p class="muted">${T('A computer that ran PSYROB Studio keeps its wallets, settings and synced chain; the installer replaces Studio.')}</p>`;
+    const lin = steps([
+      T('Ubuntu and Debian: download {file} above and install it, either by double-clicking it (App Center) or in a terminal:', { file: `<code>${debName}</code>` }) + `<pre class="code">sudo apt install ./${debName}</pre>`,
+      T('Open <strong>PSYROB Suite</strong> from your applications, or type <code>psyrob-suite</code> in a terminal.'),
+      T('Other Linux: make the AppImage executable (<code>chmod +x</code>) and start it, or unpack the <code>.tar.gz</code> and run <code>./psyrob-suite</code> in its folder.'),
+      T('Create a wallet in the welcome window and save its backup somewhere off this PC. A lost key cannot be recovered.'),
+      T('Choose the threads and press <strong>Start mining</strong>. To run your own node too, choose <strong>Own local node</strong> on the <strong>Node</strong> page.'),
+      genesisStep]) +
+      `<p class="muted">${T('A server without a desktop runs the node from the source code: <a href="https://github.com/psycho-v1/psyrob-node">github.com/psycho-v1/psyrob-node</a>.')}</p>`;
+    const body = `<p class="eyebrow">${T('Run a node')}</p><h1>${T('Anyone can join.')}</h1><p class="lead">${T('PSYROB Suite mines PSY with your computer and can run your own full node, which checks every block and transaction itself, keeps the whole block DAG and serves your own explorer and JSON-RPC. Anyone may run both.')}</p>` +
+      cards +
+      `<p class="muted small">${T('Every node checks every block against the rules itself, so a changed copy of a program cannot change the network for anyone else. Download only from this page and check the checksum.')}</p>` +
+      `<div class="tabs" role="tablist"><button class="btn btn-line" type="button" role="tab" id="tab-win" aria-controls="pane-win" aria-selected="true">Windows</button><button class="btn btn-line" type="button" role="tab" id="tab-lin" aria-controls="pane-lin" aria-selected="false">${T('Ubuntu and Linux')}</button></div>` +
+      `<section class="panel" role="tabpanel" id="pane-win" aria-labelledby="tab-win"><h2 class="h4">${T('Windows 10 and 11')}</h2>${win}</section><section class="panel" role="tabpanel" id="pane-lin" aria-labelledby="tab-lin"><h2 class="h4">${T('Ubuntu and Linux')}</h2>${lin}</section>` +
       `<p class="muted">${T('Expected genesis hash: {g}', { g: `<code>${esc(g)}</code>` })}</p>` +
       `<h2 class="h4 mt-4">${T('Reading your node’s log')}</h2><ul>` +
       `<li>${T('<code>p2p: connecting to wss://rpc.psyrob.com/p2p</code>, then <code>p2p: connected to … (psyrob/11.0.0, blue score …)</code>: your node reached the public node and is syncing. Check progress at <code>http://127.0.0.1:8770/health</code> (<code>chainHeight</code>).')}</li>` +
