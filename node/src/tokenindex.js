@@ -7,6 +7,8 @@
 // shows its event balance. Every list is capped so a flood of tiny transfers cannot exhaust the server's memory.
 
 export const TRANSFER_TOPIC = 'ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+// Approval(address indexed owner, address indexed spender, uint256 value): which spenders an owner has approved
+export const APPROVAL_TOPIC = '8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925';
 const ZERO = '0x' + '00'.repeat(20);
 
 export const TOKEN_CAPS = {
@@ -14,6 +16,7 @@ export const TOKEN_CAPS = {
   holdersPerToken: 100_000, // new holders beyond this are not added (`partial`)
   recent: 500, // newest transfers kept per token, per address and overall
   tokensPerAddress: 200,
+  approvalsPerOwner: 100, // newest (token, spender) pairs kept per owner
 };
 
 /** Push to a newest-last list; when it doubles its cap the oldest half is dropped. Undo = pop. */
@@ -29,9 +32,35 @@ export class TokenLedger {
     this.tokens = new Map(); // token hex (0x…) -> { holders: Map addr -> bigint, transfers, recent: [], first, partial, minted, burned }
     this.byAddr = new Map(); // addr hex -> { tokens: Map token -> count of transfers, recent: [] }
     this.recent = []; // newest transfers over all tokens
+    this.approvals = new Map(); // owner hex -> Map 'token|spender' -> { token, spender, height } (newest last)
     this.untracked = 0;
     this.version = 0; // changes with every applied or undone transfer (cache key for sorted holder lists)
   }
+
+  static isApproval(l) {
+    return l.topics?.length === 3 && l.data?.length === 32 && Buffer.from(l.topics[0]).toString('hex') === APPROVAL_TOPIC;
+  }
+
+  /** Remember that `owner` approved `spender` on `token` (the amount is read live: transferFrom changes it silently). */
+  approve(token, owner, spender, height) {
+    let m = this.approvals.get(owner);
+    if (!m) { m = new Map(); this.approvals.set(owner, m); }
+    const k = token + '|' + spender;
+    const prev = m.get(k);
+    m.delete(k);
+    m.set(k, { token, spender, height });
+    let dropped = null;
+    if (m.size > TOKEN_CAPS.approvalsPerOwner) { const [dk, dv] = m.entries().next().value; m.delete(dk); dropped = [dk, dv]; }
+    return () => {
+      m.delete(k);
+      if (prev) m.set(k, prev);
+      if (dropped) m.set(dropped[0], dropped[1]);
+      if (!m.size) this.approvals.delete(owner);
+    };
+  }
+
+  /** (token, spender) pairs an owner has approved, newest first. */
+  approvalsOf(owner) { return [...(this.approvals.get(owner)?.values() ?? [])].reverse(); }
 
   /** True when a log is an ERC-20 Transfer (not ERC-721). */
   static isTransfer(l) {

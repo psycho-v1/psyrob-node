@@ -96,7 +96,7 @@ const web = [];
 const walk = (d) => { for (const f of fs.readdirSync(path.join(ROOT, d))) { const r = d + '/' + f; fs.statSync(path.join(ROOT, r)).isDirectory() ? walk(r) : web.push(r); } };
 walk('node/web');
 const assets = {
-  node: Object.fromEntries([...common, ...web, 'common/abicodec.js', 'genesis/artifacts.json', GENESIS_FILE, 'genesis/seeds.txt'].map((r) => [r, path.join(ROOT, r)])
+  node: Object.fromEntries([...common, ...web, 'common/abicodec.js', 'genesis/artifacts.json', GENESIS_FILE, 'genesis/seeds.txt', ...(fs.existsSync(path.join(ROOT, `genesis/labels-${CHAIN_ID}.json`)) ? [`genesis/labels-${CHAIN_ID}.json`] : [])].map((r) => [r, path.join(ROOT, r)])
     .concat([['help/psyrob-node.txt', path.join(WORK, 'help/psyrob-node.txt')], ['node/powworker.cjs', path.join(WORK, 'powworker.cjs')]])),
   // the miner's dashboard shows the PSYROB fonts, icons and logo (miner/gui/assets.js serves them)
   miner: Object.fromEntries([...common, ...web.filter((r) => /^node\/web\/(sprite\.svg|logo\.svg|vendor\/fonts\/.+\.woff2)$/.test(r))].map((r) => [r, path.join(ROOT, r)]).concat([['miner/worker.cjs', path.join(WORK, 'worker.cjs')], ['help/psyrob-miner.txt', path.join(WORK, 'help/psyrob-miner.txt')]])),

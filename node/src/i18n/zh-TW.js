@@ -1461,4 +1461,10 @@ export default {
   'Transfers': '轉帳',
   'system': '系統',
   '{n} tokens.': '{n} 個代幣。',
+  'Allowance': '授權額度',
+  'Approved in': '授權於',
+  'Contracts and addresses this address has allowed to spend its tokens. Revoke an approval you no longer need by approving 0 in your wallet.': '此位址允許其花費代幣的合約和位址。不再需要的授權，可在錢包中授權 0 來撤銷。',
+  'Spender': '被授權方',
+  'Token approvals': '代幣授權',
+  'unlimited': '無限',
 };

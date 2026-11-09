@@ -1461,4 +1461,10 @@ export default {
   'Transfers': '전송',
   'system': '시스템',
   '{n} tokens.': '토큰 {n}개.',
+  'Allowance': '허용 한도',
+  'Approved in': '승인 위치',
+  'Contracts and addresses this address has allowed to spend its tokens. Revoke an approval you no longer need by approving 0 in your wallet.': '이 주소가 토큰 사용을 허용한 컨트랙트와 주소입니다. 더 이상 필요 없는 승인은 지갑에서 0을 승인해 취소하세요.',
+  'Spender': '사용 권한자',
+  'Token approvals': '토큰 승인',
+  'unlimited': '무제한',
 };

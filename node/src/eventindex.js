@@ -92,6 +92,11 @@ export class EventIndex {
       this._record(height, undo);
       return;
     }
+    if (TokenLedger.isApproval(l)) {
+      const word = (b) => '0x' + bytesToHex(b.slice(12));
+      this._record(height, this.tokens.approve(h(l.address), word(l.topics[1]), word(l.topics[2]), height));
+      return;
+    }
     const spec = this.specs.get(bytesToHex(t0));
     if (!spec || bytesToHex(l.address) !== spec.address) return;
     const ev = {};

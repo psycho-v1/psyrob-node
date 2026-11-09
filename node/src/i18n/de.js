@@ -1461,4 +1461,10 @@ export default {
   'Transfers': 'Transfers',
   'system': 'System',
   '{n} tokens.': '{n} Token.',
+  'Allowance': 'Freigabe',
+  'Approved in': 'Freigegeben in',
+  'Contracts and addresses this address has allowed to spend its tokens. Revoke an approval you no longer need by approving 0 in your wallet.': 'Verträge und Adressen, denen diese Adresse erlaubt hat, ihre Token auszugeben. Widerrufen Sie eine nicht mehr benötigte Freigabe, indem Sie in Ihrer Wallet 0 freigeben.',
+  'Spender': 'Berechtigter',
+  'Token approvals': 'Token-Freigaben',
+  'unlimited': 'unbegrenzt',
 };

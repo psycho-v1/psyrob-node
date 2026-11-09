@@ -193,6 +193,11 @@ export class Explorer {
     this.labels = new Map(Object.entries(map).map(([name, key]) => [bytesToHex(ADDR[key]), name]));
     for (const d of DEV_ACCOUNTS) this.labels.set(bytesToHex(ADDR[d.key]), `${d.label} vesting`);
     this.labels.set('000000000000000000000000000000000000dead', 'Burn address');
+    // well-known contracts deployed after genesis (tokens, pools): genesis/labels-<chain ID>.json, { "0x…": "Name" }
+    try {
+      const extra = JSON.parse(readResource(`genesis/labels-${this.p.chainId}.json`).toString('utf8'));
+      for (const [a, n] of Object.entries(extra)) if (/^0x[0-9a-fA-F]{40}$/.test(a) && typeof n === 'string' && n.trim()) this.labels.set(a.slice(2).toLowerCase(), n.trim().slice(0, 40));
+    } catch { /* no labels file for this network */ }
     // custom errors by selector, so pages can explain why a transaction would fail
     const errors = {};
     for (const x of Object.values(arts)) for (const e of x.abi.filter((f) => f.type === 'error')) {

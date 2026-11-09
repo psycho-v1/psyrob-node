@@ -1461,4 +1461,10 @@ export default {
   'Transfers': 'التحويلات',
   'system': 'النظام',
   '{n} tokens.': '{n} من الرموز.',
+  'Allowance': 'المبلغ المسموح',
+  'Approved in': 'تمت الموافقة في',
+  'Contracts and addresses this address has allowed to spend its tokens. Revoke an approval you no longer need by approving 0 in your wallet.': 'العقود والعناوين التي سمح لها هذا العنوان بإنفاق رموزه. ألغِ أي موافقة لم تعد تحتاجها بالموافقة على 0 في محفظتك.',
+  'Spender': 'المُنفِق',
+  'Token approvals': 'موافقات الرموز',
+  'unlimited': 'غير محدود',
 };

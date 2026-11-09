@@ -65,6 +65,8 @@ test('tokens: any ERC-20 appears in the list, its page, holdings, transactions a
   await call(gold, 'transfer', [hx(B.addr), 2_500n * 10n ** 18n]);
   await call(cent, 'transfer', [hx(B.addr), 1_234n]);
   await call(gold, 'burn', [10n ** 18n]);
+  await call(gold, 'approve', [hx(D.addr), 77n * 10n ** 18n]);
+  await call(cent, 'approve', [hx(D.addr), (1n << 256n) - 1n]);
   await mine(3);
   const transferTx = sent[2];
   // the chain agrees with the contract
@@ -90,6 +92,10 @@ test('tokens: any ERC-20 appears in the list, its page, holdings, transactions a
   assert.match(ap, /2,500 GLDT/);
   assert.match(ap, /12\.34 CNT/, 'two decimals');
   assert.match(ap, /Recent token transfers/);
+  const owner = await page('/address/' + hx(A.addr));
+  assert.match(owner, /Token approvals/);
+  assert.match(owner, /77 GLDT/, 'allowance read live from the token');
+  assert.match(owner, /unlimited/);
   const tokenAddrPage = await page('/address/' + gold);
   assert.match(tokenAddrPage, /This address is a token contract/);
 
@@ -145,4 +151,15 @@ test('token ledger: balances, caps and undo', () => {
   assert.equal(units(123456789n, 6), '123.456789');
   assert.equal(units(5n, 0), '5');
   assert.equal(cleanText('a\u0000b‮c' + 'x'.repeat(60)).length, 41);
+});
+
+test('labels: well-known contracts of a network come from genesis/labels-<chain ID>.json', async () => {
+  const t = await testChain();
+  const node = { chain: t.chain, params: { ...t.params, chainId: 87870n }, mempool: t.mempool, p2p: null, finality: null, opts: { vhosts: ['*'] }, log: () => {} };
+  const labels = JSON.parse(fs.readFileSync(new URL('../../genesis/labels-87870.json', import.meta.url), 'utf8'));
+  const ex = new Explorer(node);
+  for (const [a, name] of Object.entries(labels)) assert.equal(ex.labels.get(a.slice(2).toLowerCase()), name);
+  assert.match(ex.addr(Object.keys(labels)[0]), /M-PSY/);
+  // another network has no such file: only the system contracts are labelled
+  assert.equal(new Explorer({ ...node, params: t.params }).labels.get(Object.keys(labels)[0].slice(2)), undefined);
 });

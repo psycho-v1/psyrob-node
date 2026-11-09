@@ -1461,4 +1461,10 @@ export default {
   'Transfers': 'Overdrachten',
   'system': 'systeem',
   '{n} tokens.': '{n} tokens.',
+  'Allowance': 'Toegestaan bedrag',
+  'Approved in': 'Goedgekeurd in',
+  'Contracts and addresses this address has allowed to spend its tokens. Revoke an approval you no longer need by approving 0 in your wallet.': 'Contracten en adressen die dit adres heeft toegestaan zijn tokens uit te geven. Trek een goedkeuring die u niet meer nodig hebt in door in uw wallet 0 goed te keuren.',
+  'Spender': 'Gemachtigde',
+  'Token approvals': 'Tokengoedkeuringen',
+  'unlimited': 'onbeperkt',
 };

@@ -16,7 +16,7 @@ import { T, locale } from './i18n.js';
 const PER = 25;
 const META_GAS = 100_000n; // gas for one name()/symbol()/decimals()/totalSupply() read
 const META_TTL = 600_000; // name, symbol and decimals are read again after 10 minutes (proxies can change them)
-const SEL = { name: '06fdde03', symbol: '95d89b41', decimals: '313ce567', totalSupply: '18160ddd' };
+const SEL = { name: '06fdde03', symbol: '95d89b41', decimals: '313ce567', totalSupply: '18160ddd', allowance: 'dd62ed3e' };
 
 /** Untrusted token text: no control or bidirectional-override characters, at most 40 characters. */
 export function cleanText(s) {
@@ -160,11 +160,38 @@ export function installTokenPages(Explorer, H) {
       rows.push(`<tr><td>${this.tokenLink(token, meta)}</td><td>${esc(meta.symbol ?? '–')}</td><td>${meta.decimals ?? '–'}</td><td>${amount(balance, meta)}</td></tr>`);
     }
     const recent = L.recentOf(me).slice(0, 10);
-    if (!rows.length && !recent.length) return out;
+    const approvals = await this.addressApprovals(me);
+    if (!rows.length && !recent.length) return out + approvals;
     out += `<h2 class="mt-4">${T('Token holdings')}</h2>` + table(['Token', 'Symbol', 'Decimals', 'Balance'], rows, 'No token balances.') +
       `<p class="muted small">${T('Native PSY is shown above; tokens are ERC-20 contracts. Balances are the sum of each holder\'s Transfer events.')}</p>`;
+    out += approvals;
     if (recent.length) out += `<h2 class="mt-4">${T('Recent token transfers')}</h2>` + table(['Transaction', 'Chain block', 'From', 'To', 'Amount', 'Token'], await this.tokenTransferRows(recent), '');
     return out;
+  };
+
+  /** Spenders this address has approved, with the allowance each still has (read live; zero ones left out). */
+  P.addressApprovals = async function (me) {
+    const pairs = this.tokenLedger().approvalsOf(me).slice(0, 20);
+    if (!pairs.length) return '';
+    const live = await this.chain.readSnapshot(async (view, ctx) => {
+      const out = [];
+      for (const x of pairs) {
+        const data = fromHex('0x' + SEL.allowance + me.slice(2).padStart(64, '0') + x.spender.slice(2).padStart(64, '0'));
+        const r = await contractCall(view, this.p, ctx, { caller: new Uint8Array(20), to: fromHex(x.token), data, gasLimit: META_GAS, commit: false });
+        out.push(r.status && r.returnValue.length >= 32 ? BigInt('0x' + bytesToHex(r.returnValue.slice(0, 32))) : null);
+      }
+      return out;
+    });
+    const rows = [];
+    for (const [i, x] of pairs.entries()) {
+      if (live[i] === 0n) continue;
+      const meta = await this.tokenMeta(x.token);
+      const unlimited = live[i] !== null && live[i] >= (1n << 255n);
+      rows.push(`<tr><td>${this.tokenLink(x.token, meta)}</td><td>${this.addr(x.spender)}</td><td>${live[i] === null ? '–' : unlimited ? T('unlimited') : amount(live[i], meta)}</td><td>${blockLink(x.height)}</td></tr>`);
+    }
+    if (!rows.length) return '';
+    return `<h2 class="mt-4">${T('Token approvals')}</h2><p class="muted small">${T('Contracts and addresses this address has allowed to spend its tokens. Revoke an approval you no longer need by approving 0 in your wallet.')}</p>` +
+      table(['Token', 'Spender', 'Allowance', 'Approved in'], rows, '');
   };
 
   /** Decoded ERC-20 Transfer events of one transaction receipt (receiptJson form). */

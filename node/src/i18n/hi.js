@@ -1461,4 +1461,10 @@ export default {
   'Transfers': 'ट्रांसफ़र',
   'system': 'सिस्टम',
   '{n} tokens.': '{n} टोकन।',
+  'Allowance': 'अनुमत राशि',
+  'Approved in': 'इसमें स्वीकृत',
+  'Contracts and addresses this address has allowed to spend its tokens. Revoke an approval you no longer need by approving 0 in your wallet.': 'कॉन्ट्रैक्ट और पते जिन्हें इस पते ने अपने टोकन ख़र्च करने की अनुमति दी है। जिस अनुमति की अब ज़रूरत नहीं, उसे अपने वॉलेट में 0 स्वीकृत करके रद्द करें।',
+  'Spender': 'ख़र्च करने वाला',
+  'Token approvals': 'टोकन अनुमतियाँ',
+  'unlimited': 'असीमित',
 };

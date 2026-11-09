@@ -1461,4 +1461,10 @@ export default {
   'Transfers': 'Переводы',
   'system': 'система',
   '{n} tokens.': 'Токенов: {n}.',
+  'Allowance': 'Разрешённая сумма',
+  'Approved in': 'Одобрено в',
+  'Contracts and addresses this address has allowed to spend its tokens. Revoke an approval you no longer need by approving 0 in your wallet.': 'Контракты и адреса, которым этот адрес разрешил тратить свои токены. Отзовите ненужное разрешение, одобрив 0 в своём кошельке.',
+  'Spender': 'Получатель разрешения',
+  'Token approvals': 'Разрешения на токены',
+  'unlimited': 'без ограничений',
 };
