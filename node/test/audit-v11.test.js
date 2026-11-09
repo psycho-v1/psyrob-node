@@ -6,7 +6,8 @@ import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { testChain, key, mineOne, blockOn } from './helpers.js';
 import { Rpc, RpcError, SIM_LIMITS } from '../src/rpc.js';
-import { State } from '../src/state.js';
+import { State, encodeLeafForTest } from '../src/state.js';
+import { merkleRootFromLeafHashes, leafHash } from '../../common/merkle.js';
 
 const M = key(7);
 // init code JUMPDEST PUSH1 0 JUMP: an endless loop, run as a contract creation (no contract has to exist)
@@ -81,4 +82,64 @@ test('F-03: rotating miner addresses cannot rebuild templates without limit', as
   rpc.buildBudget.tokens = 1;
   const one = await rpc.handle('psy_getBlockTemplate', [addr]);
   assert.deepEqual(await rpc.handle('psy_getBlockTemplate', [addr]), one);
+});
+
+// ---------------------------------------------------------------- F-01: state root cost
+
+/** The state root exactly as 2789047 computed it: every record, sorted, hashed from scratch. */
+function referenceRoot(state) {
+  const sorted = [...state.data.keys()].sort();
+  return merkleRootFromLeafHashes(sorted.map((k) => leafHash(encodeLeafForTest(k, state.data.get(k)))));
+}
+
+test('F-01: the incremental state root equals the full recomputation under random changes', () => {
+  const s = new State();
+  const rnd = (n) => Math.floor(Math.random() * n);
+  const addrs = Array.from({ length: 60 }, () => randomBytes(20));
+  const undos = [];
+  for (let round = 0; round < 400; round++) {
+    const v = s.view();
+    const ops = 1 + rnd(12);
+    for (let i = 0; i < ops; i++) {
+      const a = addrs[rnd(addrs.length)];
+      switch (rnd(6)) {
+        case 0: v.setAccount(a, { balance: BigInt(rnd(5)) }); break; // 0 deletes an empty account
+        case 1: v.setAccount(a, { nonce: BigInt(rnd(3)), balance: BigInt(1 + rnd(1e6)) }); break;
+        case 2: v.setStorage(a, randomBytes(32).fill(rnd(4), 0, 31), BigInt(rnd(3))); break;
+        case 3: v.setCode(a, rnd(2) ? randomBytes(1 + rnd(40)) : new Uint8Array(0)); break;
+        case 4: v.clearStorage(a); break;
+        default: v.setGlobal({ burned: BigInt(rnd(1e9)) });
+      }
+    }
+    // sometimes a fresh, never-seen key (inserted anywhere in the order)
+    if (rnd(3) === 0) v.setAccount(randomBytes(20), { balance: 1n });
+    const undo = s.commit(v);
+    undos.push(undo);
+    // rootWith-style: commit, root, revert, as templates do
+    if (rnd(4) === 0) { const w = s.view(); w.setAccount(randomBytes(20), { balance: 7n }); assert.deepEqual(s.rootWith(w), (() => { const u = s.commit(w); const r = referenceRoot(s); s.revert(u); return r; })()); }
+    // sometimes undo the last few blocks (reorgs)
+    if (rnd(5) === 0) for (let k = rnd(3); k > 0 && undos.length; k--) s.revert(undos.pop());
+    // not every block asks for the root: changes pile up between roots too
+    if (rnd(3) !== 0) assert.deepEqual(s.root(), referenceRoot(s), `round ${round}`);
+  }
+  assert.deepEqual(s.root(), referenceRoot(s));
+  // and down to an empty state
+  for (const u of undos.reverse()) s.revert(u);
+  assert.deepEqual(s.root(), referenceRoot(s));
+});
+
+test('F-01: a block that changes existing records does not rehash the whole state', () => {
+  const s = new State();
+  const v = s.view();
+  const addrs = Array.from({ length: 50_000 }, () => randomBytes(20));
+  for (const a of addrs) v.setAccount(a, { balance: 1n });
+  s.commit(v);
+  s.root();
+  // a typical block: some transfers between existing accounts and a reward to an existing miner
+  const w = s.view();
+  for (let i = 0; i < 40; i++) w.setAccount(addrs[i * 997 % addrs.length], { balance: 5n + BigInt(i) });
+  s.commit(w);
+  const r = s.root();
+  assert.ok(s.rootStats().lastRehashed < 40 * 20, `rehashed ${s.rootStats().lastRehashed} nodes for 40 changed records`);
+  assert.deepEqual(r, referenceRoot(s));
 });

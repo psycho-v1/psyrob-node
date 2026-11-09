@@ -122,6 +122,8 @@ export async function startHttp({ node, host, port, rate = [200, 50], vhosts = n
           syncing: node.p2p?.syncing?.() ?? false, finalCheckpoint: c.finalCheckpoint.number, mempool: node.mempool.size, systemCallFailures: node.systemCallFailures ?? 0,
           // heap in use and its limit (MB): lets an operator see memory trouble coming without access to the service
           heap: heapMB(),
+          // state records and the cost of the last state root: state growth is visible before it slows the node (audit F-01)
+          state: c.state.rootStats(),
           ...(c.upgradeRequired ? { upgradeRequired: versionText(c.upgradeRequired) } : {}), p2pBytes: node.p2p ? { in: node.p2p.bytesIn, out: node.p2p.bytesOut } : null }));
         return;
       }

@@ -16,8 +16,9 @@
 
 import * as rlp from '../../common/rlp.js';
 import { bytesToHex, hexToBytes, concat } from '../../common/bytes.js';
-import { leafHash, merkleRootFromLeafHashes } from '../../common/merkle.js';
+import { leafHash } from '../../common/merkle.js';
 import { keccak256 } from '../../common/crypto.js';
+import { SortedMerkle } from './statetree.js';
 
 export const KECCAK_EMPTY = keccak256(new Uint8Array(0));
 const KECCAK_EMPTY_HEX = bytesToHex(KECCAK_EMPTY);
@@ -51,6 +52,9 @@ function encodeLeaf(key, v) {
   const t = TYPES[key[0]];
   return rlp.encode([concat(Uint8Array.of(t.code), hexToBytes(key.slice(1))), ...t.fields.map((f) => encField(v[f]))]);
 }
+
+/** The leaf encoding, for tests that recompute the root from scratch. */
+export const encodeLeafForTest = (key, v) => encodeLeaf(key, v);
 
 function checkValue(key, v) {
   const t = TYPES[key[0]];
@@ -153,9 +157,9 @@ export class State extends Reader {
     super();
     this.snapshots = new Set(); // open StateSnapshots
     this.data = new Map();
-    this.leaves = new Map(); // key -> cached leaf hash
     this.slotsByAddr = new Map(); // addrHex -> Set of storage keys (for clearStorage)
-    this.sortedKeys = null;
+    // the root is kept up to date incrementally (statetree.js, audit F-01): same value as a full recomputation
+    this.tree = new SortedMerkle((key) => leafHash(encodeLeaf(key, this.data.get(key))));
   }
 
   get(key) { return this.data.get(key); }
@@ -164,14 +168,14 @@ export class State extends Reader {
     for (const snap of this.snapshots) if (!snap.saved.has(key)) snap.saved.set(key, this.data.get(key));
     if (value === undefined) {
       if (this.data.delete(key)) {
-        this.leaves.delete(key);
-        this.sortedKeys = null;
+        this.tree.remove(key);
         if (key[0] === 'k') this.slotsByAddr.get(key.slice(1, 41))?.delete(key);
       }
       return;
     }
-    if (!this.data.has(key)) {
-      this.sortedKeys = null;
+    const had = this.data.has(key);
+    this.tree.put(key, had);
+    if (!had) {
       if (key[0] === 'k') {
         const a = key.slice(1, 41);
         if (!this.slotsByAddr.has(a)) this.slotsByAddr.set(a, new Set());
@@ -179,7 +183,6 @@ export class State extends Reader {
       }
     }
     this.data.set(key, value);
-    this.leaves.set(key, leafHash(encodeLeaf(key, value)));
   }
 
   /** Apply a view's changes. Returns an undo record (Map key -> previous value). */
@@ -198,10 +201,16 @@ export class State extends Reader {
     for (const [k, prev] of undo) this._put(k, prev);
   }
 
+  /** merkle.js merkleRootFromLeafHashes over the leaf hashes of every record sorted by key (see the header). */
   root() {
-    if (!this.sortedKeys) this.sortedKeys = [...this.data.keys()].sort();
-    return merkleRootFromLeafHashes(this.sortedKeys.map((k) => this.leaves.get(k)));
+    const { top, count } = this.tree.treeRoot();
+    const c = new Uint8Array(8);
+    new DataView(c.buffer).setBigUint64(0, BigInt(count));
+    return keccak256(concat(Uint8Array.of(2), c, top));
   }
+
+  /** Record count and the cost of the last root (for /health: audit F-01 monitor). */
+  rootStats() { return { records: this.data.size, lastRootMs: Math.round(this.tree.stats.lastMs * 10) / 10, lastRehashed: this.tree.stats.lastRehashed }; }
 
   /** A copy-on-write snapshot of the state as it is now (see StateSnapshot). The caller must release it. */
   snapshot() {
