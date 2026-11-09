@@ -52,17 +52,32 @@ export class Downloads {
     const file = path.join(this.dir, name);
     let st;
     try { st = fs.statSync(file); } catch { res.writeHead(404, headers).end('not found'); return true; }
-    const head = { ...headers, 'Content-Type': TYPES[path.extname(name)] ?? 'application/octet-stream', 'Content-Length': st.size, 'Cache-Control': 'public, max-age=600',
-      ...(small ? {} : { 'Content-Disposition': `attachment; filename="${name}"` }) };
-    if (req.method === 'HEAD') { res.writeHead(200, head).end(); return true; }
+    // a download that broke off can be resumed: one byte range (Range: bytes=start- or start-end), answered 206 with
+    // Content-Range; the ETag (size and time of the file) lets the client check it is still the same file
+    const etag = `"${st.size.toString(16)}-${Math.floor(st.mtimeMs).toString(16)}"`;
+    const head = { ...headers, 'Content-Type': TYPES[path.extname(name)] ?? 'application/octet-stream', 'Cache-Control': 'public, max-age=600',
+      'Accept-Ranges': 'bytes', ETag: etag, ...(small ? {} : { 'Content-Disposition': `attachment; filename="${name}"` }) };
+    let start = 0, end = st.size - 1, partial = false;
+    const range = /^bytes=(\d*)-(\d*)$/.exec(String(req.headers?.range ?? '').trim());
+    const ifRange = req.headers?.['if-range'];
+    if (range && (range[1] || range[2]) && (!ifRange || ifRange === etag)) {
+      if (range[1]) { start = Number(range[1]); if (range[2]) end = Math.min(Number(range[2]), st.size - 1); } else start = Math.max(0, st.size - Number(range[2]));
+      if (!(start <= end && start < st.size)) { res.writeHead(416, { ...headers, 'Content-Range': `bytes */${st.size}` }).end(); return true; }
+      partial = true;
+    }
+    const length = end - start + 1;
+    const status = partial ? 206 : 200;
+    const out = { ...head, 'Content-Length': length, ...(partial ? { 'Content-Range': `bytes ${start}-${end}/${st.size}` } : {}) };
+    if (req.method === 'HEAD') { res.writeHead(status, out).end(); return true; }
     if (!small) {
       if (this.active >= this.concurrent) { res.writeHead(503, { ...headers, 'Retry-After': '60' }).end('busy: try again in a minute'); return true; }
-      if (!this.allowed(client)) { res.writeHead(429, { ...headers, 'Retry-After': '3600' }).end('download limit reached: try again within the hour'); return true; }
+      // resuming a download that broke off (a range that does not start at 0) does not count against the hourly limit
+      if (start === 0 && !this.allowed(client)) { res.writeHead(429, { ...headers, 'Retry-After': '3600' }).end('download limit reached: try again within the hour'); return true; }
     }
     this.active++;
     try {
-      res.writeHead(200, head);
-      await pipeline(fs.createReadStream(file), res);
+      res.writeHead(status, out);
+      await pipeline(fs.createReadStream(file, { start, end }), res);
     } catch { res.destroy(); } finally { this.active--; }
     return true;
   }
