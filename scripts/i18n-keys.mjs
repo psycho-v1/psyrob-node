@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 if (!process.env.PSYROB_I18N_COLLECT) { console.error('run with PSYROB_I18N_COLLECT=1'); process.exit(1); }
 const ROOT = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
-const SERVER = ['node/src/explorer.js', 'node/src/explorer-pages.js', 'node/src/explorer-governance.js', 'node/src/charts.js'];
+const SERVER = ['node/src/explorer.js', 'node/src/explorer-pages.js', 'node/src/explorer-governance.js', 'node/src/explorer-tokens.js', 'node/src/charts.js'];
 
 const { COLLECTED, FILLED, withLang } = await import('../node/src/i18n.js');
 const { Explorer, clientKeysOf } = await import('../node/src/explorer.js');
@@ -83,7 +83,7 @@ const ex = new Explorer(node);
 await ex.refreshMode(); await ex.refreshPause();
 const routes = ['/', '/dag', '/blocks', '/block/1', '/block/0', '/txs', '/mempool', '/holders', '/emission', '/account', `/account?address=${hex(rich.addr)}`, '/account?address=x', `/address/${hex(rich.addr)}`, `/address/${hex(ngo.addr)}`,
   '/proposals', '/proposal/0', '/election-rounds', '/election-round/0', '/mining', '/committee', '/committee/0', '/developers', '/contracts', '/contract/Governor', '/run-a-node', '/ngos', `/ngo/${hex(ngo.addr)}`,
-  '/ngo-submit', '/register/miner', '/register/ngo', '/attestation', '/election', '/governance', '/roles', '/treasury', '/upgrades', '/pause', '/metrics', '/network', '/mine', '/wallet', '/about', '/search?q=zzz', '/nope'];
+  '/ngo-submit', '/register/miner', '/register/ngo', '/attestation', '/election', '/governance', '/roles', '/treasury', '/upgrades', '/pause', '/metrics', '/network', '/mine', '/wallet', '/about', '/tokens', '/search?q=zzz', '/nope'];
 for (const r of routes) await withLang('en', () => ex.route(r.split('?')[0], new URLSearchParams(r.split('?')[1] ?? '')).then((x) => x ?? ex.layout('Not found', '', '')));
 await withLang('en', async () => { ex.layout('Error', '', ''); await ex.mapData(new URLSearchParams()); });
 const skipped = [];

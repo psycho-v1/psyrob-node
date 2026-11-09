@@ -9,6 +9,7 @@ import { bytesToHex } from '../../common/bytes.js';
 import { artifacts } from './genesis.js';
 import { ADDR, TESTNET_WALLET_NAME } from './params.js';
 import { EventIndex } from './eventindex.js';
+import { installTokenPages } from './explorer-tokens.js';
 import { chainMetrics } from './metrics.js';
 import { lineChart, columnChart, donut, gauge, COLORS } from './charts.js';
 import { T, locale } from './i18n.js';
@@ -841,4 +842,6 @@ export function installPages(Explorer, H) {
     }
     return rows.length ? `<h2 class="mt-4">${T('PSY moved inside this transaction')}</h2>` + table(['From', 'To', 'Amount', 'What'], rows, '') : '';
   };
+
+  installTokenPages(Explorer, { esc, num, short, table, kv, pager, pageOf, blockLink });
 }

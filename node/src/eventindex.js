@@ -3,12 +3,14 @@
 // the chain blocks' receipts, so the index reads each chain block once, when a page first asks after the block was
 // accepted; no request scans the whole chain. A reorganisation of the selected chain is undone by dropping the entries
 // above the fork (found among the last WINDOW chain blocks; a deeper one rebuilds the index from genesis).
-// Lists are capped so memory stays bounded on a small server.
+// Lists are capped so memory stays bounded on a small server. ERC-20 Transfer events of any contract feed the token
+// ledger (tokenindex.js) through the same pass and the same reorg undo records.
 
 import { keccak256 } from '../../common/crypto.js';
 import { bytesToHex } from '../../common/bytes.js';
 import { decodeParams } from '../../common/abicodec.js';
 import { ADDR } from './params.js';
+import { TokenLedger } from './tokenindex.js';
 
 const WINDOW = 2_000; // chain blocks whose hashes are remembered for reorg detection
 const CAP = 5_000; // entries kept per list (older ones are counted but dropped)
@@ -37,6 +39,8 @@ export class EventIndex {
   }
 
   reset() {
+    if (!this.tokens) this.tokens = new TokenLedger();
+    this.tokens.reset();
     this.height = 0; // last chain height scanned
     this.hashes = new Map(); // chain height -> hash (last WINDOW)
     this.proposals = new Map(); // id -> { description, proposer, kind, votes: [], voteCount }
@@ -65,7 +69,11 @@ export class EventIndex {
     const tip = c.tip.chainHeight;
     for (let x = this.height + 1; x <= tip; x++) {
       const cb = c.dag.get(c.chain[x]);
-      for (const r of cb?.receipts ?? []) for (const l of r.logs ?? []) this._log(l, x, h(r.txHash));
+      let li = 0;
+      for (const r of cb?.receipts ?? []) {
+        // only successful transactions have logs; the log index is the position in the chain block, as eth_getLogs
+        for (const l of r.logs ?? []) this._log(l, x, h(r.txHash), li++);
+      }
       for (const r of cb?.systemReceipts ?? []) for (const l of r.logs ?? []) this._log(l, x, null);
       this.hashes.set(x, c.chain[x]);
       this.hashes.delete(x - WINDOW);
@@ -75,9 +83,15 @@ export class EventIndex {
     if (this.entries.length > 50_000) this.entries = this.entries.filter((e) => e.height > this.height - WINDOW);
   }
 
-  _log(l, height, tx) {
+  _log(l, height, tx, logIndex = null) {
     const t0 = l.topics?.[0];
     if (!t0) return;
+    if (TokenLedger.isTransfer(l)) {
+      const word = (b) => '0x' + bytesToHex(b.slice(12));
+      const undo = this.tokens.apply(h(l.address), word(l.topics[1]), word(l.topics[2]), BigInt(h(l.data)), height, tx, logIndex);
+      this._record(height, undo);
+      return;
+    }
     const spec = this.specs.get(bytesToHex(t0));
     if (!spec || bytesToHex(l.address) !== spec.address) return;
     const ev = {};

@@ -90,7 +90,7 @@ const when = (t) => (t ? new Date(Number(t) * 1000).toISOString().replace('T', '
 const badge = (t, on = false) => `<span class="st ${on ? 'on' : 'off'}">${esc(T(t))}</span>`;
 
 const NAV = [
-  ['Explorer', 'layers', [['/', 'home', 'Home'], ['/dag', 'git-branch', 'Block DAG'], ['/blocks', 'box', 'Chain blocks'], ['/txs', 'swap', 'Transactions'],
+  ['Explorer', 'layers', [['/', 'home', 'Home'], ['/dag', 'git-branch', 'Block DAG'], ['/blocks', 'box', 'Chain blocks'], ['/txs', 'swap', 'Transactions'], ['/tokens', 'wallet', 'Tokens'],
     ['/mempool', 'swap', 'Pending transactions'], ['/holders', 'list', 'Top holders'], ['/emission', 'chart-line', 'Emission and supply'], ['/account', 'key', 'My account']]],
   ['Register', 'badge', [['/register/miner', 'cpu', 'Register your miner'], ['/register/ngo', 'id', 'Register a miner for your NGO']]],
   ['Governance', 'shield', [['/ngos', 'list', 'NGO register'], ['/ngo-submit', 'upload', 'Submit and mint'], ['/attestation', 'badge', 'Attestation'],
@@ -102,7 +102,7 @@ const NAV = [
 ];
 const RAIL = new Set(['/dag', '/blocks']);
 const BAND = new Set(['/dag', '/blocks', '/txs', '/emission', '/network', '/ngos', '/ngo-submit', '/attestation', '/election', '/governance', '/roles', '/treasury', '/committee', '/metrics', '/run-a-node', '/mine', '/wallet', '/about',
-  '/mempool', '/holders', '/account', '/election-rounds', '/proposals', '/mining', '/developers', '/contracts', '/upgrades', '/pause']);
+  '/mempool', '/holders', '/account', '/tokens', '/election-rounds', '/proposals', '/mining', '/developers', '/contracts', '/upgrades', '/pause']);
 /** PSY still held by the three Dev Account vesting contracts. */
 const devHeld = (view) => DEV_ACCOUNTS.reduce((t, a) => t + view.getAccount(ADDR[a.key]).balance, 0n);
 const ROLE_NAMES = ['CEO', 'CTO', 'Treasurer', 'Community Lead', 'Security Lead'];
@@ -314,6 +314,8 @@ export class Explorer {
     if (p === '/txs') return this.txsPage();
     if (p.startsWith('/tx/')) return this.txPage(decodeURIComponent(p.slice(4)));
     if (p.startsWith('/address/')) return this.addressPage(decodeURIComponent(p.slice(9)));
+    if (p === '/tokens') return this.tokensPage(q);
+    if (p.startsWith('/token/')) return this.tokenPage(decodeURIComponent(p.slice(7)), q);
     if (p === '/emission') return this.emissionPage();
     if (p === '/network') return this.networkPage();
     if (p === '/ngos') return this.ngosPage();
@@ -829,7 +831,7 @@ export class Explorer {
     return this.layout(T('Transactions'), body, '/txs');
   }
 
-  txPage(ref) {
+  async txPage(ref) {
     if (!/^0x[0-9a-fA-F]{64}$/.test(ref)) return notFound(this.layout(T('Transaction'), `<h1>${T('Not a transaction hash')}</h1>` + this.searchBox(ref) + `<p><a href="/blocks">${T('See the latest chain blocks')}</a></p>`, '/txs'));
     const rpc = this.node.rpc;
     const t = rpc.methods.eth_getTransactionByHash.call(rpc, ref);
@@ -840,7 +842,7 @@ export class Explorer {
       ...(r ? [['Chain block', `<a href="/block/${Number(r.blockNumber)}">#${Number(r.blockNumber)}</a>`], ['Finality', this.finalityHtml(Number(r.blockNumber))], ['Contained in DAG block', `<a href="/block/${r.dagBlock}"><code>${short(r.dagBlock)}</code></a>`],
         ['Gas used', num(BigInt(r.gasUsed))], ['Effective gas price', gwei(BigInt(r.effectiveGasPrice)) + ' gwei'], ['Contract created', r.contractAddress ? this.addr(r.contractAddress) : '–'], ['Logs', r.logs.length]] : []),
       ['Input', `<code>${esc(t.input.length > 300 ? t.input.slice(0, 300) + '…' : t.input)}</code>`]].map(([k, v]) => `<tr><th>${T(k)}</th><td>${v}</td></tr>`).join('');
-    return this.layout(T('Transaction'), `<h1>${T('Transaction')}</h1><div class="table-responsive"><table>${kv}</table></div>${this.internalTransfers(r)}`, '/txs');
+    return this.layout(T('Transaction'), `<h1>${T('Transaction')}</h1><div class="table-responsive"><table>${kv}</table></div>${this.internalTransfers(r)}${await this.txTokenTransfers(r)}`, '/txs');
   }
 
   async addressPage(ref) {
@@ -873,14 +875,23 @@ export class Explorer {
       this.txTable(shown, this.now(), { lookalike }) +
       (hidden.length ? `<details class="mt-2"><summary>${T('{n} zero-value or tiny incoming transfers hidden', { n: num(hidden.length) })}</summary><p class="muted small">${T('Transfers of almost nothing from unknown addresses are a common trick to plant a look-alike address in your history. Never copy an address from them.')}</p>${this.txTable(hidden, this.now(), { lookalike })}</details>` : '') +
       `<p class="mt-2"><a href="/api/address/${esc(me)}/txs.csv" download>${T('Download these transactions (CSV)')}</a></p>` +
-      this.addressRewards(me), '');
+      await this.addressTokens(me) + this.addressRewards(me), '');
   }
 
-  search(q) {
+  async search(q) {
     if (/^\d{1,12}$/.test(q)) return { redirect: '/block/' + q };
-    if (/^0x[0-9a-fA-F]{40}$/.test(q)) return { redirect: '/address/' + q };
+    // a token contract goes to its token page (its address page links back)
+    if (/^0x[0-9a-fA-F]{40}$/.test(q)) return { redirect: (this.tokenLedger().tokens.has(q.toLowerCase()) ? '/token/' : '/address/') + q };
     if (/^0x[0-9a-fA-F]{64}$/.test(q)) return { redirect: this.chain.dag.has(q.slice(2).toLowerCase()) ? '/block/' + q : '/tx/' + q };
-    return notFound(this.layout(T('Search'), `<h1>${T('Nothing found')}</h1><p class="muted">${T('Search for an address, a transaction hash, a chain height or a block hash.')}</p>` + this.searchBox(q) + `<p><a href="/blocks">${T('See the latest chain blocks')}</a></p>`, ''));
+    // a token name or symbol: one exact match opens it, otherwise the matches are listed
+    const hits = await this.searchTokens(q);
+    const exact = hits.filter((h) => [h.meta.symbol, h.meta.name].some((x) => x && x.toLowerCase() === q.toLowerCase()));
+    if (hits.length === 1 || exact.length === 1) return { redirect: '/token/' + (exact[0] ?? hits[0]).token };
+    if (hits.length) {
+      return this.layout(T('Search'), `<h1>${T('Tokens matching “{q}”', { q: esc(q.slice(0, 40)) })}</h1>` + this.searchBox(q) +
+        `<ul>${hits.map((h) => `<li>${this.tokenLink(h.token, h.meta)} <code class="small">${esc(h.token)}</code></li>`).join('')}</ul>`, '');
+    }
+    return notFound(this.layout(T('Search'), `<h1>${T('Nothing found')}</h1><p class="muted">${T('Search for an address, a transaction hash, a chain height, a block hash, or a token name or symbol.')}</p>` + this.searchBox(q) + `<p><a href="/blocks">${T('See the latest chain blocks')}</a></p>`, ''));
   }
 
   /** Emission charts: reward per blue block and cumulative issue of each pool over the years, the allocation. */

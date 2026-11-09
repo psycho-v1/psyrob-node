@@ -36,7 +36,7 @@ test('i18n keys: every literal T() text on the server and in the browser scripts
   const keys = new Set(KEYS);
   const unq = (x) => x.replace(/\\(['\\])/g, '$1');
   const KEEP = new Set(['…']);
-  for (const f of ['explorer.js', 'explorer-pages.js', 'explorer-governance.js', 'charts.js']) {
+  for (const f of ['explorer.js', 'explorer-pages.js', 'explorer-governance.js', 'explorer-tokens.js', 'charts.js']) {
     for (const m of read('node/src/' + f).matchAll(/\bT\(\s*'((?:[^'\\\n]|\\.)*)'/g)) {
       const k = unq(m[1]);
       if (!KEEP.has(k)) assert.ok(keys.has(k), `${f}: T('${k}') is not in keys.json (run scripts/i18n-keys.mjs)`);
