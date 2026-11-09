@@ -11,6 +11,8 @@ import { buildTemplate, templateGasLimit } from '../src/template.js';
 import { signTx } from '../src/tx.js';
 import { contractCall } from '../src/evm.js';
 import { keccak256 } from '../../common/crypto.js';
+import { P2P, MSG, REQUESTS_PER_PEER } from '../src/p2p.js';
+import * as rlp from '../../common/rlp.js';
 import { merkleRootFromLeafHashes, leafHash } from '../../common/merkle.js';
 
 const M = key(7);
@@ -217,4 +219,26 @@ test('F-04: a block naming one parent below the merge depth is refused before an
   t.chain.dag.isAncestor = isAncestor; t.chain.dag.mergesetOf = mergesetOf;
   const ok = await blockOn(t, [t.chain.tip.hash], key(10));
   assert.equal((await t.chain.addBlock(ok)).status, 'added');
+});
+
+// ---------------------------------------------------------------- F-06: INV floods and solicited blocks
+
+test('F-06: an INV flood cannot erase which blocks were asked of an honest peer', async () => {
+  const chain = { dag: { has: () => false, tips: new Set() }, orphans: new Map(), txIndex: new Map(), tip: { blueScore: 0 }, chain: [] };
+  const p2p = new P2P({ params: { networkMagic: 1, chainId: 1n, protocolVersion: 10 }, chain, mempool: { get: () => null }, genesisHash: new Uint8Array(32), seeds: [], log: () => {} });
+  const fakePeer = (id) => ({ id, host: id, known: new Set(), sent: 0, score: 0, sendRlp() { this.sent++; }, misbehave(p) { this.score += p; } });
+  const honest = fakePeer('honest-sync-peer'), attacker = fakePeer('attacker');
+  const batch = Array.from({ length: 500 }, () => randomBytes(32).toString('hex'));
+  for (const h of batch) p2p.markRequested(h, honest);
+  // the audit's PoC: 41 INV messages of 500 random block hashes (at 2789047 this cleared the map: 500 -> 0)
+  for (let m = 0; m < 41; m++) await p2p.handle(attacker, MSG.INV, rlp.encode(Array.from({ length: 500 }, () => [rlp.int(1), randomBytes(32)])));
+  assert.equal(batch.filter((h) => p2p.requestedFrom(h, honest)).length, 500, 'every block of the batch is still solicited');
+  assert.ok(attacker.reqs.size <= REQUESTS_PER_PEER, 'the attacker is asked for at most its share');
+  assert.ok(p2p.requested.size <= 500 + REQUESTS_PER_PEER);
+  // the honest peer's own requests beyond its cap displace only its own oldest ones
+  for (let i = 0; i < REQUESTS_PER_PEER; i++) p2p.markRequested(randomBytes(32).toString('hex'), honest);
+  assert.equal(honest.reqs.size, REQUESTS_PER_PEER);
+  // a closed peer's requests are forgotten
+  p2p.onClose(attacker);
+  assert.ok([...p2p.requested.values()].every((r) => r.peer !== attacker));
 });

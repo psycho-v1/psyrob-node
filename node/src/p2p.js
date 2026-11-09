@@ -36,6 +36,9 @@ import { NODE_VERSION } from './params.js';
 import { decodeCert, encodeCert, decodeBlock } from './block.js';
 import { acceptWebSocket, clientIp, WsClientSocket, isWsUrl } from './ws.js';
 
+/** Blocks one peer may have outstanding requests for (a sync batch is at most 510; parents of orphans come on top). */
+export const REQUESTS_PER_PEER = 2_000;
+
 export const MSG = Object.freeze({ HELLO: 1, PING: 2, PONG: 3, GETADDR: 4, ADDR: 5, INV: 6, GETDATA: 7, BLOCK: 8, TX: 9, GETCHAIN: 10, CHAIN: 11, CERT: 12, SIG: 13 });
 const FRAME_HEADER = 9;
 const MAX_FRAME = 4 * 1024 * 1024;
@@ -160,7 +163,10 @@ export class P2P {
     this.bytesOut = 0;
     this.addrman = AddrMan.fromJSON(opts.store?.readJson('peers.json', null));
     this.anchors = opts.store?.readJson('anchors.json', []) ?? [];
-    this.requested = new Map(); // block hash hex -> { at, peer } (the peer it was requested from)
+    // block hash hex -> { at, peer } (the peer it was requested from). Each peer has at most REQUESTS_PER_PEER entries
+    // (peer.reqs, oldest first); the map is never cleared as a whole, so one peer's announcements cannot erase which
+    // blocks were asked of another (audit F-06: an INV flood used to clear it and get the honest syncing peer banned)
+    this.requested = new Map();
     this.banLocal = opts.banLocal ?? true;
     // Proof-of-work budget for unsolicited blocks: each peer has its own small share, and inbound and outbound peers
     // draw on separate pools, so attackers' connections (inbound) cannot use up the share of the peers we chose.
@@ -343,6 +349,9 @@ export class P2P {
 
   onClose(peer) {
     this.peers.delete(peer);
+    // its requests can no longer be answered: let other peers be asked
+    for (const h of peer.reqs ?? []) if (this.requested.get(h)?.peer === peer) this.requested.delete(h);
+    peer.reqs = null;
     const secs = Math.floor((Date.now() - peer.connectedAt) / 1000);
     if (peer.self) {
       // our own address: closed on purpose, nothing to report
@@ -394,7 +403,7 @@ export class P2P {
           const hx = bytesToHex(h);
           peer.known.add(hx);
           const kind = Number(rlp.decodeInt(k, 1));
-          if (kind === 1 && !this.chain.dag.has(hx) && !this.chain.orphans.has(hx) && !this.recentlyRequested(hx)) { this.markRequested(hx, peer); want.push([rlp.int(1), h]); }
+          if (kind === 1 && !this.chain.dag.has(hx) && !this.chain.orphans.has(hx) && !this.recentlyRequested(hx) && this.canRequestMore(peer)) { this.markRequested(hx, peer); want.push([rlp.int(1), h]); }
           if (kind === 2 && !this.mempool.get(hx) && !this.chain.txIndex.has(hx)) want.push([rlp.int(2), h]);
         }
         if (want.length) peer.sendRlp(MSG.GETDATA, want);
@@ -507,7 +516,6 @@ export class P2P {
 
   recentlyRequested(h) {
     const r = this.requested.get(h);
-    if (this.requested.size > 20_000) this.requested.clear();
     return !!r && this.live(r);
   }
 
@@ -534,7 +542,37 @@ export class P2P {
     return { blueScore: tip.blueScore, target: Math.max(...ahead.map((p) => p.blueScore)) };
   }
 
-  markRequested(h, peer) { this.requested.set(h, { at: Date.now(), peer }); }
+  /** Record that block h was asked of `peer`. At its cap, the peer's own oldest request is forgotten, no one else's. */
+  markRequested(h, peer) {
+    const prev = this.requested.get(h);
+    if (prev) prev.peer.reqs?.delete(h);
+    if (!peer.reqs) peer.reqs = new Set();
+    this.requested.set(h, { at: Date.now(), peer });
+    peer.reqs.delete(h);
+    peer.reqs.add(h);
+    while (peer.reqs.size > REQUESTS_PER_PEER) {
+      const old = peer.reqs.values().next().value;
+      peer.reqs.delete(old);
+      if (this.requested.get(old)?.peer === peer) this.requested.delete(old);
+    }
+    // expired requests of peers that went quiet: swept now and then, live ones are never dropped
+    if (this.requested.size > 20_000 && Date.now() - (this.sweptAt ?? 0) > 5_000) {
+      this.sweptAt = Date.now();
+      for (const [k, r] of this.requested) if (!this.live(r)) this.unrequest(k);
+    }
+  }
+
+  /** Forget the request for block h (arrived, or given up). */
+  unrequest(h) {
+    const r = this.requested.get(h);
+    if (!r) return;
+    r.peer.reqs?.delete(h);
+    this.requested.delete(h);
+  }
+
+  /** Room for more announced blocks to ask this peer for (INV): a peer at its cap is asked for nothing more until its
+   * requests arrive or expire, instead of displacing older ones. */
+  canRequestMore(peer) { return (peer.reqs?.size ?? 0) < REQUESTS_PER_PEER; }
 
   /** Is a block we asked this peer for still due? Expired requests do not hold up a sync. */
   awaiting(peer) {
@@ -556,7 +594,7 @@ export class P2P {
     const best = [...this.peers].filter((p) => p.ready && p.kind !== 'feeler' && (p.syncMore || p.blueScore > tip)).sort((a, b) => b.blueScore - a.blueScore)[0];
     if (!best || now - (best.chainAskedAt ?? 0) < 15_000) return;
     if (best.batch?.size && now - (best.batchAt ?? 0) < 15_000) return;
-    for (const h of best.batch ?? []) if (this.requested.get(h)?.peer === best) this.requested.delete(h);
+    for (const h of best.batch ?? []) if (this.requested.get(h)?.peer === best) this.unrequest(h);
     best.batch = null;
     best.syncMore = false;
     this.requestChain(best);
@@ -583,7 +621,7 @@ export class P2P {
     }
     if (!r) return;
     peer.known.add(r.hash);
-    this.requested.delete(r.hash);
+    this.unrequest(r.hash);
     // a tip block that arrives as an orphan while batches are still coming from this peer: its parents are thousands
     // of blocks away and the batches bring them; walking back to them one GETDATA at a time only floods the peer
     if (r.status === 'orphan' && !(peer.syncMore && !inBatch)) {
