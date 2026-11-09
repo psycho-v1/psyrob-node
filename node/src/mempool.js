@@ -186,7 +186,8 @@ export class Mempool {
    * senders ordered by the tip of their first transaction; within the block gas limit. Queued transactions are never
    * selected, so a gap only holds up its own sender.
    */
-  select(view, baseFee, gasLimit, timestamp = null) {
+  /** `hardLimit`: a transaction above gasLimit but within hardLimit may still fill a block on its own. */
+  select(view, baseFee, gasLimit, timestamp = null, hardLimit = gasLimit) {
     const queues = [];
     for (const [s, list] of this.bySender) {
       let n = view.getAccount(Uint8Array.from(Buffer.from(s, 'hex'))).nonce;
@@ -199,7 +200,17 @@ export class Mempool {
     queues.sort((a, b) => (tipOf(b[0]) > tipOf(a[0]) ? 1 : tipOf(b[0]) < tipOf(a[0]) ? -1 : 0));
     const out = [];
     let gas = 0n;
-    for (const q of queues) for (const t of q) { if (gas + t.gasLimit > gasLimit || out.length >= this.p.maxBlockTxs) break; out.push(t); gas += t.gasLimit; }
+    for (const q of queues) {
+      for (const t of q) {
+        if (gas + t.gasLimit > gasLimit) {
+          // a large transaction is never left out for good: the best one goes alone into an otherwise empty block
+          if (!out.length && t.gasLimit <= hardLimit) return [t];
+          break;
+        }
+        if (out.length >= this.p.maxBlockTxs) break;
+        out.push(t); gas += t.gasLimit;
+      }
+    }
     return out;
   }
 

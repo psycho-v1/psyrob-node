@@ -82,7 +82,7 @@ export class Node {
     });
     this.powPool = o.powWorker === false ? null : new PowPool({ pow: g.params.pow, log: (m) => this.log(m) });
     this.finality = new Finality({ chain: this.chain, p2p: this.p2p, store: this.store, mempool: this.mempool, signerKey: o.signerKey ?? null, signerKeys: o.signerKeys ?? null, log: (m) => this.log(m) });
-    this.rpc = new Rpc({ chain: this.chain, mempool: this.mempool, p2p: this.p2p, finality: this.finality, node: this });
+    this.rpc = new Rpc({ chain: this.chain, mempool: this.mempool, p2p: this.p2p, finality: this.finality, node: this, templateGasLimit: o.templateGasLimit ?? null });
     if (o.p2pPort !== null) await this.p2p.start();
     this.http = await startHttp({ node: this, host: o.httpHost ?? '127.0.0.1', port: o.httpPort ?? 8770, rate: o.rpcRate });
     this.log(`P2P on ${o.p2pHost ?? '0.0.0.0'}:${o.p2pPort}, HTTP/RPC and explorer on http://${o.httpHost ?? '127.0.0.1'}:${o.httpPort ?? 8770}`);

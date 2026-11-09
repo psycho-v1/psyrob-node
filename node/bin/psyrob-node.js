@@ -25,6 +25,8 @@
 //   --no-ban-local          do not ban local/private addresses that misbehave (devnets on one machine only)
 //   --signer-key <file>     committee member or bootstrap key file (hex private key, mode 0600): sign checkpoints and
 //                           fund approvals; may be given more than once (one node holding several bootstrap keys)
+//   --template-gas <n>      gas of transactions in the blocks this node builds (default: the base-fee target; one
+//                           larger transaction may fill a block alone). A local policy, not a consensus rule
 //   --devnet <params.json>  parameter overrides for a local devnet (refused for the public chain IDs)
 //   --help
 
@@ -104,6 +106,7 @@ if (opt('prelaunch')) {
     rpcRate: opt('rpc-rate', '200,50').split(',').map(Number),
     signerKeys: argv.flatMap((a, i) => (a === '--signer-key' && argv[i + 1] ? [readKey(argv[i + 1])] : [])),
     banLocal: !flag('no-ban-local'),
+    templateGasLimit: opt('template-gas') ? BigInt(opt('template-gas')) : null,
   });
 
   node.start().catch((e) => { console.error('start failed:', e.message); process.exit(1); });

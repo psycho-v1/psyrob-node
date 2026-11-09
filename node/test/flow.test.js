@@ -38,7 +38,8 @@ test('process order end to end: NGOs elected, Normal mode, committee drawn, chec
   // the first election needs 5 distinct approvers with at least 100 PSY locked each (firstElectionMinVoters)
   const voters = Array.from({ length: 5 }, (_, i) => key(200 + i));
 
-  const mine = async (who, n = 1) => { for (let i = 0; i < n; i++) { t.advance(10); await mineOne(t, who); await t.chain.readAtTip((v) => t.mempool.prune(v)); } };
+  // full blocks (as --template-gas at the block limit): this test is about the process, not the template gas policy
+  const mine = async (who, n = 1) => { for (let i = 0; i < n; i++) { t.advance(10); await mineOne(t, who, { gasLimit: t.params.blockGasLimit }); await t.chain.readAtTip((v) => t.mempool.prune(v)); } };
   const read = (name, fn, args = []) => t.chain.readAtTip(async (view, ctx) => {
     const r = await contractCall(view, t.params, ctx, { to: TO[name], data: C[name].encode(fn, args), commit: false });
     if (!r.status) throw new Error(`${name}.${fn} reverted: ${r.reason}`);

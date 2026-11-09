@@ -7,6 +7,10 @@ import { randomBytes } from 'node:crypto';
 import { testChain, key, mineOne, blockOn } from './helpers.js';
 import { Rpc, RpcError, SIM_LIMITS } from '../src/rpc.js';
 import { State, encodeLeafForTest } from '../src/state.js';
+import { buildTemplate, templateGasLimit } from '../src/template.js';
+import { signTx } from '../src/tx.js';
+import { contractCall } from '../src/evm.js';
+import { keccak256 } from '../../common/crypto.js';
 import { merkleRootFromLeafHashes, leafHash } from '../../common/merkle.js';
 
 const M = key(7);
@@ -142,4 +146,54 @@ test('F-01: a block that changes existing records does not rehash the whole stat
   const r = s.root();
   assert.ok(s.rootStats().lastRehashed < 40 * 20, `rehashed ${s.rootStats().lastRehashed} nodes for 40 changed records`);
   assert.deepEqual(r, referenceRoot(s));
+});
+
+// ---------------------------------------------------------------- F-05: gas against JavaScript execution time
+
+test('F-05: blocks built here keep their transactions within the base-fee target, and a large one still gets in', async () => {
+  const t = await testChain({ params: { maxSupply: 10n ** 30n } });
+  const S = key(3);
+  for (let i = 0; i < 3; i++) { t.advance(10); await mineOne(t, S); }
+  const add = async (nonce, gasLimit) => {
+    const tx = signTx({ type: 2, nonce, to: new Uint8Array(20).fill(0xee), value: 1n, gasLimit, maxFee: 20_000_000_000n, maxPriorityFee: 1n }, S.sk, t.params);
+    await t.chain.readAtTip((v, ctx) => t.mempool.add(tx.raw, v, ctx.baseFee, ctx.timestamp));
+    return tx;
+  };
+  const cap = templateGasLimit(t.params);
+  assert.equal(cap, t.params.baseFeeTarget);
+  // 3 x 2 M gas: two fit under the 5 M target, the third waits for the next block
+  const n0 = t.chain.state.getAccount(S.addr).nonce;
+  for (let i = 0n; i < 3n; i++) await add(n0 + i, 2_000_000);
+  let tpl = await buildTemplate(t.chain, t.mempool, S.addr);
+  assert.equal(tpl.txRaws.length, 2);
+  // a single 9 M-gas transaction (over the policy, within the block limit) is mined alone, not shut out
+  const t2 = await testChain({ params: { maxSupply: 10n ** 30n } });
+  for (let i = 0; i < 3; i++) { t2.advance(10); await mineOne(t2, S); }
+  const big = signTx({ type: 2, nonce: t2.chain.state.getAccount(S.addr).nonce, to: new Uint8Array(20).fill(0xee), value: 1n, gasLimit: 9_000_000, maxFee: 20_000_000_000n, maxPriorityFee: 1n }, S.sk, t2.params);
+  await t2.chain.readAtTip((v, ctx) => t2.mempool.add(big.raw, v, ctx.baseFee, ctx.timestamp));
+  tpl = await buildTemplate(t2.chain, t2.mempool, S.addr);
+  assert.equal(tpl.txRaws.length, 1);
+  // an explicit --template-gas of the block limit restores the old behaviour
+  tpl = await buildTemplate(t.chain, t.mempool, S.addr, { gasLimit: t.params.blockGasLimit });
+  assert.equal(tpl.txRaws.length, 3);
+});
+
+// The audit's workload: seconds per 10 M gas on the consensus path. A full mergeset should validate in at most 25 % of
+// the block interval; at 30 M gas it does not (ecrecover ~3 s per 10 M gas). Fixing that changes consensus parameters
+// (mergesetGasLimit, precompile prices), so this stays a to-do that reports the numbers without failing the suite.
+test('F-05: a full mergeset of the worst cheap workload validates within 25 % of the block interval', { todo: 'needs a consensus change (mergesetGasLimit or gas prices): council-approved node update' }, async () => {
+  const t = await testChain();
+  t.advance(10); await mineOne(t, M);
+  const Gx = '79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798';
+  const setup = '601b602052' + '7f' + Gx + '604052' + '6001606052' + '6001600052';
+  const code = Uint8Array.from(Buffer.from(setup + '5b6020600060806000' + '6001' + '5afa50' + '60' + (setup.length / 2).toString(16).padStart(2, '0') + '56', 'hex'));
+  const addr = new Uint8Array(20).fill(0xab);
+  const seconds = await t.chain.readAtTip(async (view, ctx) => {
+    view.setCode(addr, code); view.setAccount(addr, { codeHash: keccak256(code), nonce: 1n });
+    const a = performance.now();
+    await contractCall(view, t.params, ctx, { to: addr, gasLimit: 10_000_000n, commit: false });
+    return (performance.now() - a) / 1000;
+  });
+  const fullMergeset = seconds * Number(t.params.mergesetGasLimit) / 10_000_000;
+  assert.ok(fullMergeset <= 0.25 * t.params.targetSpacing, `a full mergeset of ecrecover calls takes ${fullMergeset.toFixed(1)} s (block interval ${t.params.targetSpacing} s)`);
 });

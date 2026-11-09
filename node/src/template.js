@@ -10,10 +10,18 @@ import { requiredVersion, OWN_VERSION } from './rules.js';
 import { versionText } from './params.js';
 
 /**
+ * Gas this node puts into the transactions of one block it builds (a local policy, not a consensus rule: other nodes
+ * accept any block up to blockGasLimit). Execution runs on one JavaScript thread and 10 M gas of cheap precompile calls
+ * takes ~3 s, so the transactions of a block of this node's own making stay within the base-fee target (audit F-05);
+ * one larger transaction (up to blockGasLimit) may fill a block alone, so no valid transaction is shut out. --template-gas.
+ */
+export const templateGasLimit = (p) => (p.baseFeeTarget < p.blockGasLimit ? p.baseFeeTarget : p.blockGasLimit);
+
+/**
  * Build a template for `miner` (20 bytes) on the current virtual. Returns { header, txRaws, certs, id }.
  * The state roots are computed by accepting the virtual's mergeset exactly as validation will.
  */
-export function buildTemplate(chain, mempool, miner, { certs = [], extra = 'psyrob-node 8.0' } = {}) {
+export function buildTemplate(chain, mempool, miner, { certs = [], extra = 'psyrob-node 8.0', gasLimit = null } = {}) {
   return chain.exclusive(async () => {
     const p = chain.p;
     const parents = chain.dag.templateParents().sort();
@@ -36,7 +44,8 @@ export function buildTemplate(chain, mempool, miner, { certs = [], extra = 'psyr
     header.gasUsed = res.gasUsed;
     // the block's own transactions run later (when a chain block accepts it); select them against the state after
     // this block's mergeset, so their nonces follow on
-    const txs = mempool.select(res.view, baseFee, p.blockGasLimit, timestamp);
+    const cap = gasLimit !== null && gasLimit < p.blockGasLimit ? gasLimit : gasLimit === null ? templateGasLimit(p) : p.blockGasLimit;
+    const txs = mempool.select(res.view, baseFee, cap, timestamp, p.blockGasLimit);
     const txRaws = txs.map((t) => t.raw);
     header.txRoot = bodyRoot(txRaws, certs);
     chain.moveTo(chain.tip.hash);

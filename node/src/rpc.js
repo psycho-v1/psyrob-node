@@ -77,7 +77,7 @@ function parseData(s) {
 }
 
 export class Rpc {
-  constructor({ chain, mempool, p2p, finality, node }) {
+  constructor({ chain, mempool, p2p, finality, node, templateGasLimit = null }) {
     this.chain = chain;
     this.mempool = mempool;
     this.p2p = p2p;
@@ -91,6 +91,7 @@ export class Rpc {
     this.knownMiners = new Map(); // miner hex -> unix seconds of its last block added through psy_submitBlock
     this.powPerMiner = new Map(); // miner hex -> Bucket(4, 1), least recently used first
     this.templates = new Map(); // id -> template (last 32)
+    this.templateGasLimit = templateGasLimit; // null: the default policy of template.js
     this.simGate = new Gate(SIM_LIMITS.concurrent, SIM_LIMITS.queued);
     // template builds run a whole mergeset and a state root under the chain lock: recent ones are cached per miner, tips
     // and mempool size, and miners that have not had a block added here in the last day share a build budget, so rotating
@@ -383,7 +384,7 @@ export class Rpc {
       const known = (this.knownMiners.get(bytesToHex(miner)) ?? 0) > Math.floor(Date.now() / 1000) - 86_400;
       if (!(known ? this.buildKnown : this.buildBudget).take()) throw new RpcError(-32005, 'the node is busy building templates; try again in a second');
       const certs = (await this.finality?.certsForTemplate()) ?? [];
-      const t = await buildTemplate(this.chain, this.mempool, miner, { certs });
+      const t = await buildTemplate(this.chain, this.mempool, miner, { certs, gasLimit: this.templateGasLimit });
       this.templates.set(t.id, t);
       // many public miners share the public node: keep enough outstanding templates (each is small)
       if (this.templates.size > 512) this.templates.delete(this.templates.keys().next().value);
