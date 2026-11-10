@@ -14,7 +14,7 @@ user `psyrob`. Adjust the paths at the top of each file for another server.
 | `psyrob-node.service` | systemd unit of the node; signs bootstrap checkpoints with the three bootstrap keys |
 | `psyrob-node.prelaunch.service` | the node unit's pre-launch form: serves only the launch ceremony page |
 | `psyrob-miner.service`, `psyrob-miner.service.d/limits.conf` | systemd unit of the miner and its CPU limits (the miner address is in the drop-in `address.conf`, written by `KEYS.sh`) |
-| `psyrob-watchdog.sh`, `.service`, `.timer` | health check every minute: restarts the node when `/health` stops answering or shows the wrong genesis, leaves a starting node alone, restarts the tunnel when only the public names fail |
+| `psyrob-watchdog.sh`, `.service`, `.timer` | health check every minute: restarts the node when `/health` fails 5 checks in a row (no answer within 15 s, or the wrong genesis), leaves a starting node alone, restarts the tunnel when only the public names fail |
 | `check-before-mining.sh` | checks temperature, free memory and the node before the miner starts |
 | `KEYS.sh` | step 1: makes the three bootstrap keys, the miner key and the release key (never prints a private key) and writes their public parts into `genesis/launch-87870.json` and `docs/RELEASE-KEY.pem` |
 | `PRELAUNCH.sh` | step 2: serves the launch ceremony page |
