@@ -30,7 +30,7 @@ a decision made after the literature review in `docs/research/RESEARCH.md`; the 
 | Checkpoint interval | every 30 chain blocks (~5 min) | committee finality (section 9) |
 | Committee epoch | 7 days (by block timestamp) | rotation (section 9) |
 | Block gas limit | 10,000,000 | per block |
-| Accepted gas per chain block | ≤ 30,000,000 | caps the work of one mergeset; protects against resource-metering DoS [brokenmetre20] |
+| Accepted gas per chain block | ≤ 30,000,000; ≤ 10,000,000 from protocol 10.1.0 | caps the work of one mergeset; protects against resource-metering DoS [brokenmetre20]; lowered with the precompile prices of section 5.1 (audit F-05) |
 | Base fee | EIP-1559 style, target 5,000,000 accepted gas per chain block, change ≤ 1/8, floor 1 gwei, burned | [roughgarden], [eip1559-22], [fee-burn] |
 | Future timestamp limit | 120 s past local clock | timestamp manipulation bound [szalachowski18] |
 | Past median time | median of the last 31 selected-chain timestamps | |
@@ -78,7 +78,7 @@ Every block B, chain or not, commits to the state it would create as a chain blo
 
 1. Start from the accepted state of SP.
 2. Visit the mergeset in consensus order. For each block X: for each transaction in X in order:
-   - skip it if it was already accepted in the selected chain of B (duplicate), if its nonce is not the sender's next nonce, if the sender cannot pay `gasLimit × maxFee`, if `maxFee < baseFee`, or if the accepted gas of this mergeset would exceed 30,000,000;
+   - skip it if it was already accepted in the selected chain of B (duplicate), if its nonce is not the sender's next nonce, if the sender cannot pay `gasLimit × maxFee`, if `maxFee < baseFee`, or if the accepted gas of this mergeset would exceed 30,000,000 (10,000,000 from protocol 10.1.0, section 5.1);
    - otherwise execute it in the EVM. EVM context: `block.number` = **chain height** of B (number of selected-chain ancestors, genesis = 0; contiguous, so wallets and tools see an ordinary increasing block number), `block.timestamp` = timestamp of B, `block.coinbase` = miner of X, `block.basefee` = baseFee of B, `block.prevrandao` = hash of SP.
    - Skipped transactions pay nothing and change nothing; they stay in the DAG and are reported by the explorer as "skipped" (Conflux-style handling of conflicting transactions [conflux20]).
 3. Pay rewards (section 7) for each blue block of the mergeset, credit fees, run the system calls (section 10). Finality certificates carried by mergeset blocks are recorded if they are valid against this state; others are ignored (they cost their block nothing but space).
@@ -87,6 +87,29 @@ Every block B, chain or not, commits to the state it would create as a chain blo
 A block whose commitments do not match the node's own execution is invalid. The node keeps per-chain-block state undo records down to the DAG finality depth, so a chain reorganisation rolls back and re-applies.
 
 **Transaction types:** legacy with EIP-155 signatures and EIP-1559 (type 2) transactions, chain ID as in section 1.
+
+
+### 5.1 Protocol 10.1.0: gas against execution time (audit F-05)
+
+The node executes on one JavaScript thread. Measured on the public node's CPU (`node scripts/gas-bench.mjs`), a full
+30 M-gas mergeset of the cheapest-per-gas workloads took up to 17 s (bn254 multiplication; ecrecover and blake2f
+~10 s), longer than the 10 s block interval, so a miner paying ordinary fees could keep every node behind. Protocol
+10.1.0 changes, from the first block whose selected parent's state requires protocol 10.1.0 or later
+(`UpgradeRegistry.requiredVersion`, a council-approved node update, docs/NODE-UPGRADES.md):
+
+| Rule | Before | From 10.1.0 |
+|---|---|---|
+| Mergeset gas budget | 30,000,000 | 10,000,000 (one block's gas limit, so every valid transaction still fits) |
+| ecrecover (0x01) | 3,000 | 6,000 |
+| bn254 multiplication (0x07) | 6,000 | 18,000 |
+| bn254 pairing (0x08) | 45,000 + 34,000 per pair | 68,000 + 51,000 per pair |
+| blake2f (0x09) | 1 per round | 2 per round |
+
+Afterwards no measured workload takes more than 2.43 s per full mergeset (24 % of the interval); the slowest is
+ordinary code (calls nesting into themselves), no longer a precompile. The decision is taken once per mergeset from
+its selected parent's state, so the block whose system call raises the required version still runs under the old
+rules, and every block already on the chain replays to the same state. Base-fee target (5,000,000) and block gas
+limit are unchanged. (Measurement and engineering decision; the pricing principle follows [brokenmetre20].)
 
 ## 6. Mining and templates
 
@@ -129,7 +152,7 @@ The process order is locked: **mine PSY → publish off-chain dossier and mint d
 
 ### 8.2 NGOs and their miner wallet
 - Exactly **100 NGO seats**, **1-year terms**.
-- **One wallet per NGO, and it is the miner wallet.** The NGO registers its miner address (which must have mined at least one blue block, which is how it obtains PSY for the fees) and mints its NGO record from that same address: name, country, legal registration reference, dossier URI and dossier hash (the dossier itself is published off-chain). Minting costs 100 PSY, burned. Attestation, the election and NGO votes all use the same address. An address can be an NGO only once.
+- **One wallet per NGO, and it is the miner wallet.** The NGO registers its miner address (which must have mined at least one blue block, which is how it obtains PSY for the fees) and mints its NGO record from that same address: name, country, legal registration reference, dossier URI and dossier hash (the dossier itself is published off-chain). Minting costs 100 PSY, burned. Attestation, the election and NGO votes all use the same address. An address can be an NGO only once. Names are not unique and cannot be (genuine NGOs share names, for example national branches of one international NGO): an NGO is told apart by its wallet, country and legal registration. The explorer lists records with the same name, and warns when two records claim the same country and registration reference, which only one organisation can hold; a false record is removed by a challenge (8.3). (Audit F-11; explorer only, no contract change.)
 - **Wallet loss is permanent.** There is no recovery or reassignment function anywhere. An NGO that loses its key must restart the full process with a new wallet (mine, mint, attestation, election). Wallet tools and pages say this before every NGO action, as user studies recommend [mai20], [eskandari15], [voskobojnikov21].
 - NGOs cannot hold operational roles (8.5). People who work for NGOs can, with their own individual wallet.
 
@@ -252,6 +275,8 @@ The volunteer fund lives on BNB Chain in `VolunteerFund` (`contracts/src/bnb/Vol
 3. **Multi-sig:** 3 of 5 signers (the Treasurer and 4 NGO signers elected by the NGOs) approve on BNB Chain.
 4. **Timelock:** 48 hours, or 72 hours for a large transfer (≥ 5 % of the fund's free balance of that token: the balance minus queued transfers, the lower of now and the figure recorded at least 72 hours earlier, so a deposit just before queuing cannot shorten the timelock). During the timelock the Security Lead or any 2 multi-sig signers can cancel. Approvals and cancel votes count only while their signer is still a current signer.
 5. **Recipient check:** never a current role holder (the role list is part of the committee-signed handover).
+
+Not yet built (audit F-14): the node signs approved transfer records, but no node code builds or signs the committee handover message; that signer is required before the fund is deployed.
 
 Rationale: cross-chain bridges fail most often through compromised validator keys and missing verification [bridgesok]; three independent factors (committee signatures, multi-sig, timelock with cancel) limit any single compromise, and on-chain wallet contracts have known pitfalls that the tests target [diangelo20], [destefanis18].
 
@@ -381,13 +406,13 @@ These rules protect the state, the node, governance and the releases. Each has a
 - **Pending and queued:** a transaction behind a nonce gap is queued: at most 16 per sender and 1,024 in total, expired after 3 hours, never relayed or selected, and evicted first when the pool is full. A pending transaction replaces only a cheaper last-in-line transaction of another sender. Counts are kept per sender, not recomputed. (The split follows go-ethereum's pool; engineering practice, not a research decision.)
 - **Limits:** every list method has range and result limits (`docs/RPC-LIMITS.md`); `psy_getDagRange` takes only safe integers and never walks past the highest blue score. Rate limits key IPv6 clients by /64, evict least recently used entries, and have a ceiling for all clients together.
 - **Block submission:** at most 4 solutions per template, dropped once one is added; the 32 MiB proof of work and the signature are checked before the chain lock; each miner address has its own small budget, miners that had a block added through the node in the last day have a budget of their own, and everyone else shares one. Transaction signatures are checked before the lock too. Peer blocks are proof-of-work checked in a worker thread, in order, so the node keeps answering.
-- **Start and sync:** while it replays its stored blocks the node serves a stand-in page and `/health` (503, `"starting": true`, progress); `/health` and `eth_syncing` report a sync. The watchdog leaves a starting node alone.
+- **Start and sync:** while it replays its stored blocks the node serves a stand-in page and `/health` (503, `"starting": true`, progress); `/health` and `eth_syncing` report a sync. The watchdog leaves a starting node alone. Every start replays the whole block log; state snapshots are future work (audit F-08).
 - **Address manager:** bucketed new and tried tables, source-group limits and a per-node secret key [eclipse15; countermeasures section read in full].
 
 ### 18.3 Governance
 - The finality committee is drawn only with at least 4 NGO candidates, so miners alone never finalise.
 - `GovernanceMode` remembers that Normal mode was reached; only 30 days in a row below 60 NGOs make the network Interim. A removal may not take the count below 60.
-- A challenge nobody decides within 14 days lapses: the challenger gets the bond back and the NGO can be finalised. The token vote can still decide within the 14 days and revoke later. A dismissed challenger cannot challenge the same NGO again. (Design choice: a fixed committee deciding challenges would give the council powers over attestation that section 17.2 rules out.)
+- A challenge nobody decides within 14 days lapses: the challenger gets the bond back and the NGO can be finalised. The token vote can still decide within the 14 days and revoke later. A dismissed challenger cannot challenge the same NGO again. (Design choice: a fixed committee deciding challenges would give the council powers over attestation that section 17.2 rules out.) Accepted testnet risk (audit F-12): because a lapse refunds the bond, one undecided challenge filed late in the window delays the attestation by up to 14 days at no cost beyond the locked bond; a change (for example part of the bond burned on lapse) is an `Attestation` update by DAO vote.
 - The voter-count path of a proposal also needs yes votes of at least 1 % of the locked PSY.
 - The NGO pot collected before the first election is streamed over one term (365 days) from the first election, shared each block by the NGOs then elected.
 - BNB fund (code and tests only): transfers and handovers need 4 NGO signatures among the 15; handovers are numbered, name the PSYROB block they were checked against, wait 48 hours and can be cancelled by the Security Lead or 2 signers.

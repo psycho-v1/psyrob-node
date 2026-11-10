@@ -106,11 +106,13 @@ Functions", CRYPTO 2018.
 4. **CPU mining invites botnets** [botcoin14], [cryptominer19].
 5. **Bootstrap finality** rests on three keys that are, for now, on one server (DAG_SPEC.md section 9.1).
 6. **No historical state** (RPC answers state queries for the latest block only), and a restart replays the whole block
-   log. Old block data leaves memory, but start-up time still grows with the chain; a state snapshot is the next
-   improvement.
+   log (audit F-08). Old block data leaves memory and state roots are incremental (F-01), but start-up time still grows
+   with the chain (68,795 blocks took ~30 minutes on 10 November 2026); state snapshots are the planned fix.
 7. **The BNB volunteer fund is not deployed.** Each committee handover must be relayed to BNB Chain by someone (any
-   party can relay; the contract checks the signatures).
-8. **Server resources:** the server running the public node has 3.3 GB of memory shared with other services.
+   party can relay; the contract checks the signatures). The node signs fund transfer records but does not yet build or
+   sign the committee handover (audit F-14): that signer must exist before the fund is deployed.
+8. **Server resources:** the server running the public node has 16 GB of memory (3.3 GB until 10 November 2026)
+   shared with other services, and it is the only public node (audit F-10).
 9. **Capture of the first election** by a party with a large share of the hash rate is made slower, visible and
    costlier, not impossible (docs/RISK_REVIEW.md 3.7).
 10. At each NGO term boundary the elected count is 0 until the main round is finalised, so the mode shows Interim
@@ -120,3 +122,23 @@ Functions", CRYPTO 2018.
     approvals. That is the design (the fund follows governance), with the BNB-side multisig and timelock as the brake.
 12. Miners can move timestamps within the ±120 s drift; epochs depend on `block.timestamp`, so epoch boundaries can
     shift by up to that much.
+
+## 5. v11 audit (BASE-F 2.0, commit 2789047): status of the open findings
+
+Fixed in 11.1.0: F-01 (incremental state root), F-03 (`eth_call` off the chain lock), F-04 (merge-depth check before
+GHOSTDAG), F-06 (per-peer requests), F-13 (test), I-4; F-05 is mitigated there by the template gas policy and fixed
+by protocol 10.1.0.
+
+| ID | Status | Reason |
+|---|---|---|
+| F-02 | Accepted testnet risk (owner decision) | The bootstrap finality, miner and release keys stay on one host for the testnet; they move to separate machines and holders before a mainnet. |
+| F-07 | Accepted testnet risk (owner decision) | Chain ID 87870 and the v10 keys are kept; the replay warning above and on every explorer page stays. |
+| F-09 | Accepted testnet risk (owner decision) | The 2-of-3 dev council approves node updates and can pause until the NGO handover, as specified. |
+| F-05 | Fixed in protocol 10.1.0, in force once the council's node update is | Mergeset budget 10 M gas and four precompiles repriced (DAG_SPEC.md 5.1): the worst full mergeset 17 s -> 2.4 s; until the update is in force only the template policy of 11.1.0 applies. |
+| F-08 | Future work | State snapshots are a larger change that must be proven to give the same state roots; until then every start replays the block log (section 4.6). |
+| F-10 | Accepted testnet risk | One public node (explorer, RPC, seed); more independent operators are needed, not code. |
+| F-11 | Mitigated in the explorer | Names cannot be unique (genuine NGOs share names, for example national branches); the explorer lists namesakes with country and registration and warns when two records claim the same country and registration reference, and a false record is removed by a challenge (8.3). |
+| F-12 | Accepted testnet risk | A lapsed challenge refunds its bond, so one undecided challenge can delay an attestation by up to 14 days at no cost; changing `Attestation` is a contract update that needs a DAO vote (DAG_SPEC.md 18.3). |
+| F-14 | Future work, before deployment | The volunteer fund is not deployed; the node-side committee handover signer is built before it is (section 4.7). |
+| I-7 | Owner | psyrob.com still names Testnet v10; the explorer is already correct. |
+
