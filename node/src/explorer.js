@@ -171,6 +171,8 @@ function guideHtml(title) {
 }
 
 const MODES = ['Bootstrap', 'Normal', 'Interim'];
+/** F-11: the form in which NGO names, countries and registrations are compared (case, spaces and punctuation ignored). */
+const ngoKey = (n) => String(n ?? '').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
 const NGO_STATUS = ['none', 'minted, waiting for vouches', 'attested', 'rejected or removed'];
 
 export class Explorer {
@@ -976,13 +978,23 @@ export class Explorer {
         for (const v of x.vouchers) for (const y of byVoucher.get(v)) if (y !== x) others.set(y.address, y.name);
         x.sharesWith = [...others].map(([address, name]) => ({ address, name }));
       }
+      // F-11: NGORegistry.mint takes any name, and genuine NGOs often share one (national branches of one international
+      // NGO). A shared name is only listed so visitors can tell the records apart; what marks a copy is a second record
+      // with the same legal registration (country + registration reference), which belongs to one organisation only
+      const group = (keyOf) => {
+        const by = new Map();
+        for (const x of out) { const k = keyOf(x); if (k) by.set(k, [...(by.get(k) ?? []), x]); }
+        return (x) => (by.get(keyOf(x)) ?? []).filter((y) => y !== x).map((y) => ({ address: y.address, name: y.name, country: y.country, registration: y.registration }));
+      };
+      const sameName = group((x) => ngoKey(x.name)), sameReg = group((x) => (ngoKey(x.registration) ? ngoKey(x.country) + '|' + ngoKey(x.registration) : ''));
+      for (const x of out) { x.sameName = sameName(x); x.sameRegistration = sameReg(x); }
       return { out, mode: Number(await read('GovernanceMode', 'mode') ?? 0n), elected: Number(await read('NGOElection', 'electedCount') ?? 0n), term: Number(await read('NGOElection', 'currentTerm') ?? 0n) };
     });
   }
 
   async ngosPage() {
     const d = await this.ngoList();
-    const rows = d.out.map((x) => `<tr><td><a href="/ngo/${x.address}">${esc(x.name)}</a><div class="muted">${esc(x.country)}</div></td><td>${this.addr(x.address)}</td><td>${esc(T(NGO_STATUS[Number(x.status)]))}</td><td>${x.vouches} / 5</td><td>${x.elected ? badge('elected', true) : badge('not elected')}</td><td>${when(x.mintedAt)}</td></tr>`).join('');
+    const rows = d.out.map((x) => `<tr><td><a href="/ngo/${x.address}">${esc(x.name)}</a><div class="muted">${esc(x.country)}</div>${x.sameRegistration?.length ? `<div class="small text-warning">${T('same legal registration as another record')}</div>` : ''}</td><td>${this.addr(x.address)}</td><td>${esc(T(NGO_STATUS[Number(x.status)]))}</td><td>${x.vouches} / 5</td><td>${x.elected ? badge('elected', true) : badge('not elected')}</td><td>${when(x.mintedAt)}</td></tr>`).join('');
     const body = `<p class="eyebrow">${T('NGO register')}</p><h1>${T('100 seats, 1-year terms.')}</h1><p class="lead">${T('Order of the process: mine PSY with the NGO\'s own wallet, publish the dossier and mint the record on-chain, be attested by five miners, be elected. Finality checkpoints start once 60 NGOs are elected.')}</p>` +
       `<div class="grid2"><div class="panel stat">${T('Mode')}<strong>${T(MODES[d.mode])}</strong></div><div class="panel stat">${T('Elected this term')}<strong>${d.elected} / 100</strong></div><div class="panel stat">${T('Term')}<strong>${d.term || T('first election running')}</strong></div><div class="panel stat">${T('Records minted')}<strong>${d.out.length}</strong></div></div>` +
       `<div class="table-responsive"><table><thead><tr><th>${T('NGO')}</th><th>${T('Wallet (miner)')}</th><th>${T('Status')}</th><th>${T('Vouches')}</th><th>${T('Seat')}</th><th>${T('Minted')}</th></tr></thead><tbody>${rows || `<tr><td colspan="6">${T('No NGO has minted a record yet.')}</td></tr>`}</tbody></table></div>` +
@@ -1002,10 +1014,13 @@ export class Explorer {
       ['Challenge window ends', when(d.kase?.windowEnds)], ['Pending challenge', d.kase && d.kase.challenger !== '0x0000000000000000000000000000000000000000' ? this.addr(d.kase.challenger) + ' · ' + T('{a} uphold / {b} dismiss', { a: d.kase.upholdVotes, b: d.kase.dismissVotes }) : '–']]
       .map(([k, v]) => `<tr><th>${T(k)}</th><td>${v}</td></tr>`).join('');
     const me = (await this.ngoList()).out.find((x) => x.address.toLowerCase() === ref.toLowerCase());
+    const other = (y) => `<a href="/ngo/${y.address}">${esc(short(y.address))}</a> (${esc(y.country || '–')}, ${esc(y.registration || '–')})`;
+    const twins = (me?.sameRegistration?.length ? `<div class="warn">${T('Another record claims the same legal registration: {list}. A registration belongs to one organisation, so at most one of these records is genuine: compare the dossiers and, if one is false, challenge it.', { list: me.sameRegistration.map(other).join(', ') })}</div>` : '') +
+      (me?.sameName?.length ? `<p class="muted">${T('Other records with this name: {list}. NGOs often share a name (for example national branches of one international NGO): tell them apart by country and legal registration.', { list: me.sameName.map(other).join(', ') })}</p>` : '');
     const shares = me?.sharesWith?.length ? me.sharesWith.map((y) => `<a href="/ngo/${y.address}">${esc(y.name)}</a>`).join(', ') : T('none');
     const vrows = (d.vouches ?? []).map((v) => `<tr><td>${this.addr(v.voucher)}</td><td>${psy(v.bond)} PSY</td><td>${when(v.at)}</td><td>${v.withdrawn ? T('returned or burned') : T('locked')}</td></tr>`).join('');
     const extras = await this.ngoExtras(ref) + await this.ngoPoolSection(ref);
-    return this.layout(T('NGO'), `<h1>${esc(r.name)}</h1><div class="table-responsive"><table>${kv}</table></div>${extras}<h2 class="mt-4">${T('Vouches')}</h2><p class="muted">${T('Its vouchers also back: {list}', { list: shares })}</p><div class="table-responsive"><table><thead><tr><th>${T('Miner')}</th><th>${T('Bond')}</th><th>${T('When')}</th><th>${T('State')}</th></tr></thead><tbody>${vrows || `<tr><td colspan="4">${T('None yet.')}</td></tr>`}</tbody></table></div>`, '/ngos');
+    return this.layout(T('NGO'), `<h1>${esc(r.name)}</h1>${twins}<div class="table-responsive"><table>${kv}</table></div>${extras}<h2 class="mt-4">${T('Vouches')}</h2><p class="muted">${T('Its vouchers also back: {list}', { list: shares })}</p><div class="table-responsive"><table><thead><tr><th>${T('Miner')}</th><th>${T('Bond')}</th><th>${T('When')}</th><th>${T('State')}</th></tr></thead><tbody>${vrows || `<tr><td colspan="4">${T('None yet.')}</td></tr>`}</tbody></table></div>`, '/ngos');
   }
 
   async submitPage() {

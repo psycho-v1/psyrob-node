@@ -1558,4 +1558,7 @@ export default {
   '.tar.gz (x64)': '.tar.gz (x64)',
   'AppImage for ARM processors (ARM64)': 'ARM 프로세서용 AppImage (ARM64)',
   '.tar.gz for ARM processors (ARM64)': 'ARM 프로세서용 .tar.gz (ARM64)',
+  "same legal registration as another record": "다른 기록과 같은 법적 등록",
+  "Another record claims the same legal registration: {list}. A registration belongs to one organisation, so at most one of these records is genuine: compare the dossiers and, if one is false, challenge it.": "다른 기록이 같은 법적 등록을 주장합니다: {list}. 등록은 한 단체에만 속하므로 이 기록 중 진짜는 최대 하나입니다: 서류를 비교하고, 하나가 거짓이면 이의를 제기하세요.",
+  "Other records with this name: {list}. NGOs often share a name (for example national branches of one international NGO): tell them apart by country and legal registration.": "이 이름을 가진 다른 기록: {list}. NGO는 이름을 공유하는 경우가 많습니다(예: 한 국제 NGO의 각국 지부): 국가와 법적 등록으로 구별하세요.",
 };

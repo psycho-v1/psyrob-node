@@ -1558,4 +1558,7 @@ export default {
   '.tar.gz (x64)': '‎.tar.gz (x64)',
   'AppImage for ARM processors (ARM64)': 'AppImage لمعالجات ARM (ARM64)',
   '.tar.gz for ARM processors (ARM64)': '‎.tar.gz لمعالجات ARM (ARM64)',
+  "same legal registration as another record": "التسجيل القانوني نفسه لسجل آخر",
+  "Another record claims the same legal registration: {list}. A registration belongs to one organisation, so at most one of these records is genuine: compare the dossiers and, if one is false, challenge it.": "سجل آخر يدّعي التسجيل القانوني نفسه: {list}. التسجيل يخص منظمة واحدة فقط، لذا سجل واحد على الأكثر من هذه السجلات حقيقي: قارن الملفات، وإن كان أحدها زائفًا فاعترض عليه.",
+  "Other records with this name: {list}. NGOs often share a name (for example national branches of one international NGO): tell them apart by country and legal registration.": "سجلات أخرى بهذا الاسم: {list}. كثيرًا ما تتشارك المنظمات غير الحكومية الاسم نفسه (مثل الفروع الوطنية لمنظمة دولية واحدة): ميّز بينها بالبلد والتسجيل القانوني.",
 };

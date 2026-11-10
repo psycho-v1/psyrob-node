@@ -31,7 +31,7 @@ const EVIL_DESC = '<img src=x onerror=alert(2)> remove "quotes" & more';
 test('explorer pages: every route, 404s, pagination, escaping, banners, radar, no CDN, RPC host redirect', { timeout: 300_000 }, async () => {
   const t = await testChain({ params: { poolCap: 360_000_000_000n * PSY, maxSupply: 10n ** 30n } });
   const nonces = new Map();
-  const rich = key(1), ngo = key(2);
+  const rich = key(1), ngo = key(2), twin = key(3);
   const mine = async (who, n = 1) => { for (let i = 0; i < n; i++) { t.advance(10); await mineOne(t, who); await t.chain.readAtTip((v) => t.mempool.prune(v)); } };
   const send = async (from, to, data = new Uint8Array(0), value = 0n, gasLimit = 3_000_000n) => {
     const k = hex(from.addr);
@@ -50,8 +50,15 @@ test('explorer pages: every route, 404s, pagination, escaping, banners, radar, n
   await mineTxs();
   await call(ngo, 'MinerRegistry', 'register', ['0x' + '00'.repeat(32)]);
   await call(rich, 'MinerRegistry', 'register', ['0x' + '00'.repeat(32)]);
+  await send(rich, twin.addr, new Uint8Array(0), 1_000n * PSY, 21_000n);
+  await mineTxs();
+  await mine(twin, 2);
+  await call(twin, 'MinerRegistry', 'register', ['0x' + '00'.repeat(32)]);
   await mineTxs();
   await call(ngo, 'NGORegistry', 'mint', [EVIL, 'NL', 'REG-1', 'javascript:alert(3)', hex(keccak256(new Uint8Array([1])))], 100n * PSY);
+  // F-11: twin shares the name (another country and registration: a namesake); rich claims ngo's registration
+  await call(twin, 'NGORegistry', 'mint', [EVIL.toUpperCase(), 'DE', 'VR 9', 'https://example.org/d', hex(keccak256(new Uint8Array([2])))], 100n * PSY);
+  await call(rich, 'NGORegistry', 'mint', ['Another name', 'nl', 'reg 1', 'https://example.org/c', hex(keccak256(new Uint8Array([3])))], 100n * PSY);
   await call(rich, 'VoteEscrow', 'lock', [], 10_000n * PSY);
   await mineTxs();
   const declare = C.MinerRegistry.encode('declareOperator', ['0x' + 'ab'.repeat(32)]);
@@ -159,6 +166,19 @@ test('explorer pages: every route, 404s, pagination, escaping, banners, radar, n
     const html = ex.txTable([row(a, b, 0)], 0, { lookalike: new Set([a, b]) });
     assert.equal((html.match(/look-alike/g) ?? []).length, 2, 'both look-alikes are marked');
     assert.ok(!ex.txTable([row(a, b, 0)], 0).includes('look-alike'), 'no mark without a look-alike');
+  }
+
+  // ---- F-11: a shared name is only listed; a shared legal registration (country + reference) is a warning
+  {
+    const page = async (k) => get(`/ngo/${hex(k.addr)}`);
+    const [a, b, c, list] = [await page(ngo), await page(twin), await page(rich), await get('/ngos')];
+    assert.match(a, /Another record claims the same legal registration/, 'ngo: rich claims its registration');
+    assert.match(a, /Other records with this name/, 'ngo: twin shares its name');
+    assert.ok(!/claims the same legal registration/.test(b), 'twin: a namesake is not a warning');
+    assert.match(b, /Other records with this name/);
+    assert.match(c, /Another record claims the same legal registration/);
+    assert.ok(!/Other records with this name/.test(c));
+    assert.equal((list.match(/same legal registration as another record/g) ?? []).length, 2, 'the list marks both registration twins');
   }
 
   // ---- 404 for unknown or malformed ids

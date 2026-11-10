@@ -1558,4 +1558,7 @@ export default {
   '.tar.gz (x64)': '.tar.gz (x64)',
   'AppImage for ARM processors (ARM64)': 'AppImage para processadores ARM (ARM64)',
   '.tar.gz for ARM processors (ARM64)': '.tar.gz para processadores ARM (ARM64)',
+  "same legal registration as another record": "mesmo registo legal que outro registo",
+  "Another record claims the same legal registration: {list}. A registration belongs to one organisation, so at most one of these records is genuine: compare the dossiers and, if one is false, challenge it.": "Outro registo reivindica o mesmo registo legal: {list}. Um registo pertence a uma única organização, por isso no máximo um destes registos é genuíno: compare os dossiês e, se um for falso, conteste-o.",
+  "Other records with this name: {list}. NGOs often share a name (for example national branches of one international NGO): tell them apart by country and legal registration.": "Outros registos com este nome: {list}. As ONG partilham muitas vezes um nome (por exemplo, secções nacionais de uma ONG internacional): distinga-as pelo país e pelo registo legal.",
 };

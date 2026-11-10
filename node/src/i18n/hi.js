@@ -1558,4 +1558,7 @@ export default {
   '.tar.gz (x64)': '.tar.gz (x64)',
   'AppImage for ARM processors (ARM64)': 'ARM प्रोसेसर के लिए AppImage (ARM64)',
   '.tar.gz for ARM processors (ARM64)': 'ARM प्रोसेसर के लिए .tar.gz (ARM64)',
+  "same legal registration as another record": "किसी अन्य रिकॉर्ड जैसा ही कानूनी पंजीकरण",
+  "Another record claims the same legal registration: {list}. A registration belongs to one organisation, so at most one of these records is genuine: compare the dossiers and, if one is false, challenge it.": "एक अन्य रिकॉर्ड उसी कानूनी पंजीकरण का दावा करता है: {list}। एक पंजीकरण केवल एक संगठन का होता है, इसलिए इनमें से अधिकतम एक रिकॉर्ड असली है: डोज़ियर की तुलना करें और यदि कोई झूठा है तो उसे चुनौती दें।",
+  "Other records with this name: {list}. NGOs often share a name (for example national branches of one international NGO): tell them apart by country and legal registration.": "इस नाम वाले अन्य रिकॉर्ड: {list}। NGO अक्सर एक ही नाम साझा करते हैं (जैसे किसी अंतरराष्ट्रीय NGO की राष्ट्रीय शाखाएँ): देश और कानूनी पंजीकरण से उन्हें अलग पहचानें।",
 };

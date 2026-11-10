@@ -1558,4 +1558,7 @@ export default {
   '.tar.gz (x64)': '.tar.gz (x64)',
   'AppImage for ARM processors (ARM64)': 'AppImage voor ARM-processors (ARM64)',
   '.tar.gz for ARM processors (ARM64)': '.tar.gz voor ARM-processors (ARM64)',
+  "same legal registration as another record": "zelfde wettelijke registratie als een ander record",
+  "Another record claims the same legal registration: {list}. A registration belongs to one organisation, so at most one of these records is genuine: compare the dossiers and, if one is false, challenge it.": "Een ander record claimt dezelfde wettelijke registratie: {list}. Een registratie hoort bij één organisatie, dus hoogstens één van deze records is echt: vergelijk de dossiers en betwist een vals record.",
+  "Other records with this name: {list}. NGOs often share a name (for example national branches of one international NGO): tell them apart by country and legal registration.": "Andere records met deze naam: {list}. Ngo’s delen vaak een naam (bijvoorbeeld nationale afdelingen van één internationale ngo): onderscheid ze op land en wettelijke registratie.",
 };

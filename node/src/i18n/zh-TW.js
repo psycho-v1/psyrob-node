@@ -1558,4 +1558,7 @@ export default {
   '.tar.gz (x64)': '.tar.gz（x64）',
   'AppImage for ARM processors (ARM64)': '適用於 ARM 處理器的 AppImage（ARM64）',
   '.tar.gz for ARM processors (ARM64)': '適用於 ARM 處理器的 .tar.gz（ARM64）',
+  "same legal registration as another record": "與另一筆紀錄的法律註冊相同",
+  "Another record claims the same legal registration: {list}. A registration belongs to one organisation, so at most one of these records is genuine: compare the dossiers and, if one is false, challenge it.": "另一筆紀錄聲稱擁有相同的法律註冊：{list}。一個註冊只屬於一個組織，因此這些紀錄中最多只有一筆是真實的：請比較檔案，如有虛假紀錄請提出質疑。",
+  "Other records with this name: {list}. NGOs often share a name (for example national branches of one international NGO): tell them apart by country and legal registration.": "使用此名稱的其他紀錄：{list}。NGO 經常同名（例如同一國際 NGO 的各國分會）：請依國家與法律註冊加以區分。",
 };
