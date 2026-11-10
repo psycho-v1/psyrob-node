@@ -3,7 +3,7 @@
 import { fromHex, hexToBytes } from '../../common/bytes.js';
 import { RATIO_COMPLEMENT } from './emission.js';
 
-export const NODE_VERSION = '11.1.2';
+export const NODE_VERSION = '11.2.0';
 /**
  * The consensus protocol version this node implements, as UpgradeRegistry counts node updates (BASE_VERSION 10.0.0 on
  * every fresh genesis). It is not the release number: a release that changes consensus rules raises it by one step

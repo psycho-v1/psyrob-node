@@ -1,6 +1,6 @@
 {
   "name": "psyrob",
-  "version": "11.1.2",
+  "version": "11.2.0",
   "description": "PSYROB: block-DAG (GHOSTDAG) network with Argon2d CPU mining, NGO governance, contracts and explorer",
   "type": "module",
   "private": true,
