@@ -13,6 +13,7 @@ import { installTokenPages } from './explorer-tokens.js';
 import { chainMetrics } from './metrics.js';
 import { lineChart, columnChart, donut, gauge, COLORS } from './charts.js';
 import { T, locale } from './i18n.js';
+import { mergesetGasLimitAt } from './rules.js';
 
 const PER = 25; // rows per page on list pages
 const PER_LONG = 50; // rows per page on voter, ballot, holder and mempool lists
@@ -369,6 +370,7 @@ export function installPages(Explorer, H) {
   P.miningData = function (window = 500) {
     const c = this.chain;
     if (this.miningCache?.tip === c.tip.hash) return this.miningCache.value;
+    const budget = mergesetGasLimitAt(c.state, this.p); // 10 M once protocol 10.1.0 is in force (audit F-05)
     const tip = c.tip, to = tip.chainHeight, from = Math.max(0, to - window);
     let blues = 0, reds = 0, work = 0n, gas = 0n;
     const series = []; // the last 60 chain blocks: seconds since the previous one, blue/red merged, gas use, work
@@ -381,7 +383,7 @@ export function installPages(Explorer, H) {
       gas += BigInt(e.gasUsed ?? 0n);
       if (x > to - 60) {
         const prev = c.dag.get(c.chain[x - 1]);
-        series.push({ height: x, interval: Math.max(0, e.header.timestamp - prev.header.timestamp), blues: b1, reds: r1, gas: Number((BigInt(e.gasUsed ?? 0n) * 10_000n) / BigInt(this.p.mergesetGasLimit)) / 10_000, work: bw.toString() });
+        series.push({ height: x, interval: Math.max(0, e.header.timestamp - prev.header.timestamp), blues: b1, reds: r1, gas: Number((BigInt(e.gasUsed ?? 0n) * 10_000n) / budget) / 10_000, work: bw.toString() });
       }
     }
     const t0 = c.dag.get(c.chain[from]).header.timestamp, span = Math.max(1, tip.header.timestamp - t0), chainBlocks = to - from;
@@ -390,8 +392,8 @@ export function installPages(Explorer, H) {
       tip: '0x' + tip.hash, chainHeight: to, window: chainBlocks, difficulty: (TWO256 / BigInt(next)).toString(), target: '0x' + BigInt(next).toString(16),
       attemptsPerSecond: chainBlocks ? Number(work / BigInt(span)) : 0, secondsPerChainBlock: chainBlocks ? span / chainBlocks : null,
       secondsPerDagBlock: blues + reds ? span / (blues + reds) : null, targetSpacing: this.p.targetSpacing, blueBlocks: blues, redBlocks: reds,
-      redRate: blues + reds ? reds / (blues + reds) : 0, gasUse: chainBlocks ? Number((gas * 10_000n) / (BigInt(chainBlocks) * BigInt(this.p.mergesetGasLimit))) / 10_000 : 0,
-      blockGasLimit: String(this.p.mergesetGasLimit), series,
+      redRate: blues + reds ? reds / (blues + reds) : 0, gasUse: chainBlocks ? Number((gas * 10_000n) / (BigInt(chainBlocks) * budget)) / 10_000 : 0,
+      blockGasLimit: String(budget), series,
     };
     this.miningCache = { tip: c.tip.hash, value };
     return value;

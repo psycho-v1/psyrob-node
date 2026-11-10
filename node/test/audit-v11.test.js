@@ -10,6 +10,8 @@ import { State, encodeLeafForTest } from '../src/state.js';
 import { buildTemplate, templateGasLimit } from '../src/template.js';
 import { signTx } from '../src/tx.js';
 import { contractCall } from '../src/evm.js';
+import { f05Active, mergesetGasLimitAt, F05_MERGESET_GAS } from '../src/rules.js';
+import { ADDR, PROTOCOL_VERSION } from '../src/params.js';
 import { keccak256 } from '../../common/crypto.js';
 import { P2P, MSG, REQUESTS_PER_PEER } from '../src/p2p.js';
 import * as rlp from '../../common/rlp.js';
@@ -180,24 +182,74 @@ test('F-05: blocks built here keep their transactions within the base-fee target
   assert.equal(tpl.txRaws.length, 3);
 });
 
-// The audit's workload: seconds per 10 M gas on the consensus path. A full mergeset should validate in at most 25 % of
-// the block interval; at 30 M gas it does not (ecrecover ~3 s per 10 M gas). Fixing that changes consensus parameters
-// (mergesetGasLimit, precompile prices), so this stays a to-do that reports the numbers without failing the suite.
-test('F-05: a full mergeset of the worst cheap workload validates within 25 % of the block interval', { todo: 'needs a consensus change (mergesetGasLimit or gas prices): council-approved node update' }, async () => {
-  const t = await testChain();
-  t.advance(10); await mineOne(t, M);
-  const Gx = '79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798';
-  const setup = '601b602052' + '7f' + Gx + '604052' + '6001606052' + '6001600052';
-  const code = Uint8Array.from(Buffer.from(setup + '5b6020600060806000' + '6001' + '5afa50' + '60' + (setup.length / 2).toString(16).padStart(2, '0') + '56', 'hex'));
+// The audit's workload and the other cheap ones: a contract calling one precompile (or running one opcode) in a loop
+// until 10 M gas run out. Protocol 10.1.0 (rules.js) lowers the mergeset budget to 10 M and raises the four precompiles
+// that were slower per gas than any ordinary code.
+const Gx = '79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798';
+const G1 = '00'.repeat(31) + '01' + '00'.repeat(31) + '02';
+const G2 = '198e9393920d483a7260bfb731fb5d25f1aa493335a9e71297e485b7aef312c2' + '1800deef121f1e76426a00665e5c4479674322d4f75edadd46debd5cd992f6ed' +
+  '090689d0585ff075ec9e99ad690c3395bc4b313370b38ef355acdadcd122975b' + '12c85ea5db8c6deb4aab71808dcb408fe3d1e7690c43d37b4ce6cc0166fa7daa';
+const w32 = (n) => BigInt(n).toString(16).padStart(64, '0');
+const PRECOMPILE_LOADS = [
+  ['ecrecover', 1, w32(1) + w32(27) + Gx + w32(1), 2],
+  ['bn254 mul', 7, G1 + 'ff'.repeat(32), 3],
+  ['bn254 pairing', 8, G1 + G2, 119000 / 79000],
+  ['blake2f', 9, '000f4240' + '00'.repeat(64 + 128 + 16) + '01', 2],
+];
+const p2 = (n) => n.toString(16).padStart(4, '0');
+const precompileLoop = (addr, input) => '61' + p2(input.length / 2) + '61' + p2(30) + '600039' + '5b' + '610100614000' + '61' + p2(input.length / 2) + '6000' + '60' + addr.toString(16).padStart(2, '0') + '5afa50600956' + '00' + input;
+async function secondsPer10M(t, codeHex, f05) {
+  const code = Uint8Array.from(Buffer.from(codeHex, 'hex'));
   const addr = new Uint8Array(20).fill(0xab);
-  const seconds = await t.chain.readAtTip(async (view, ctx) => {
+  return t.chain.readAtTip(async (view, ctx) => {
     view.setCode(addr, code); view.setAccount(addr, { codeHash: keccak256(code), nonce: 1n });
     const a = performance.now();
-    await contractCall(view, t.params, ctx, { to: addr, gasLimit: 10_000_000n, commit: false });
+    const r = await contractCall(view, t.params, { ...ctx, f05 }, { to: addr, gasLimit: 10_000_000n, commit: false });
+    assert.equal(r.gasUsed, 10_000_000n);
     return (performance.now() - a) / 1000;
   });
-  const fullMergeset = seconds * Number(t.params.mergesetGasLimit) / 10_000_000;
-  assert.ok(fullMergeset <= 0.25 * t.params.targetSpacing, `a full mergeset of ecrecover calls takes ${fullMergeset.toFixed(1)} s (block interval ${t.params.targetSpacing} s)`);
+}
+
+test('F-05: protocol 10.1.0 prices: the slow precompiles cost more gas, so 10 M gas buys proportionally fewer calls', async (tc) => {
+  const t = await testChain();
+  t.advance(10); await mineOne(t, M);
+  // calls per 10 M gas, counted from the gas each call charges (deterministic); the seconds are printed for the record
+  // only: node:test makes every await several times slower, so wall-clock limits belong to scripts/gas-bench.mjs
+  const report = [];
+  for (const [name, addr, input, ratio] of PRECOMPILE_LOADS) {
+    const before = await secondsPer10M(t, precompileLoop(addr, input), false);
+    const after = await secondsPer10M(t, precompileLoop(addr, input), true);
+    report.push(`${name} ${before.toFixed(2)} -> ${after.toFixed(2)} s`);
+    const gas = async (f05) => t.chain.readAtTip(async (view, ctx) => {
+      const to = new Uint8Array(20); to[19] = addr;
+      const r = await contractCall(view, t.params, { ...ctx, f05 }, { to, data: Uint8Array.from(Buffer.from(input, 'hex')), gasLimit: 10_000_000n, commit: false });
+      assert.equal(r.status, 1, `${name} input is valid`);
+      return r.gasUsed;
+    });
+    const r = Number(await gas(true)) / Number(await gas(false));
+    assert.ok(Math.abs(r - ratio) < 0.01, `${name} price ratio ${r}`);
+  }
+  tc.diagnostic(report.join('; ') + ' per 10 M gas under node:test');
+});
+
+test('F-05: the 10.1.0 rules apply only once the network requires protocol 10.1.0; before, the old budget and prices', async () => {
+  const t = await testChain();
+  t.advance(10); await mineOne(t, M);
+  const ecrecoverGas = (view, ctx, f05) => contractCall(view, t.params, { ...ctx, f05 }, { to: (() => { const a = new Uint8Array(20); a[19] = 1; return a; })(), data: Uint8Array.from(Buffer.from(w32(1) + w32(27) + Gx + w32(1), 'hex')), gasLimit: 100_000n, commit: false });
+  await t.chain.readAtTip(async (view, ctx) => {
+    assert.equal(f05Active(view), false);
+    assert.equal(mergesetGasLimitAt(view, t.params), 30_000_000n);
+    assert.equal((await ecrecoverGas(view, ctx)).gasUsed, 3000n);
+    for (const [v, on] of [[10_000_000, false], [10_000_001, false], [10_001_000, true], [10_002_000, true]]) {
+      const x = view.view();
+      x.setStorage(ADDR.upgradeRegistry, (() => { const b = new Uint8Array(32); b[31] = 4; return b; })(), BigInt(v));
+      assert.equal(f05Active(x), on, `required ${v}`);
+      assert.equal(mergesetGasLimitAt(x, t.params), on ? 10_000_000n : 30_000_000n);
+      assert.equal((await ecrecoverGas(x, ctx)).gasUsed, on ? 6000n : 3000n, 'the view decides when ctx.f05 is not set');
+    }
+  });
+  assert.equal(PROTOCOL_VERSION, '10.1.0');
+  assert.ok(F05_MERGESET_GAS <= t.params.blockGasLimit && F05_MERGESET_GAS >= t.params.blockGasLimit, 'every valid transaction still fits a mergeset');
 });
 
 // ---------------------------------------------------------------- F-04: deep parents

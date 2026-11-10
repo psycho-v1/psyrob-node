@@ -15,6 +15,7 @@ import { bytesToBigint, bigintToBytes, bytesToHex, equals, hexToBytes } from '..
 import { KECCAK_EMPTY } from './state.js';
 import { SYSTEM_ADDRESS } from './params.js';
 import { effectiveGasPrice } from './tx.js';
+import { f05Active, F05_GAS_PARAMS } from './rules.js';
 
 const EMPTY = new Uint8Array(0);
 
@@ -85,9 +86,11 @@ function makeCommon(chainId) {
 }
 
 /**
- * ctx = { number, timestamp, coinbase, baseFee, prevRandao, gasLimit, blockHash(n) -> bytes|null }
+ * ctx = { number, timestamp, coinbase, baseFee, prevRandao, gasLimit, blockHash(n) -> bytes|null, f05? }
+ * `view` is the state the call runs on. ctx.f05 (set once per mergeset from its selected parent's state) says whether
+ * the protocol 10.1.0 gas prices apply (audit F-05, rules.js); without it the view decides.
  */
-async function buildEvm(p, state, ctx) {
+async function buildEvm(p, state, ctx, view) {
   const evm = await createEVM({
     common: makeCommon(p.chainId),
     stateManager: state,
@@ -100,6 +103,8 @@ async function buildEvm(p, state, ctx) {
       shallowCopy() { return this; },
     },
   });
+  // the precompiles read their prices from this EVM's own copy of the common at every call
+  if (ctx.f05 ?? f05Active(view)) evm.common.updateParams(F05_GAS_PARAMS);
   const block = {
     header: {
       number: BigInt(ctx.number), coinbase: new Address(ctx.coinbase), timestamp: BigInt(ctx.timestamp), difficulty: 0n,
@@ -148,7 +153,7 @@ export async function runTx(view, tx, ctx, p) {
   view.setAccount(tx.from, { balance: sender.balance - tx.gasLimit * price });
   const txView = view.view();
   const state = new EvmState(txView, view);
-  const { evm, block } = await buildEvm(p, state, ctx);
+  const { evm, block } = await buildEvm(p, state, ctx, view);
   warm(evm, [tx.from, ctx.coinbase, ...(create ? [] : [tx.to])]);
   const res = await evm.runCall({
     caller: new Address(tx.from), origin: new Address(tx.from), to: create ? undefined : new Address(tx.to),
@@ -187,7 +192,7 @@ export async function runTx(view, tx, ctx, p) {
 export async function contractCall(view, p, ctx, { caller = SYSTEM_ADDRESS, to, data = EMPTY, value = 0n, gasLimit = p.systemCallGas, commit = true }) {
   const txView = view.view();
   const state = new EvmState(txView, view);
-  const { evm, block } = await buildEvm(p, state, ctx);
+  const { evm, block } = await buildEvm(p, state, ctx, view);
   warm(evm, [caller, to]);
   const res = await evm.runCall({
     caller: new Address(caller), origin: new Address(caller), to: new Address(to), value, data, gasLimit, gasPrice: 0n, block, skipBalance: value === 0n, skipNonceIncrement: true,
@@ -205,7 +210,7 @@ export async function genesisCreate(view, p, ctx, { address, initCode, value = 0
   view.setAccount(address, { nonce: 1n }); // the account must exist before the constructor writes storage
   const txView = view.view();
   const state = new EvmState(txView, view);
-  const { evm, block } = await buildEvm(p, state, ctx);
+  const { evm, block } = await buildEvm(p, state, ctx, view);
   const res = await evm.runCode({ code: initCode, data: EMPTY, gasLimit: p.systemCallGas, to: new Address(address), caller: new Address(SYSTEM_ADDRESS), origin: new Address(SYSTEM_ADDRESS), value, block, isStatic: false });
   if (res.exceptionError) throw new Error(`genesis: constructor at 0x${bytesToHex(address)} failed: ${res.exceptionError.error} ${revertReason(res.returnValue ?? EMPTY)}`);
   if (state.stack.length !== 1) throw new Error('internal: unbalanced EVM checkpoints');
@@ -227,7 +232,7 @@ export async function simulate(view, p, ctx, call, { deadlineMs = 1000, yieldEve
   const run = async (gas) => {
     const v = view.view();
     const state = new EvmState(v.view(), v);
-    const { evm, block } = await buildEvm(p, state, ctx);
+    const { evm, block } = await buildEvm(p, state, ctx, view);
     let steps = 0, timedOut = false;
     const check = () => { if (++steps % 512 === 0 && Date.now() > deadline) { timedOut = true; throw new Error('simulation time limit exceeded'); } };
     if (yieldEvery > 0) evm.events.on('step', (_e, done) => { check(); if (steps % yieldEvery === 0) setImmediate(done); else done(); });

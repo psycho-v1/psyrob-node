@@ -12,7 +12,7 @@ export const NODE_VERSION = '11.1.2';
  * stops following the chain when UpgradeRegistry requires a higher protocol version (rules.js OWN_VERSION).
  * docs/NODE-UPGRADES.md.
  */
-export const PROTOCOL_VERSION = '10.0.0';
+export const PROTOCOL_VERSION = '10.1.0'; // 10.1.0: audit F-05 gas rules (rules.js), in force once the network requires it
 /** The network's name on pages, in the launch ceremony and in downloads, derived from NODE_VERSION so labels cannot
  *  drift apart again. */
 export const TESTNET_MAJOR = Number(NODE_VERSION.split('.')[0]);

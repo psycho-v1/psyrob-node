@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { testChain, key, mineOne } from './helpers.js';
 import { signTx } from '../src/tx.js';
 import { ADDR, PROTOCOL_VERSION, NODE_VERSION, versionNumber } from '../src/params.js';
-import { OWN_VERSION, requiredVersion, launchMessage, personalDigest } from '../src/rules.js';
+import { OWN_VERSION, requiredVersion, launchMessage, personalDigest, mergesetGasLimitAt } from '../src/rules.js';
 import { contract } from '../../common/abicodec.js';
 import { keccak256, signDigest } from '../../common/crypto.js';
 import { bytesToHex, bigintToFixed, concat } from '../../common/bytes.js';
@@ -37,7 +37,7 @@ const DESCRIPTION = 'PSYROB node 11.1.0: cheaper state roots\nRelease: 11.1.0\nC
 
 test('protocol version: the node gates on its protocol version, not its release number', () => {
   assert.equal(OWN_VERSION, versionNumber(PROTOCOL_VERSION));
-  assert.equal(PROTOCOL_VERSION, '10.0.0', 'a fresh network starts at UpgradeRegistry.BASE_VERSION');
+  assert.equal(PROTOCOL_VERSION, '10.1.0', 'one minor step above UpgradeRegistry.BASE_VERSION (10.0.0): the audit F-05 gas rules');
   assert.notEqual(OWN_VERSION, versionNumber(NODE_VERSION));
 });
 
@@ -107,12 +107,20 @@ test('node update: two council keys approve on /upgrade/<id>; 7 days later the n
   assert.equal((html.match(/st on">signed</g) ?? []).length, 2);
   assert.match(await page('/'), /is approved and takes effect/);
 
-  // 4. after the timelock the network requires protocol 10.1.0; this node (protocol 10.0.0) stops; same genesis
+  // 4. after the timelock the network requires protocol 10.1.0; this node runs protocol 10.1.0, so it follows the
+  // chain with the new rules (audit F-05: 10 M mergeset budget, ecrecover 6,000 gas) from the next block; same genesis
+  const ecrecover = () => t.chain.readAtTip(async (view, ctx) => {
+    const to = new Uint8Array(20); to[19] = 1;
+    return (await contractCall(view, t.params, ctx, { to, data: new Uint8Array(128), gasLimit: 100_000n, commit: false })).gasUsed;
+  });
+  assert.equal(await ecrecover(), 3000n, 'the old price while 10.1.0 is only approved');
   t.advance(7 * 86400 + 60);
   await mine(council[0]);
   assert.equal(await t.chain.readAtTip((v) => requiredVersion(v)), 10_001_000);
   assert.equal(t.chain.dag.genesis.hash, genesis, 'no new genesis');
   t.advance(10);
-  await assert.rejects(mineOne(t, council[0]), /needs protocol 10\.1\.0/);
+  await mineOne(t, council[0]);
+  assert.equal(await t.chain.readAtTip((v) => mergesetGasLimitAt(v, t.params)), 10_000_000n);
+  assert.equal(await ecrecover(), 6000n);
   assert.match(await page('/upgrade/0'), /in force/);
 });

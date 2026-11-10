@@ -23,7 +23,7 @@ import { parseTx } from './tx.js';
 import { runTx, skipReason, contractCall } from './evm.js';
 import { poolSubsidy } from './emission.js';
 import { ADDR, SYSTEM_ADDRESS, BURN_ADDRESS, versionText } from './params.js';
-import { pauseSkip, requiredVersion, OWN_VERSION, neverReplaceable } from './rules.js';
+import { pauseSkip, requiredVersion, OWN_VERSION, neverReplaceable, f05Active, mergesetGasLimitAt } from './rules.js';
 import { KECCAK_EMPTY } from './state.js';
 
 const EMPTY = new Uint8Array(0);
@@ -428,8 +428,12 @@ export class Chain {
     const view = this.state.view();
     const hd = pending.header;
     const pmt = this.pastMedianTime(sp);
+    // audit F-05 (protocol 10.1.0, rules.js): decided once per mergeset from the selected parent's state, so a node
+    // update coming into force in this block's own system calls applies from the next block on
+    const f05 = f05Active(view);
+    const budget = mergesetGasLimitAt(view, p);
     const ctxBase = {
-      number: gd.chainHeight, timestamp: hd.timestamp, baseFee, prevRandao: sp.hashBytes, gasLimit: p.blockGasLimit,
+      number: gd.chainHeight, timestamp: hd.timestamp, baseFee, prevRandao: sp.hashBytes, gasLimit: p.blockGasLimit, f05,
       blockHash: (n) => { const x = this.chainHashAt(sp, n); return x ? this.dag.get(x).hashBytes : null; },
     };
     const blues = new Set(gd.mergesetBlues);
@@ -444,7 +448,7 @@ export class Chain {
       const x = this.dag.get(xh);
       if (!x.body?.txs) continue;
       for (const tx of x.body.txs) {
-        const why = skipReason(view, tx, baseFee, p) ?? pauseSkip(view, tx, hd.timestamp) ?? (gasUsed + tx.gasLimit > p.mergesetGasLimit ? 'mergeset gas budget' : null);
+        const why = skipReason(view, tx, baseFee, p) ?? pauseSkip(view, tx, hd.timestamp) ?? (gasUsed + tx.gasLimit > budget ? 'mergeset gas budget' : null);
         if (why) { skipped.push({ hash: tx.hash, block: xh, reason: why }); continue; }
         const scratch = view.view();
         const r = await runTx(scratch, tx, { ...ctxBase, coinbase: x.header.miner }, p);

@@ -30,6 +30,9 @@ Which releases need an upgrade plan:
   the same block.
 - **A fix every node must run** without new rules: one patch step (10.1.0 → 10.1.1).
 
+The first protocol step is **10.1.0** (release 11.2.0): the audit F-05 gas rules (DAG_SPEC.md section 5.1). Until
+the council's plan for it is in force, a 10.1.0 node applies the old rules, so it can be installed early.
+
 Before the handover the council can approve only one step above the version in force: the next minor or the next
 patch. A larger jump needs a DAO vote (an Upgrade proposal), available once 60 NGOs are elected.
 

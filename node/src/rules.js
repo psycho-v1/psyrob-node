@@ -34,6 +34,26 @@ export function requiredVersion(view) {
 /** The protocol version this node implements (params.js PROTOCOL_VERSION), compared with requiredVersion. */
 export const OWN_VERSION = versionNumber(PROTOCOL_VERSION);
 
+// ---- protocol 10.1.0: audit F-05 (DAG_SPEC.md section 5.1)
+// A chain block's whole mergeset had a 30 M gas budget, and at the old prices 30 M gas of bn254 multiplications took
+// ~18 s to execute on the public node's CPU (ecrecover and blake2f ~10 s): longer than the 10 s block interval, so a
+// miner paying ordinary fees could keep every node behind. From the first block whose selected parent requires
+// protocol 10.1.0 or later (a council-approved node update), the budget is one block's gas limit and the four
+// precompiles that were slower per gas than any ordinary EVM code cost more, so no workload takes more than ~25 % of
+// the block interval (node/test/audit-v11.test.js measures it). Before that the old rules apply unchanged, so every
+// block already on the chain replays to the same state.
+export const F05_VERSION = versionNumber('10.1.0');
+export const F05_MERGESET_GAS = 10_000_000n;
+/** Gas prices that change (EVM param names of @ethereumjs/evm, by the EIP that defines them). */
+export const F05_GAS_PARAMS = Object.freeze({
+  1: { ecRecoverGas: 6000 }, // was 3000
+  1679: { bn254MulGas: 18000, bn254PairingGas: 68000, bn254PairingWordGas: 51000, blake2RoundGas: 2 }, // were 6000, 45000, 34000, 1
+});
+/** Do the protocol 10.1.0 rules apply to a mergeset executed on this state (the state of its selected parent)? */
+export const f05Active = (view) => requiredVersion(view) >= F05_VERSION;
+/** The gas budget of a chain block's whole mergeset on this state. */
+export const mergesetGasLimitAt = (view, p) => (f05Active(view) && F05_MERGESET_GAS < p.mergesetGasLimit ? F05_MERGESET_GAS : p.mergesetGasLimit);
+
 const sel = (sig) => bytesToHex(keccak256(utf8(sig)).subarray(0, 4));
 const DEV_VESTINGS = DEV_ACCOUNTS.map((a) => bytesToHex(ADDR[a.key]));
 const ANY = new Set([bytesToHex(ADDR.governor), bytesToHex(ADDR.devCouncil), bytesToHex(ADDR.upgradeRegistry), bytesToHex(ADDR.emergencyPause)]);

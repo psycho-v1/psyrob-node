@@ -12,6 +12,7 @@ import { buildTemplate, templateJson, solvedBlock } from './template.js';
 import { NODE_VERSION, ADDR } from './params.js';
 import { effectiveGasPrice, parseTx } from './tx.js';
 import { chainMetrics } from './metrics.js';
+import { mergesetGasLimitAt } from './rules.js';
 
 /** Solutions accepted per block template. */
 const SUBMITS_PER_TEMPLATE = 4;
@@ -250,10 +251,11 @@ export class Rpc {
       const n = Math.min(Number(typeof count === 'string' ? parseQuantity(count, 16) : count) || 1, 1024);
       const last = this.chainBlock(newest) ?? this.chain.tip;
       const base = [], ratios = [];
+      const budget = Number(mergesetGasLimitAt(this.chain.state, this.chain.p)); // audit F-05: 10 M from protocol 10.1.0
       for (let h = Math.max(0, last.chainHeight - n + 1); h <= last.chainHeight; h++) {
         const b = this.chain.dag.get(this.chain.chain[h]);
         base.push(toQuantity(b.baseFee));
-        ratios.push(Number(b.gasUsed ?? 0n) / Number(this.chain.p.mergesetGasLimit));
+        ratios.push(Number(b.gasUsed ?? 0n) / budget);
       }
       base.push(toQuantity(nextBaseFee(last.baseFee, last.gasUsed, this.chain.p)));
       return { oldestBlock: toQuantity(Math.max(0, last.chainHeight - n + 1)), baseFeePerGas: base, gasUsedRatio: ratios, reward: [] };
