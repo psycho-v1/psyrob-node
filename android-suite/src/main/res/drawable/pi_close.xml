@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PSYROB mark "close" (psyrob-icon-font-pack), 64 grid -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="64" android:viewportHeight="64">
+    <path android:pathData="M18,18 L46,46 M46,18 L18,46" android:strokeColor="#00F0FF" android:strokeWidth="3.6" android:strokeLineCap="square"/>
+    <path android:pathData="M32,29 A3,3 0 1,1 31.99,29 Z" android:fillColor="#00F0FF"/>
+</vector>
