@@ -59,7 +59,7 @@ fun SettingsScreen(m: Model, s: Snap) {
     PCard {
         CardTitle("Appearance")
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).border(1.dp, p.line, RoundedCornerShape(12.dp))) {
-            for ((k, label, icon) in listOf(Triple("system", "System", "phone"), Triple("dark", "Dark", "moon"), Triple("light", "Day", "sun"))) {
+            for ((k, label, icon) in listOf(Triple("system", "Auto", "refresh"), Triple("dark", "Dark", "moon"), Triple("light", "Day", "sun"))) {
                 val on = m.theme == k
                 Row(
                     Modifier.weight(1f).background(if (on) p.accent.copy(alpha = .14f) else p.input).clickable { Theme.setChoice(m.act, k); m.theme = k }.padding(vertical = 12.dp),

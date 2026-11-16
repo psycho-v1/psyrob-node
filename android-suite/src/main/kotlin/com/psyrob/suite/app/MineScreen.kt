@@ -62,10 +62,15 @@ enum class MineState { Ready, Wait, On }
 @Composable
 fun MineButton(state: MineState, label: String, size: Dp, onClick: () -> Unit) {
     val p = LocalPsy.current
-    val inf = rememberInfiniteTransition(label = "mine")
-    val spinSlow by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(14_000, easing = LinearEasing)), label = "spin14")
-    val spinFast by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(3_000, easing = LinearEasing)), label = "spin3")
-    val wave by inf.animateFloat(0f, 1f, infiniteRepeatable(tween(1_200), RepeatMode.Reverse), label = "pulse")
+    // animations run only while mining or waiting, so the idle screen does not redraw
+    var spin = 0f
+    var wave = 0f
+    if (state != MineState.Ready) {
+        val inf = rememberInfiniteTransition(label = "mine")
+        val sp by inf.animateFloat(0f, 360f, infiniteRepeatable(tween(if (state == MineState.On) 14_000 else 3_000, easing = LinearEasing)), label = "spin")
+        val wv by inf.animateFloat(0f, 1f, infiniteRepeatable(tween(1_200), RepeatMode.Reverse), label = "pulse")
+        spin = sp; wave = wv
+    }
     val press = remember { MutableInteractionSource() }
     val pressed by press.collectIsPressedAsState()
     val pressScale by animateFloatAsState(if (pressed) .94f else 1f, label = "press")
@@ -83,8 +88,7 @@ fun MineButton(state: MineState, label: String, size: Dp, onClick: () -> Unit) {
         // glow
         if (glowA > 0f) Box(Modifier.size(size + 22.dp).alpha(glowA).background(Brush.radialGradient(listOf(p.ringOn.copy(alpha = .9f), Color.Transparent)), CircleShape))
         // dashed outer ring
-        val rot = when (state) { MineState.On -> spinSlow; MineState.Wait -> spinFast; MineState.Ready -> 0f }
-        Canvas(Modifier.size(size + 20.dp).rotate(rot)) {
+        Canvas(Modifier.size(size + 20.dp).rotate(spin)) {
             drawCircle(ring, style = Stroke(width = 1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 5.dp.toPx()))))
         }
         // the button disc
@@ -127,7 +131,7 @@ fun MineScreen(m: Model, s: Snap) {
                 else when {
                     !s.hasWallet -> m.act.toast("Create or import a wallet first.")
                     s.watchOnly -> m.act.toast("The selected account is watch-only. Mining needs an account with its key on this phone.")
-                    else -> { MinerService.start(m.act); m.clock++ }
+                    else -> { m.act.askNotifications(); MinerService.start(m.act); m.clock++ }
                 }
             }
             Text(label, color = p.muted, fontSize = 13.sp, modifier = Modifier.padding(top = 4.dp))

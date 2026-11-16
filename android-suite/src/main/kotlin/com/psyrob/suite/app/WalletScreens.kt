@@ -103,7 +103,16 @@ fun WalletScreen(m: Model, s: Snap) {
     val list = if (a != null && a.optLong("chainId") == s.chainId && a.optString("address") == s.address) a.optJSONArray("assets")?.objects() else null
     val nat = list?.firstOrNull()
 
-    if (!s.backedUp) NoteBox("Your recovery phrase is not backed up yet.") { LinkBtn("Back it up now", { revealPhrase(m) }, color = p.warnText) }
+    if (!s.backedUp) Row(
+        Modifier.fillMaxWidth().padding(bottom = 12.dp).clip(RoundedCornerShape(12.dp)).background(p.warnBg)
+            .border(1.dp, p.warnLine, RoundedCornerShape(12.dp)).clickable { revealPhrase(m) }.padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        PIcon("alert", tint = p.warnText, size = 20.dp)
+        Spacer(Modifier.width(10.dp))
+        Text("Your recovery phrase is not backed up yet.", color = p.warnText, fontSize = 14.sp, modifier = Modifier.weight(1f))
+        Text("Back up", color = p.warnText, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+    }
     PCard {
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { if (m.editing < 0) m.go("accounts") }, verticalAlignment = Alignment.CenterVertically) {
             Avatar(s.address, 44.dp)
@@ -119,7 +128,7 @@ fun WalletScreen(m: Model, s: Snap) {
         }
         Spacer(Modifier.height(14.dp))
         Row(verticalAlignment = Alignment.Bottom) {
-            if (nat != null) Text(fmtAmt(nat.optString("balance", null)), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = p.text)
+            if (nat != null) Text(fmtAmt(nat.bal()), fontSize = 34.sp, fontWeight = FontWeight.Bold, color = p.text)
             else CircularProgressIndicator(Modifier.size(28.dp), strokeWidth = 2.dp, color = p.accent)
             Spacer(Modifier.width(8.dp))
             Text(s.symbol, fontSize = 16.sp, color = p.accent, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 6.dp))
@@ -151,7 +160,7 @@ fun WalletScreen(m: Model, s: Snap) {
                 trailing = {
                     when {
                         t.has("error") -> Text("error", color = p.bad, fontSize = 13.sp)
-                        list != null -> Text(fmtAmt(t.optString("balance", null)), color = p.text, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                        list != null -> Text(fmtAmt(t.bal()), color = p.text, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                         else -> CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp, color = p.accent)
                     }
                 },

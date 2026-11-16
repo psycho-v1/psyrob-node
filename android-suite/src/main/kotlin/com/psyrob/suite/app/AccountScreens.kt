@@ -77,19 +77,19 @@ fun AccountsScreen(m: Model, s: Snap) {
         }
     }
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        PButton("New account", {
+        PButton("New", {
             add.run {
                 val addr = m.io { m.api.vault.addAccount() }
                 m.assets = null; m.changed()
                 m.editing = m.api.vault.accounts().objects().indexOfFirst { it.optString("address").equals(addr, true) }
             }
         }, Modifier.weight(1f), kind = Kind.Ghost, icon = "user-plus", enabled = s.hasPhrase, busy = add.busy, busyText = "Adding")
-        PButton("Import key", { m.go("importKey") }, Modifier.weight(1f), kind = Kind.Ghost, icon = "key")
+        PButton("Import", { m.go("importKey") }, Modifier.weight(1f), kind = Kind.Ghost, icon = "key")
     }
     Spacer(Modifier.height(10.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        PButton("Watch address", { m.go("watch") }, Modifier.weight(1f), kind = Kind.Ghost, icon = "eye")
-        PButton("Key and removal", { m.go("editAccount", mapOf("i" to s.selected)) }, Modifier.weight(1f), kind = Kind.Ghost, icon = "settings")
+        PButton("Watch", { m.go("watch") }, Modifier.weight(1f), kind = Kind.Ghost, icon = "eye")
+        PButton("Manage", { m.go("editAccount", mapOf("i" to s.selected)) }, Modifier.weight(1f), kind = Kind.Ghost, icon = "settings")
     }
     ErrText(add.err)
 }
@@ -194,14 +194,15 @@ fun SendScreen(m: Model, s: Snap, token0: String) {
                 }
             }
         }
-        if (bal != null) Muted("Available: " + fmtAmt(bal.optString("balance", null)) + " " + bal.optString("symbol"), Modifier.padding(top = 6.dp))
+        if (bal != null) Muted("Available: " + fmtAmt(bal.bal()) + " " + bal.optString("symbol"), Modifier.padding(top = 6.dp))
         Field(to, { to = it.trim() }, label = "To", placeholder = "0x… address", mono = true, trailing = { PasteBtn(m) { to = it } })
-        Row(Modifier.padding(top = 4.dp)) {
+        if (s.accounts.size > 1) Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Muted("My accounts:", size = 12)
             s.accounts.filterIndexed { i, _ -> i != s.selected }.take(4).forEach { acc -> LinkBtn(acc.optString("name"), { to = acc.optString("address") }) }
         }
         Field(amount, { amount = it.trim() }, label = "Amount", placeholder = "0.0", keyboard = KeyboardType.Decimal, trailing = {
             LinkBtn("Max", {
-                val b = bal?.optString("balance", null)?.toBigDecimalOrNull() ?: return@LinkBtn
+                val b = bal?.bal()?.toBigDecimalOrNull() ?: return@LinkBtn
                 if (bal.optBoolean("native")) {
                     val v = b.subtract(java.math.BigDecimal("0.01")).max(java.math.BigDecimal.ZERO).setScale(6, java.math.RoundingMode.DOWN).stripTrailingZeros()
                     amount = v.toPlainString(); note = "Kept 0.01 ${bal.optString("symbol")} for the network fee."
@@ -251,7 +252,7 @@ fun ReceiveScreen(m: Model, s: Snap) {
             Spacer(Modifier.height(14.dp))
             QrCode(s.address ?: "", Modifier.widthIn(max = 260.dp).fillMaxWidth())
             Spacer(Modifier.height(12.dp))
-            SelectionContainer { Text(s.address ?: "", fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = p.text, textAlign = TextAlign.Center) }
+            SelectionContainer { Text(splitAddr(s.address ?: ""), fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = p.text, textAlign = TextAlign.Center) }
             Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 IconBtn("copy", "Copy address", { m.copy(s.address) }, size = 52.dp)
                 IconBtn("share", "Share address", { m.share(s.address ?: "") }, size = 52.dp)

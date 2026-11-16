@@ -148,7 +148,7 @@ private fun ApprovalSheet(host: HostActivity, ask: HostActivity.Ask<Approval.Req
                         Column(Modifier.padding(vertical = 8.dp)) {
                             Text(row[0], fontSize = 12.sp, color = p.muted)
                             SelectionContainer {
-                                Text(row[1], fontSize = 15.sp, color = p.text, fontFamily = if (row[1].startsWith("0x")) FontFamily.Monospace else FontFamily.Default)
+                                Text(splitAddr(row[1]), fontSize = 15.sp, color = p.text, fontFamily = if (row[1].startsWith("0x")) FontFamily.Monospace else FontFamily.Default)
                             }
                         }
                     }

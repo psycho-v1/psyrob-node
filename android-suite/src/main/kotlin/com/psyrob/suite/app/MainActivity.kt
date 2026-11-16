@@ -196,8 +196,6 @@ class MainActivity : HostActivity() {
         uiMode = resources.configuration.uiMode
         bars(m.dark())
         m.applyScreenOn()
-        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
-            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
         if (m.settings.autoResume() && m.settings.wasMining() && m.api.vault.has() && !MinerService.active()) MinerService.start(this)
         m.fetchStats()
         setContent {
@@ -206,6 +204,12 @@ class MainActivity : HostActivity() {
             LaunchedEffect(dark) { bars(dark) }
             PsyTheme(dark) { App(m); HostDialogs(this) }
         }
+    }
+
+    /** The mining notification needs this on Android 13+; asked the first time mining starts. */
+    fun askNotifications() {
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) { super.onConfigurationChanged(newConfig); uiMode = newConfig.uiMode }
@@ -278,7 +282,9 @@ private fun Page(m: Model, s: Snap, r: Route) {
 private fun TopBar(m: Model, s: Snap) {
     val p = LocalPsy.current
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Image(painterResource(p.psyLogo), null, Modifier.size(30.dp).clip(CircleShape).then(if (!p.dark) Modifier.background(Color.White) else Modifier))
+        Box(Modifier.size(34.dp).clip(CircleShape).background(if (p.dark) p.panel2 else Color.White).border(1.dp, p.line, CircleShape), contentAlignment = Alignment.Center) {
+            Image(painterResource(p.psyLogo), null, Modifier.size(26.dp))
+        }
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
             Text("PSYROB Suite", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = p.text)
@@ -300,10 +306,21 @@ private fun MiningLamp(m: Model) {
     val e = MinerService.engine()
     val snap = e?.snapshot()
     val mining = snap != null && snap.optBoolean("running") && snap.optString("status") == "Mining"
-    val color = if (mining) p.ok else if (MinerService.active()) p.warn else p.line
-    val pulse by rememberInfiniteTransition(label = "lamp").animateFloat(.45f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "a")
-    Box(Modifier.size(32.dp).clip(CircleShape).clickable { m.tab("mine") }, contentAlignment = Alignment.Center) {
-        Box(Modifier.size(12.dp).alpha(if (mining) pulse else 1f).clip(CircleShape).background(color))
+    if (!MinerService.active()) return
+    val color = if (mining) p.ok else p.warn
+    Row(
+        Modifier.clip(RoundedCornerShape(16.dp)).clickable { m.tab("mine") }.padding(horizontal = 6.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (mining) PulseDot(color) else Box(Modifier.size(10.dp).clip(CircleShape).background(color))
+        Spacer(Modifier.width(5.dp))
+        Text(if (mining) "Mining" else "Starting", color = color, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
     }
+}
+
+@Composable
+private fun PulseDot(color: Color) {
+    val pulse by rememberInfiniteTransition(label = "lamp").animateFloat(.45f, 1f, infiniteRepeatable(tween(900), RepeatMode.Reverse), label = "a")
+    Box(Modifier.size(10.dp).alpha(pulse).clip(CircleShape).background(color))
 }
 

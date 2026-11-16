@@ -367,4 +367,12 @@ fun fmtDur(s: Double): String = when {
 
 fun fmtUp(s: Long): String = String.format(Locale.US, "%d:%02d:%02d", s / 3600, (s / 60) % 60, s % 60)
 
+/** The token balance, or null while unknown. */
+fun JSONObject.bal(): String? = if (has("balance") && !isNull("balance")) optString("balance") else null
+
+/** Long addresses in two even monospace lines instead of a ragged wrap. */
+fun splitAddr(v: String): String = v.lines().joinToString("\n") { l ->
+    if (l.matches(Regex("0x[0-9a-fA-F]{40}"))) l.substring(0, 21) + "\n" + l.substring(21) else l
+}
+
 fun org.json.JSONArray.objects(): List<JSONObject> = (0 until length()).mapNotNull { optJSONObject(it) }

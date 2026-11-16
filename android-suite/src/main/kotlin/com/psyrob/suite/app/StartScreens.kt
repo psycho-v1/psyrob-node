@@ -84,10 +84,9 @@ fun WelcomeScreen(m: Model) {
             Spacer(Modifier.height(16.dp))
             PButton("Create a new wallet", { a.run { val ph = m.io { m.api.vault.create() }; m.reset("backup", mapOf("phrase" to ph, "first" to true)) } }, busy = a.busy, busyText = "Creating", icon = "plus")
             Spacer(Modifier.height(10.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                PButton("Recovery phrase", { m.go("restore") }, Modifier.weight(1f), kind = Kind.Ghost, icon = "restore")
-                PButton("Private key", { m.go("importFirst") }, Modifier.weight(1f), kind = Kind.Ghost, icon = "key")
-            }
+            PButton("Restore with recovery phrase", { m.go("restore") }, kind = Kind.Ghost, icon = "restore")
+            Spacer(Modifier.height(10.dp))
+            PButton("Import a private key", { m.go("importFirst") }, kind = Kind.Ghost, icon = "key")
             ErrText(a.err)
         }
     }
