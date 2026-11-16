@@ -250,12 +250,12 @@ fun ReceiveScreen(m: Model, s: Snap) {
                 Column { Text(s.account.optString("name"), fontWeight = FontWeight.SemiBold, color = p.text); Muted(s.netName, size = 12) }
             }
             Spacer(Modifier.height(14.dp))
-            QrCode(s.address ?: "", Modifier.widthIn(max = 260.dp).fillMaxWidth())
+            QrCode(s.shown ?: "", Modifier.widthIn(max = 260.dp).fillMaxWidth())
             Spacer(Modifier.height(12.dp))
-            SelectionContainer { Text(splitAddr(s.address ?: ""), fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = p.text, textAlign = TextAlign.Center) }
+            SelectionContainer { Text(splitAddr(s.shown ?: ""), fontFamily = FontFamily.Monospace, fontSize = 14.sp, color = p.text, textAlign = TextAlign.Center) }
             Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                IconBtn("copy", "Copy address", { m.copy(s.address) }, size = 52.dp)
-                IconBtn("share", "Share address", { m.share(s.address ?: "") }, size = 52.dp)
+                IconBtn("copy", "Copy address", { m.copy(s.shown) }, size = 52.dp)
+                IconBtn("share", "Share address", { m.share(s.shown ?: "") }, size = 52.dp)
             }
             Muted("Send only ${s.symbol} and tokens on ${s.netName} (chain ${s.chainId}) to this address.", Modifier.padding(top = 8.dp), size = 12)
         }

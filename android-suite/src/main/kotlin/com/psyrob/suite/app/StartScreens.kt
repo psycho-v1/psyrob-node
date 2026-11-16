@@ -252,7 +252,7 @@ fun PasswordScreen(m: Model, s: Snap, first: Boolean) {
         )
         if (change) Field(cur, { cur = it }, label = "Current password", password = true)
         Field(n, { n = it }, label = if (change) "New password" else "Password", placeholder = "At least ${AppLock.MIN_LEN} characters", password = true)
-        Field(r, { r = it }, label = "Repeat it", password = true, onDone = { save() })
+        Field(r, { r = it }, label = "Repeat it", placeholder = "Same password again", password = true, onDone = { save() })
         ErrText(a.err)
         Spacer(Modifier.height(14.dp))
         PButton(if (change) "Update password" else "Set password", { save() }, busy = a.busy, busyText = "Saving", icon = "lock")

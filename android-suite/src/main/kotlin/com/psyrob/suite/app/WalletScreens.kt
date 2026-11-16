@@ -122,11 +122,11 @@ fun WalletScreen(m: Model, s: Snap) {
             Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 NameEditor(m, s.selected, s.account, big = true)
-                Text(short(s.address), color = p.muted, fontSize = 13.sp, fontFamily = FontFamily.Monospace)
+                Text(short(s.shown), color = p.muted, fontSize = 13.sp, fontFamily = FontFamily.Monospace)
             }
             if (m.editing != s.selected) {
                 PIcon("chevron-down", tint = p.muted, size = 18.dp)
-                IconBtn("copy", "Copy address", { m.copy(s.address) })
+                IconBtn("copy", "Copy address", { m.copy(s.shown) })
             }
         }
         Spacer(Modifier.height(14.dp))

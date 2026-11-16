@@ -94,7 +94,7 @@ fun SettingsScreen(m: Model, s: Snap) {
 
     PCard(padding = PaddingValues(start = 14.dp, end = 14.dp, top = 14.dp, bottom = 4.dp)) {
         CardTitle("Wallet")
-        NavRow("users", "Accounts", "${s.accounts.size} account(s), watch-only and imported keys") { m.go("accounts") }
+        NavRow("users", "Accounts", "${s.accounts.size} account${if (s.accounts.size == 1) "" else "s"} · watch & imported") { m.go("accounts") }
         Divider()
         NavRow("network", "Networks", "${s.netName} · ${s.networks.size} network(s)") { m.go("networks") }
         Divider()

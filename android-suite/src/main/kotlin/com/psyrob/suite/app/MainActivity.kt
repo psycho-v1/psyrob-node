@@ -82,6 +82,8 @@ class Snap(m: Model) {
     val selected = v.selected()
     val account: JSONObject = accounts.getOrNull(selected) ?: JSONObject()
     val address: String? = v.address()
+    /** The address as shown and shared: EIP-55 checksum case. */
+    val shown: String? = address?.let { try { WalletApi.checksum(it) } catch (_: Exception) { it } }
     val watchOnly = hasWallet && v.watchOnly()
     val hasPhrase = v.hasPhrase()
     val backedUp = v.backedUp()
@@ -152,7 +154,8 @@ class Model(val act: MainActivity) {
 
     fun copy(text: String?) {
         if (text == null || AppLock.locked(act)) return
-        (act.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("PSYROB Suite", text))
+        val t = if (text.matches(Regex("0x[0-9a-fA-F]{40}"))) WalletApi.checksum(text) else text
+        (act.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("PSYROB Suite", t))
         if (Build.VERSION.SDK_INT < 33) act.toast("Copied")
     }
     fun paste(): String {
@@ -228,7 +231,8 @@ fun App(m: Model) {
     LaunchedEffect(Unit) { while (true) { delay(1000); m.clock++; m.checkLock() } }
     var route = m.route
     if (!m.locked && !s.hasWallet && route.page !in START) route = Route("welcome")
-    val shell = s.hasWallet && !m.locked
+    // no header or tabs while the wallet is being set up (backup, first password)
+    val shell = s.hasWallet && !m.locked && route.args["first"] != true
     BackHandler(true) { if (m.locked || !m.back()) m.act.moveTaskToBack(true) }
 
     Column(Modifier.fillMaxSize().background(p.bg).windowInsetsPadding(WindowInsets.safeDrawing)) {
@@ -287,11 +291,11 @@ private fun TopBar(m: Model, s: Snap) {
         }
         Spacer(Modifier.width(10.dp))
         Column(Modifier.weight(1f)) {
-            Text("PSYROB Suite", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = p.text)
+            Text("PSYROB Suite", fontWeight = FontWeight.Bold, fontSize = 17.sp, color = p.text, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Text("Beta 1.0", fontSize = 11.sp, color = p.muted)
         }
         Text(s.netName, color = p.accent, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.widthIn(max = 140.dp).clip(RoundedCornerShape(20.dp)).border(1.dp, p.line, RoundedCornerShape(20.dp))
+            modifier = Modifier.widthIn(max = if (MinerService.active()) 104.dp else 140.dp).clip(RoundedCornerShape(20.dp)).border(1.dp, p.line, RoundedCornerShape(20.dp))
                 .clickable { m.go("networks") }.padding(horizontal = 12.dp, vertical = 6.dp))
         Spacer(Modifier.width(10.dp))
         MiningLamp(m)
