@@ -79,9 +79,12 @@ abstract class HostActivity : ComponentActivity(), Approval.Host {
     /** No screenshots or screen recording of this screen. */
     protected open val secure: Boolean = true
 
+    /** Debug builds allow screenshots (adb screencap) for testing; release builds never do. */
+    val debuggable: Boolean get() = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (secure) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        if (secure && !debuggable) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
     }
 
     override fun onStart() { super.onStart(); AppLock.onStart(this) }
@@ -117,18 +120,18 @@ abstract class HostActivity : ComponentActivity(), Approval.Host {
 
 @Composable
 fun HostDialogs(host: HostActivity) {
-    host.approval?.let { ApprovalSheet(it) }
+    host.approval?.let { ApprovalSheet(host, it) }
     host.password?.let { PasswordSheet(host, it) }
 }
 
 @Composable
-private fun ApprovalSheet(ask: HostActivity.Ask<Approval.Request>) {
+private fun ApprovalSheet(host: HostActivity, ask: HostActivity.Ask<Approval.Request>) {
     val r = ask.value
     val p = LocalPsy.current
     var ack by remember(ask) { mutableStateOf(false) }
     Dialog(
         onDismissRequest = { ask.done(false) },
-        properties = DialogProperties(usePlatformDefaultWidth = false, securePolicy = SecureFlagPolicy.SecureOn, dismissOnClickOutside = false, decorFitsSystemWindows = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false, securePolicy = if (host.debuggable) SecureFlagPolicy.SecureOff else SecureFlagPolicy.SecureOn, dismissOnClickOutside = false, decorFitsSystemWindows = false),
     ) {
         Column(Modifier.fillMaxSize().background(p.bg).windowInsetsPadding(WindowInsets.safeDrawing).padding(18.dp)) {
             Text(r.title, fontSize = 21.sp, fontWeight = FontWeight.Bold, color = p.text)
@@ -202,7 +205,7 @@ private fun PasswordSheet(host: HostActivity, ask: HostActivity.Ask<String>) {
             if (msg == null) ask.done(true) else { err = msg; pw = "" }
         }
     }
-    Dialog(onDismissRequest = { ask.done(false) }, properties = DialogProperties(securePolicy = SecureFlagPolicy.SecureOn)) {
+    Dialog(onDismissRequest = { ask.done(false) }, properties = DialogProperties(securePolicy = if (host.debuggable) SecureFlagPolicy.SecureOff else SecureFlagPolicy.SecureOn)) {
         Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(p.panel).border(1.dp, p.line, RoundedCornerShape(18.dp)).padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 PIcon("lock", size = 22.dp); Spacer(Modifier.width(10.dp))
