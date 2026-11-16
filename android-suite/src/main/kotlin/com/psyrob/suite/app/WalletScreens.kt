@@ -110,8 +110,11 @@ fun WalletScreen(m: Model, s: Snap) {
     ) {
         PIcon("alert", tint = p.warnText, size = 20.dp)
         Spacer(Modifier.width(10.dp))
-        Text("Your recovery phrase is not backed up yet.", color = p.warnText, fontSize = 14.sp, modifier = Modifier.weight(1f))
-        Text("Back up", color = p.warnText, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+        Column(Modifier.weight(1f)) {
+            Text("Your recovery phrase is not backed up yet.", color = p.warnText, fontSize = 14.sp)
+            Text("Back it up now", color = p.warnText, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp))
+        }
+        PIcon("chevron-right", tint = p.warnText, size = 18.dp)
     }
     PCard {
         Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).clickable { if (m.editing < 0) m.go("accounts") }, verticalAlignment = Alignment.CenterVertically) {
