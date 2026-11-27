@@ -52,4 +52,7 @@ export default {
   advanced: 'Advanced', explorer: 'Explorer address', dataFolder: 'Data folder', quit: 'Quit PSYROB Miner', quitConfirm: 'Stop mining and quit PSYROB Miner?', quitDone: 'PSYROB Miner has stopped. You can close this tab.',
   filter: 'Filter', signIn: 'Sign in', signInText: 'Enter the app password to open the dashboard.', wrongPassword: 'Wrong password.',
   overYear: 'more than a year',
+  device: 'This device', devTemp: 'CPU temperature', devTempNone: 'not reported by this device', devTempOk: 'normal', devTempWarm: 'warm: check airflow or use fewer threads',
+  devTempHot: 'hot: use fewer threads', devMemory: 'Memory in use', devMemFree: '{f} free · miner {m}', devLoad: 'CPU load (1 min)', devCores: '{n} cores · {a}',
+  devStorage: 'Storage free', devDiskOf: 'of {t}', devNone: 'not reported', devUptime: 'Device uptime', devNetwork: 'Network address', devLocalIp: 'local IP address',
 };

@@ -180,6 +180,26 @@ function main() {
   autoStart();
 
   /** What the dashboard shows about mining: rates, threads, the current job and estimates. */
+  /** The machine the miner runs on (a PC, a TV box, a board): CPU temperature, memory, load, storage, uptime, address.
+   * Every reading is optional: what the platform does not expose is left null. */
+  function deviceInfo() {
+    let tempC = null;
+    try {
+      for (const z of fs.readdirSync('/sys/class/thermal').filter((d) => d.startsWith('thermal_zone')).sort()) {
+        const v = Number(fs.readFileSync(`/sys/class/thermal/${z}/temp`, 'utf8').trim());
+        if (Number.isFinite(v) && v > 0) { const c = v > 1000 ? v / 1000 : v; if (c > 0 && c < 150 && (tempC === null || c > tempC)) tempC = c; }
+      }
+    } catch { /* no thermal zones readable (Windows, macOS, some sandboxes) */ }
+    let disk = null;
+    try { const st = fs.statfsSync(HOME); disk = { free: st.bavail * st.bsize, total: st.blocks * st.bsize }; } catch { /* statfs unavailable */ }
+    let ip = null;
+    try { ip = Object.values(os.networkInterfaces()).flat().find((a) => a && a.family === 'IPv4' && !a.internal)?.address ?? null; } catch { /* not allowed on some Android versions */ }
+    let memAvail = null;
+    try { const m = /MemAvailable:\s+(\d+) kB/.exec(fs.readFileSync('/proc/meminfo', 'utf8')); if (m) memAvail = Number(m[1]) * 1024; } catch { /* not Linux */ }
+    return { tempC, memTotal: os.totalmem(), memFree: memAvail ?? os.freemem(), rss: process.memoryUsage().rss, load: os.loadavg()[0], uptime: os.uptime(),
+      cpus, arch: os.arch(), platform: os.platform(), hostname: os.hostname(), ip, disk };
+  }
+
   function miningState() {
     const secs = miner ? (Date.now() - startedAt) / 1000 : 0;
     const live = history.live.slice(-12).filter((p) => p.rate > 0);
@@ -247,7 +267,7 @@ function main() {
       if (url.pathname === '/api/state') {
         const m = miningState();
         return json(200, { version: VERSION, network: TESTNET_NAME, chainId: CHAIN_ID, address: walletAddress(), wallet: walletState(), settings, cpus, ...m,
-          chain, logs: logs.slice(-200), home: HOME, totals: history.totals, live: history.live, blocks: history.blocks.slice(-50).concat((miner?.blocks ?? []).filter((b) => b.status === 'pending')), appProtected: appSet });
+          chain, device: deviceInfo(), logs: logs.slice(-200), home: HOME, totals: history.totals, live: history.live, blocks: history.blocks.slice(-50).concat((miner?.blocks ?? []).filter((b) => b.status === 'pending')), appProtected: appSet });
       }
       if (url.pathname === '/api/history') return json(200, history.range(String(url.searchParams.get('range') ?? '1h')));
       if (req.method !== 'POST') return send(405, '{}');

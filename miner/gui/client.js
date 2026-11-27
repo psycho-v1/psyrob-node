@@ -233,6 +233,9 @@ export function client(I18N, BOOT) {
         el('div', { className: 'grid2' },
           card(t('liveRate'), el('div', { id: 'd_chart' })),
           card(t('threads'), el('div', { id: 'd_threads', className: 'threads' }))),
+        card(t('device'), el('div', { className: 'tiles dev' },
+          tile(t('devTemp'), 'v_temp', 'v_temp2'), tile(t('devMemory'), 'v_mem', 'v_mem2'), tile(t('devLoad'), 'v_load', 'v_load2'),
+          tile(t('devStorage'), 'v_disk', 'v_disk2'), tile(t('devUptime'), 'v_up', 'v_up2'), tile(t('devNetwork'), 'v_ip', 'v_ip2'))),
         card(t('recentBlocks'), el('div', { id: 'd_blocks' }), el('p', {}, btn(t('allBlocks'), () => go('blocks'), 'link', 'arrow-right'))));
       let chartKey = '';
       return {
@@ -252,6 +255,19 @@ export function client(I18N, BOOT) {
           const th = $('d_threads');
           if (!s.threads.length) th.replaceChildren(el('p', { className: 'muted', textContent: s.mining ? t('starting') : t('threadsIdle', { n: num(s.settings.threads) }) }));
           else { const mx = Math.max(...s.threads, 1e-9); th.replaceChildren(...s.threads.map((r, i) => el('div', { className: 'thr' }, el('span', { textContent: t('threadN', { n: i + 1 }) }), el('div', { className: 'track' }, el('div', { className: 'fill', style: { width: (r / mx) * 100 + '%' } })), el('span', { className: 'num', textContent: rate(r) })))); }
+          const d = s.device;
+          if (d) {
+            const gb = (b) => (b === null || b === undefined ? '–' : num(b / 2 ** 30, b < 10 * 2 ** 30 ? 2 : 1) + ' GB');
+            const mb = (b) => num(b / 2 ** 20) + ' MB';
+            const tv = $('v_temp');
+            if (d.tempC === null) { tv.textContent = '–'; set('v_temp2', t('devTempNone')); }
+            else { tv.replaceChildren(badge(d.tempC >= 85 ? 'bad' : d.tempC >= 75 ? 'warn' : 'good', num(d.tempC, 1) + ' °C')); set('v_temp2', d.tempC >= 85 ? t('devTempHot') : d.tempC >= 75 ? t('devTempWarm') : t('devTempOk')); }
+            set('v_mem', gb(d.memTotal - d.memFree) + ' / ' + gb(d.memTotal)); set('v_mem2', t('devMemFree', { f: gb(d.memFree), m: mb(d.rss) }));
+            set('v_load', num(d.load, 2)); set('v_load2', t('devCores', { n: num(d.cpus), a: d.arch }));
+            set('v_disk', d.disk ? gb(d.disk.free) : '–'); set('v_disk2', d.disk ? t('devDiskOf', { t: gb(d.disk.total) }) : t('devNone'));
+            set('v_up', dur(d.uptime)); set('v_up2', d.hostname + ' · ' + d.platform);
+            set('v_ip', d.ip ?? '–'); set('v_ip2', t('devLocalIp'));
+          }
           const b = s.blocks.slice(-5).reverse();
           $('d_blocks').replaceChildren(b.length ? blockTable(b, true) : el('p', { className: 'muted', textContent: t('noBlocksYet') }));
         },
